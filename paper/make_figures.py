@@ -376,10 +376,73 @@ def fig5_agent_trace():
           % (vg[-1], lg[-1], vi[-1], li[-1]))
 
 
+# =============================================================== FIGURE 6
+def fig6_domains():
+    """Four domain instantiations: greedy at zero regret loses in all of them."""
+    from evolving_bandits import (agent_tools, adaptive_therapy,
+                                  platform_trial, design_space,
+                                  Greedy, ECI, Conservative, ThompsonSampling,
+                                  run)
+    doms = [("Agent\ntools", agent_tools),
+            ("Adaptive\ntherapy", adaptive_therapy),
+            ("Platform\ntrial", platform_trial),
+            ("Design\nspace", design_space)]
+    names = ["greedy", "thompson", "conservative", "eci"]
+    vals = {n: [] for n in names}
+    regs = {n: [] for n in names}
+    kaps = []
+    for _, fac in doms:
+        kaps.append(float(np.std(fac(seed=0).kappa)))
+        for n in names:
+            vs, rs = [], []
+            for sd in range(30):
+                env = fac(seed=sd)
+                pol = {"greedy": Greedy, "thompson": ThompsonSampling,
+                       "eci": ECI}.get(n)
+                pol = (Conservative(e_bound=float(np.mean(env.e))*2.0)
+                       if n == "conservative" else pol())
+                r = run(env, pol, seed=sd)
+                vs.append(r["value"]); rs.append(r["regret"])
+            vals[n].append(np.mean(vs)); regs[n].append(np.mean(rs))
+
+    labels = [d[0] for d in doms]
+    x = np.arange(len(labels)); w = 0.2
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.2, 2.9))
+    cols = {"greedy": RED, "thompson": ORANGE,
+            "conservative": GREEN, "eci": BLUE}
+    for i, n in enumerate(names):
+        rel = [100*(vals[n][j]-vals["greedy"][j])/abs(vals["greedy"][j])
+               for j in range(len(labels))]
+        ax1.bar(x + (i-1.5)*w, rel, w, color=cols[n], label=n)
+    ax1.set_xticks(x); ax1.set_xticklabels(labels, fontsize=7)
+    ax1.set_ylabel("value vs greedy (%)")
+    ax1.set_title("(a)  Correction pays in every domain")
+    ax1.legend(ncol=2, fontsize=7)
+    ax1.axhline(0, color="k", lw=0.6)
+
+    for i, n in enumerate(names):
+        ax2.bar(x + (i-1.5)*w, [regs[n][j] for j in range(len(labels))],
+                w, color=cols[n], label=n)
+    ax2.set_xticks(x); ax2.set_xticklabels(labels, fontsize=7)
+    ax2.set_ylabel("cumulative regret")
+    ax2.set_title("(b)  Greedy reports zero regret everywhere")
+    ax2.axhline(0, color="k", lw=0.6)
+    ax2.set_ylim(0, max(max(regs[n]) for n in names) * 1.30)
+    for j, k in enumerate(kaps):
+        ax2.text(j, ax2.get_ylim()[1] * 0.92, r"std$(\kappa)$=%.2f" % k,
+                 ha="center", fontsize=6.5, color=GREY)
+
+    fig.tight_layout()
+    fig.savefig(os.path.join(OUT, "fig6_domains.pdf"), bbox_inches="tight")
+    plt.close(fig)
+    print("fig6: greedy regret by domain:", np.round(regs["greedy"], 4))
+
+
 if __name__ == "__main__":
     fig1_divergence()
     fig2_characterisation()
     fig3_estimation_floor()
     fig4_policies()
     fig5_agent_trace()
+    fig6_domains()
     print("\nall figures written to", OUT)

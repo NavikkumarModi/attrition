@@ -184,3 +184,54 @@ def test_cannot_pull_dead_arm():
     env.step(0)
     with pytest.raises(ValueError):
         env.step(0)
+
+
+# ---------------------------------------------------------------- domains
+def test_all_domains_run_and_have_kappa_dispersion():
+    """Every domain instantiates, and each has non-zero kappa dispersion,
+    so by Theorem 1 greedy is suboptimal in all of them."""
+    from evolving_bandits import (agent_tools, adaptive_therapy,
+                                  platform_trial, design_space)
+    for factory in [agent_tools, adaptive_therapy, platform_trial, design_space]:
+        env = factory(seed=0)
+        assert env.n >= 3
+        assert np.std(env.kappa) > 0.1
+        res = run(env, Greedy(), seed=0)
+        assert res["pulls"] > 0
+
+
+def test_greedy_zero_regret_in_every_domain():
+    """The headline claim holds in all four instantiations."""
+    from evolving_bandits import (agent_tools, adaptive_therapy,
+                                  platform_trial, design_space)
+    for factory in [agent_tools, adaptive_therapy, platform_trial, design_space]:
+        res = run(factory(seed=2), Greedy(), seed=2)
+        assert res["regret"] < 1e-9
+
+
+def test_correction_beats_greedy_in_every_domain():
+    """And greedy loses in all four despite its perfect regret record."""
+    from evolving_bandits import (agent_tools, adaptive_therapy,
+                                  platform_trial, design_space)
+    for factory in [agent_tools, adaptive_therapy, platform_trial, design_space]:
+        g = np.mean([run(factory(seed=s), Greedy(), seed=s)["value"]
+                     for s in range(15)])
+        i = np.mean([run(factory(seed=s), ECI(), seed=s)["value"]
+                     for s in range(15)])
+        assert i > g
+
+
+def test_adaptive_therapy_mtd_is_greedy():
+    """In the therapy domain, dose intensity orders v, p and e together,
+    so maximum tolerated dose is exactly the greedy policy."""
+    from evolving_bandits import adaptive_therapy
+    env = adaptive_therapy(seed=0)
+    assert np.argmax(env.v) == np.argmax(env.p) == np.argmax(env.e)
+    assert np.std(env.kappa) > 0.5
+
+
+def test_domain_notes_present():
+    from evolving_bandits import DOMAIN_NOTES
+    for k in ["agent_tools", "adaptive_therapy", "platform_trial",
+              "design_space"]:
+        assert k in DOMAIN_NOTES and len(DOMAIN_NOTES[k]) > 100

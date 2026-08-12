@@ -153,11 +153,38 @@ At `m = 12`, `δE = 2`: optimum `+12.88`, greedy `−11.12`. Regret: `0.0000`.
 | `SortByE` | `e` | exactly optimal in pure sequencing |
 | `Rollout` | base policy + simulator | 99.5–99.9% of optimum |
 
-## Agent tool ecosystems
+## Domains
 
-An orchestrator routing across API-backed tools is an instance: heavy use trips a
-rate limit or revokes a key (destruction), and tools sharing upstream
-infrastructure degrade together (externality). See
+Four instantiations ship with the library, each a running parameterisation rather
+than an illustration. Fit quality is stated honestly.
+
+| domain | arm | destruction (`p`) | externality (`e`) | fit |
+|---|---|---|---|---|
+| `agent_tools` | API-backed tool | call trips a rate limit or revokes a key | shared upstream infrastructure | strong |
+| `adaptive_therapy` | dose level | dose exhausts drug-sensitive cells | released resistant clone degrades all later treatment | strong |
+| `platform_trial` | treatment arm | dropped for futility on self-generated evidence | loss of concurrent control | moderate |
+| `design_space` | process parameter setting | run consumes material or goes out of spec | narrows the defensible filing envelope | partial |
+
+```python
+from evolving_bandits import adaptive_therapy, Greedy, ECI, run, DOMAIN_NOTES
+
+env = adaptive_therapy(seed=0)
+print(DOMAIN_NOTES["adaptive_therapy"])
+print(run(env, Greedy())["regret"])     # 0.0 -- and it loses by 49%
+```
+
+Greedy records **cumulative regret of exactly 0.0000 in all four domains**, and is
+beaten in all four — by 30–49% where `κ` dispersion is largest.
+
+**Adaptive therapy is the sharpest case.** Maximum tolerated dose — administer the
+highest tolerable dose — *is* the greedy policy. Dose intensity raises immediate
+tumour control, the chance of exhausting the drug-sensitive population, and the
+damage done when that happens, all together. So `κ = p·e` is highly dispersed,
+exactly the regime where Theorem 1 says greedy fails. The model reproduces
+competitive release from first principles. (A reduced form, not a clinical model:
+real tumour dynamics are a population process.)
+
+See `experiments/exp25_domains.py` for all four, and
 `experiments/exp17_agent_ecosystem.py` for a session trace where the greedy
 router's dashboard shows a flawless zero-regret record while it burns the
 ecosystem to a worse outcome with fewer tools remaining.

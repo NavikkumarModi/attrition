@@ -101,6 +101,10 @@ programming.}
 This paper formalises that failure. Our contributions:
 
 \begin{itemize}
+\item \textbf{Four domain instantiations}---agent tool ecosystems, adaptive cancer
+therapy under competitive release, platform trials, and CMC design-space
+development---each simulated, with fit quality stated honestly
+(Section~\ref{sec:domains}).
 \item \textbf{Theorem~\ref{thm:vacuity}} (main result). A zero-regret policy can
 incur value loss $m\delta E$, unbounded in pool size and externality magnitude, and
 can finish net-negative while the optimum is positive. No-regret is not no-harm.
@@ -455,7 +459,72 @@ triples Thompson's realised value ($20.8$ vs.\ $7.2$). The mechanisms compose
 rather than compete---TS handles uncertainty in $v$, ECI handles consumption---and
 TS+ECI dominates both.
 
-\subsection{Agent tool ecosystems}
+\section{Domains}
+\label{sec:domains}
+
+The model is not specific to agents. We instantiate it in four settings, each
+supplying its own mapping to $(v,p,e,\delta)$ and each simulated rather than
+merely described. Table~\ref{tab:domains} gives the mappings, and we state the
+quality of fit honestly: two are close, one is a reasonable abstraction, and one is
+partial.
+
+\begin{table}[t]
+\centering
+\small
+\caption{Domain instantiations. Each row is a running parameterisation, not an
+illustration.}
+\label{tab:domains}
+\begin{tabular}{p{2.0cm}p{2.4cm}p{3.0cm}p{3.4cm}p{1.4cm}}
+\toprule
+domain & arm & destruction ($p$) & externality ($e$) & fit \\
+\midrule
+Agent tools & API-backed tool & call trips a rate limit, exhausts a quota, or
+revokes a key & shared upstream infrastructure: burning one throttles the rest &
+strong \\[2pt]
+Adaptive therapy & dose level & dose exhausts the drug-sensitive cell population &
+released resistant clone degrades all later treatment & strong \\[2pt]
+Platform trial & treatment arm & arm dropped for futility on evidence the
+allocation generated & reliance on shared control; removal degrades concurrency for
+all comparisons & moderate \\[2pt]
+Design space & process parameter setting & run consumes scarce material or yields
+an out-of-spec batch & failure narrows the defensible filing envelope for all
+settings & partial \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Adaptive therapy is the sharpest case.} Under maximum tolerated dose,
+clinicians administer the highest tolerable dose, which is \emph{exactly} the greedy
+policy. Higher dose intensity raises immediate tumour control $v$, but also raises
+both the chance of exhausting the drug-sensitive population ($p$) and the damage
+done when that happens ($e$), because the sensitive population was suppressing the
+resistant clone. Since $v$, $p$ and $e$ rise together, $\kappa = pe$ is highly
+dispersed---precisely the regime where Theorem~\ref{thm:char} says greedy fails. The
+model therefore reproduces \emph{competitive release} from first principles: it
+predicts that MTD is beaten by a dose-modulating policy, which is what adaptive
+therapy trials find. We stress this is a reduced form; real tumour dynamics are a
+population process, not additive burden from dead arms.
+
+\paragraph{Results.} Figure~\ref{fig:domains} runs all four. Greedy records
+cumulative regret of exactly $0.0000$ in every domain, and is beaten in every
+domain---by $30$--$49\%$ where $\kappa$ dispersion is largest. Thompson sampling,
+which is consumption-blind, gains at most $7\%$ and in the agent domain is
+\emph{worse} than greedy. The conservative policy, which uses no per-arm
+externality knowledge whatsoever, matches or beats the fully-informed index in
+three of the four domains---the practical form of Theorem~\ref{thm:floor}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{fig6_domains.pdf}
+\caption{Four domains, 30 seeds each. \textbf{(a)} Value relative to greedy.
+Correction pays everywhere, most where $\kappa$ dispersion is largest.
+\textbf{(b)} Cumulative regret. Greedy sits at exactly zero in all four domains
+while losing in all four. The consumption-blind baselines cluster near zero regret
+with it; the policies that actually perform are the ones the metric penalises.}
+\label{fig:domains}
+\end{figure}
+
+\subsection{Agent tool ecosystems in detail}
 
 Figure~\ref{fig:trace} returns to the routing example of Section~1 and shows the
 three quantities side by side over a single session. Panel (a) is what an
@@ -492,6 +561,15 @@ not be fooled, but it is also not what deployed systems measure, which is the po
 Theorem~\ref{thm:char}'s sufficiency proof relies on a coupling argument whose
 formalisation under horizon truncation we verify exhaustively rather than prove in
 full generality.
+
+The domain instantiations vary in fidelity. The agent and adaptive-therapy mappings
+are structurally faithful; the platform-trial mapping treats an inferential
+externality (loss of concurrent control) as if it were a reward penalty, and mixes
+patient benefit with information gain in a single scalar; the design-space mapping
+omits the terminal-commitment layer that defines the real problem---a one-shot
+declaration of design-space width that fixes the feasible set permanently. That
+layer is an optimal-stopping problem on top of the bandit and is, in our view, the
+most promising direction this work opens.
 
 \section{Conclusion}
 
