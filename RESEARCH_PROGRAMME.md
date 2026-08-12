@@ -274,21 +274,108 @@ Gate it on the mechanistic engines working.
 
 ---
 
-## 5. Publication sequence
+## 5. Release strategy: one flagship, not a drip
 
-| # | paper | depends on | venue |
-|---|---|---|---|
-| 1 | *No-Regret is Not No-Harm* | done | arXiv → ICML/NeurIPS |
-| 2 | System-value regret separation + full non-separability characterisation | T-A(2), T-D | ICML/NeurIPS theory |
-| 3 | ATTRITION: multi-agent testbed for consumable action sets | Stage 1–2 | NeurIPS D&B / workshop |
-| 4 | Price of anarchy and learning under shared consumption | T-B, T-C, Stage 1 | ICML/NeurIPS |
-| 5 | Terminal commitment | T-E | ICML/NeurIPS or journal |
-| 6 | Domain flagship: development–launch coupling | Stage 4 | domain journal |
+### The case for merging
 
-Papers 2 and 3 can run in parallel — one is theory on existing machinery, the
-other engineering.
+Incremental extensions do not clear top-tier review. "We extend our prior result
+to two agents" is a weak submission whatever the theorem's quality — reviewers
+reward scope, completeness, and a contribution that reshapes how a problem is
+seen. Six papers, each a step, would produce six mediocre reviews and one
+forgettable line of work.
 
----
+**The merge is therefore correct.** But it succeeds or fails on one structural
+choice.
+
+### Merge around a thesis, not a list
+
+A paper presenting seven theorems and a simulator reads as unfocused and gets
+rejected for exactly that. The same content organised under one claim reads as
+definitive. The claim:
+
+> When actions consume the action set, the standard metric certifies destruction.
+> This holds from two arms to multi-agent ecosystems, across every coupling form
+> tested, in four domains — and the correction is computable, cheap, and provably
+> near-optimal.
+
+Every result becomes evidence for that sentence rather than an item on a list.
+
+### What goes in the flagship
+
+| component | role in the argument | status |
+|---|---|---|
+| T4 vacuity + exact construction | the phenomenon exists | **proven** |
+| **T-A(2) converse separation** | avoiding harm *requires* looking bad | weeks |
+| T1 characterisation | exactly when it bites (`κ = p·e`) | proven (sufficiency verified) |
+| **T-D full non-separability** | it is not an artefact of additive burden | half done |
+| **T-B multi-agent + price of anarchy** | it survives decentralisation, and worsens | months |
+| **T-C multi-agent estimation floor** | and cannot be learned away, even jointly | months |
+| T3 estimation floor | why specification beats estimation | **proven** |
+| ECI + rollout + **T-G guarantees** | the correction, with a bound | empirical → bound |
+| **Stage 1–2 simulator** | the artifact others build on | weeks → months |
+| four domains, mechanistically grounded | it is not a toy | months |
+
+Bold items are the new work. Everything else exists.
+
+### What stays out — and why that protects the flagship
+
+**T-E terminal commitment** is a different mathematical object (optimal stopping
+where the stopping action fixes the feasible set). Including it dilutes the thesis
+and invites "unclear scope." It is strong enough to carry its own paper.
+
+**T-F mechanism design** addresses a different community with different
+conventions. Its framing — *Pigouvian design under an irreducible
+externality-estimation floor* — is excellent and deserves proper treatment, not a
+subsection.
+
+**Stage 4 development–launch coupling** is the part most at risk of becoming
+unfalsifiable. Including speculative domain modelling in a paper whose strength is
+rigour would hand reviewers the attack.
+
+Cutting these is not timidity; it is what makes the remaining argument airtight.
+
+### Priority protection: post paper 1 to arXiv now
+
+Merging does **not** require withholding the current paper, and withholding it
+would be a real cost. Post it to arXiv immediately:
+
+- an arXiv preprint is not a publication and precludes no venue;
+- it timestamps the core result, which matters in a field this fast;
+- the flagship supersedes it as v2, or cites it as the conference version;
+- it gives the artifact something citable while the larger work is built.
+
+This is the standard pattern for exactly this situation, and it removes the only
+genuine risk of merging — being scooped on the core claim while building the
+comprehensive version.
+
+### Venue
+
+| venue | fit | note |
+|---|---|---|
+| **JMLR** | **strongest** | Long-form, comprehensive treatments with released software are what JMLR is *for*. No page limit, theory plus artifact expected, top-tier standing. Best match for a merged paper of this shape. |
+| ICML / NeurIPS main | strong | Page limits force the domains and simulator into an appendix, weakening the artifact half. Viable if the theory leads. |
+| NeurIPS Datasets & Benchmarks | good for the artifact | Would split theory from simulator — the opposite of merging. |
+
+**Recommendation: JMLR**, with an ICML/NeurIPS submission of the theory core if a
+conference timestamp is wanted alongside.
+
+### Timeline
+
+```
+now       post paper 1 to arXiv                         ── priority secured
+weeks     T-A(2) converse separation
+          T-D full characterisation
+          Stage 1 multi-agent core + price of anarchy
+months    T-B, T-C multi-agent theory
+          Stage 2 mechanistic engines (therapy first)
+          T-G approximation guarantees
+then      flagship submission
+parallel  T-E, T-F as independent papers
+```
+
+The first block is weeks of work on existing code and produces the first
+price-of-anarchy-under-consumption number — publishable alone if the flagship
+slips.
 
 ## 6. Risks, and how each is answered
 
@@ -304,15 +391,19 @@ other engineering.
 
 ## 7. What to do first
 
-1. **Post paper 1.** Everything else compounds off a citable artifact.
-2. **T-A(2)** — the converse separation. Weeks, and it upgrades the headline claim
-   from "no-regret permits harm" to "avoiding harm *requires* looking bad."
+1. **Post paper 1 to arXiv.** Not a venue submission — a timestamp. Removes the
+   only real risk of building a larger work.
+2. **T-A(2)** — the converse separation. Weeks, and it is the single strongest
+   available result: avoiding harm does not merely permit looking bad on the
+   dashboard, it *requires* it.
 3. **T-D full characterisation.** Weeks, mostly written.
-4. **Stage 1 multi-agent core.** Weeks from the current solver, and it produces the
-   first price-of-anarchy-under-consumption number, which is a genuinely new
-   quantity.
+4. **Stage 1 multi-agent core.** Weeks from the current solver, and it yields the
+   first price-of-anarchy-under-consumption measurement.
 
-Those four are a strong second paper and a working multi-agent testbed inside a
-few months, built almost entirely on code that already exists and results already
-proven. Everything beyond is real but optional, and should be gated on these
-landing.
+These four are a few weeks on existing code, and they are simultaneously the
+opening chapters of the flagship and a complete fallback paper if the larger work
+takes longer than expected. Nothing is wasted either way.
+
+**The one thing that decides the flagship's fate** is not how much goes in but
+whether every piece serves the one-sentence thesis. Any result that does not is
+better published separately, where it can be the thesis.
