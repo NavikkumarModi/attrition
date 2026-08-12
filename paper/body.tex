@@ -236,13 +236,12 @@ settings tested, $m \in \{1,2,4,8,12\}$ and $\delta E \in \{0.5,1,2\}$. At $m=12
 $\delta E = 2$: $V^\star = 12.88$, $V_{\mathrm{greedy}} = -11.12$, gap exactly
 $24.0000$, regret $0.0000$.
 
-\paragraph{A correction, recorded.} An earlier version of this construction claimed
-the gap grows linearly in $T$. That is false: with $p=1$ the pool is exhausted
-after $n$ pulls, so $T$ beyond $n$ is irrelevant. Under $p<1$ the gap grows with
-$T$ only until $T \approx \sum_j 1/p_j$, then saturates---the same sample-budget
-ceiling that appears independently in Theorem~\ref{thm:floor}. The correct scaling
-is linear in pool size, which is the meaningful quantity: greedy's error is paid
-once per subsequent pull.
+\paragraph{Scaling.} The gap is linear in the pool size $m$, not in the horizon
+$T$. With $p=1$ the pool is exhausted after $n$ pulls, so $T$ beyond $n$ is
+irrelevant; under $p<1$ the gap grows with $T$ only until $T \approx \sum_j 1/p_j$
+and then saturates at the same sample-budget ceiling that appears in
+Theorem~\ref{thm:floor}. Pool size is the operative quantity because greedy's error
+is paid once per subsequent pull.
 
 \begin{theorem}[Converse: optimality forces private regret]
 \label{thm:converse}
@@ -255,39 +254,37 @@ system optimum has private regret at least $M$.
 \begin{proof}
 The optimal policy defers $H$ to the final round. At each of the $m$ earlier rounds
 the best available arm is $H$ (value $1$ against $1-\epsilon$), and the policy
-declines it, incurring instantaneous private regret $\epsilon$. Summing over the
-$m$ deferrals gives $m\epsilon$. Any policy that instead pulls $H$ early forfeits
+declines it, incurring instantaneous private regret $\epsilon$. Summing over the $m$
+deferrals gives $m\epsilon$. Any policy that instead pulls $H$ early forfeits
 $\delta E$ per remaining round, so for $\epsilon < \delta E$ deferral is necessary
 for near-optimality. Taking $m \to \infty$ gives the second claim.
 \end{proof}
 
 Exact dynamic programming confirms the closed form at all eight settings tested,
-$m \in \{2,4,8,12\}$ and $\delta E \in \{0.5,1.5\}$: private regret of the optimal
-policy is $m\epsilon$ to machine precision while its system-value advantage over
+$m \in \{2,4,8,12\}$ and $\delta E \in \{0.5,1.5\}$: the optimal policy's private
+regret is $m\epsilon$ to machine precision while its system-value advantage over
 greedy is $m\delta E$.
 
 Together with Theorem~\ref{thm:vacuity} this closes the separation in both
 directions. A zero-regret policy may destroy unbounded value, and---the sharper
-statement---a policy that preserves value \emph{must} report regret. Being unable to
-tell the two apart is not an oversight in how the metric is read; the metric orders
-them backwards.
+statement---a policy that preserves value \emph{must} report regret. The metric does
+not merely fail to separate the two; it orders them backwards.
 
-\begin{corollary}[The dashboard reading tracks the benefit]
+\begin{corollary}[The reported regret tracks the value delivered]
 \label{cor:tracks}
-In the same family, the optimal policy's private regret is $m\epsilon$ and its
+In the same family the optimal policy's private regret is $m\epsilon$ and its
 system-value advantage is $m\delta E$, so their ratio is $\epsilon/(\delta E)$,
-independent of $m$. The worse a value-preserving policy appears on the standard
-metric, the more value it is delivering.
+independent of $m$.
 \end{corollary}
 
-Verified exactly: sweeping $\epsilon \in \{0.01,0.05,0.10,0.20,0.40\}$ at $m=8$,
-$\delta E = 1$, the system gain is $8.0000$ throughout while private regret runs
-$0.08, 0.40, 0.80, 1.60, 3.20$ --- ratios of exactly $\epsilon$.
+Sweeping $\epsilon \in \{0.01,0.05,0.10,0.20,0.40\}$ at $m=8$, $\delta E=1$: the
+system gain is $8.0000$ throughout while private regret runs $0.08, 0.40, 0.80,
+1.60, 3.20$---ratios of exactly $\epsilon$.
 
-\paragraph{A second benchmark.} Because the choice of benchmark is doing the work,
-we report both. Define \emph{system-value regret} $R_{\mathrm{sys}}(\pi) = V^\star -
-W(\pi)$ against the ex-ante optimal policy. On random instances ($n=6$, $T=8$, 15
-instances, exact DP):
+\paragraph{A second benchmark.} Because the choice of benchmark determines the
+verdict, we report both. Define \emph{system-value regret} $R_{\mathrm{sys}}(\pi) =
+V^\star - W(\pi)$ against the ex-ante optimal policy. On random instances ($n=6$,
+$T=8$, 15 instances, exact DP):
 
 \begin{center}
 \begin{tabular}{lrrr}
@@ -301,9 +298,8 @@ greedy & $4.4061$ & $0.9987$ & $\mathbf{0.0000}$ \\
 \end{tabular}
 \end{center}
 
-The two regret columns rank the three policies in opposite orders. This is the
-cleanest statement of the paper's point: the algorithms are fixed and the verdict is
-determined entirely by which benchmark is consulted.
+The two regret columns rank the three policies in opposite orders. The algorithms
+are fixed; the benchmark alone determines which appears best.
 
 \paragraph{Interpretation: private versus system value.} Define the \emph{system
 value} of a policy $\pi$ as its expected total reward,
@@ -383,9 +379,9 @@ required instance. \qed
 
 The step that closes the argument is that constant $\kappa$ makes the \emph{entire}
 expected burden policy-invariant, not merely the per-arm burden term in the Bellman
-comparison. This removes the need for a coupling argument, and with it the
-horizon-truncation difficulty that obstructed our earlier attempt: the identity
-holds over the realised episode however long it turns out to be.
+comparison. No coupling argument is needed, and horizon truncation
+presents no difficulty: the identity holds over the realised episode however long it
+turns out to be.
 
 \paragraph{Exact verification of the invariance.} We confirm the key identity
 directly by dynamic programming, computing $\mathbb{E}[\sum_t B(S_t)]$ exactly for
@@ -410,10 +406,10 @@ varies.
 
 Two empirical checks. Varying $p$ and $e$ widely while pinning $\kappa$ constant
 leaves greedy exactly optimal (0/10 instances broken, gap $0.000\%$); varying the
-product breaks it (10/10, gap $5.4$--$6.3\%$). Separately, the interchange inequality
-$v_a - v_b \ge p_a D_a - p_b D_b$---now a corollary of the theorem rather than a
-step toward it---was audited exhaustively: $0$ violations in $6{,}842$ ordered
-pairs under constant $\kappa$, versus $56.2\%$ when $\kappa$ varies.
+product breaks it (10/10, gap $5.4$--$6.3\%$). The theorem also implies the interchange inequality
+$v_a - v_b \ge p_a D_a - p_b D_b$, which we audit exhaustively as a consistency
+check: $0$ violations in $6{,}842$ ordered pairs under constant $\kappa$, versus
+$56.2\%$ when $\kappa$ varies.
 
 The optimality gap grows monotonically with $\mathrm{std}(\kappa)$, from $5.9\%$ to
 $29.1\%$ across six bins over 240 instances. Figure~\ref{fig:char} summarises both
@@ -426,7 +422,7 @@ findings.
 exactly optimal whenever $\kappa=p\,e$ is constant, and fails whenever it is not.
 Case~E is the decisive test: $p$ and $e$ each vary widely while their product is
 pinned, and the gap is exactly zero---so neither factor alone is the invariant.
-Case~D was a prediction of the refined conjecture and broke greedy as predicted.
+Cases~C and~D isolate the two factors separately, and both break greedy.
 \textbf{(b)} The gap grows monotonically with the dispersion of $\kappa$, while the
 corrected index (Section~\ref{sec:eci}) stays flat, so its advantage grows without
 bound. Error bars are standard errors over 12 instances.}
@@ -496,9 +492,8 @@ Finally $N = \min(T, N_{\mathrm{exh}})$, and once $T$ exceeds $N_{\mathrm{exh}}$
 binding constraint is the pool rather than the clock.
 \end{proof}
 
-The oracle-comparison step is what repairs the naive argument: the
-difference-in-means estimator is the MLE only when the other externalities are
-known, and it is invoked here solely as a \emph{lower bound} on the harder joint
+The difference-in-means estimator is the MLE only when the other externalities are
+known; it is invoked here solely as a \emph{lower bound} on the harder joint
 problem. We verify the inequality chain
 $\mathrm{Var}_{\text{joint}} \ge \mathrm{Var}_{\text{oracle}} \ge 4\sigma^2/N$
 numerically on simulated episodes; it holds in every instance tested. In instances
@@ -606,9 +601,8 @@ $\sum_a v_a - \delta \sum_s e_{a_s}(n-s)$: an arm at position $s$ pays its
 externality $(n-s)$ times. Minimising requires pairing large $e$ with small $(n-s)$.
 \end{proof}
 
-Verified by brute force over all $n!$ orderings, exact at 8/8 instances. Notably ECI
-is \emph{not} exactly optimal even here---a conjecture we falsified---and the exact
-rule inverts the usual intuition: when consumption is certain, an arm's value is
+Verified by brute force over all $n!$ orderings, exact at 8/8 instances. ECI is \emph{not} exactly
+optimal even here, and the exact rule inverts the usual intuition: when consumption is certain, an arm's value is
 irrelevant to scheduling; only its externality matters.
 
 \section{Experiments}
@@ -672,7 +666,7 @@ UCB & $69.73$ & $53.32$ & $-5.1\%$ \\
 \end{tabular}
 \end{center}
 
-Two findings deserve emphasis, one supporting and one qualifying.
+Two features of the table matter.
 
 \emph{The Lagrangian method barely helps} ($+1.9\%$), despite being the closest
 existing approach: it prices consumption, but a scalar dual cannot express the
@@ -680,13 +674,13 @@ horizon-dependent charge $\delta\kappa_a(T-t)$, which must shrink as the episode
 runs down while $\lambda$ cannot. Resource-aware machinery is not sufficient; the
 correction has to be time-varying.
 
-\emph{The ratio heuristic is competitive at this scale}, within $1\%$ of ECI. We
-report this rather than only the greedy comparison. Against exact optimum at $n=6$,
-however, ECI dominates it at every setting tested---gaps of $0.14$--$2.31\%$ versus
-ratio's $1.27$--$15.77\%$---and the margin widens with the horizon, exactly as the
-$(T-t)$ term predicts. Our reading is that with many arms a good low-$\kappa$
-substitute is nearly always available, so the fine-grained weighting matters less;
-ECI's derivation, not its empirical margin at large $n$, is the contribution.
+\emph{The ratio heuristic is competitive at this scale}, within $1\%$ of ECI.
+Against the exact optimum at $n=6$, however, ECI dominates it at every setting
+tested---gaps of $0.14$--$2.31\%$ against ratio's $1.27$--$15.77\%$---and the margin
+widens with the horizon, as the $(T-t)$ term predicts. With many arms a good
+low-$\kappa$ substitute is nearly always available, so the fine-grained weighting
+matters less; ECI's derivation, rather than its empirical margin at large $n$, is
+what the theory contributes.
 
 Thompson sampling is consistently \emph{worse} than greedy under known parameters.
 Its exploration is not free here: sampling a suboptimal arm can destroy a
@@ -850,8 +844,8 @@ direct: for irreversible actions, externality costs must be \emph{specified}, no
 discovered. A crude uniform upper bound outperforms every learned estimator we
 tested.
 
-\paragraph{Code and reproducibility.} The library, all 27 experiments including the
-falsified ones, and one regression test per theorem are released openly.
+\paragraph{Code and reproducibility.} The library, all 32 experiments including
+negative results, and one regression test per theorem are released openly.
 Every figure regenerates from the library and the exact-DP reference via a single
 command, all random seeds are fixed and stated in code, and the test suite fails if
 any theorem's numerical claim breaks.
