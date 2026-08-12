@@ -1581,3 +1581,81 @@ Practically this settles the design question the empirical results raised. ECI a
 where compute is tight; ECI plus one rollout step where decisions are expensive
 enough to justify `m·K·T` simulations; and beyond that, deeper search rather than
 more corrections at the same depth.
+
+---
+
+## The ordinal saturation point: a closed form, and a correction
+
+### τ ≈ 0.68 was an artefact of n = 8
+
+exp39 held the pool at `n = 8` throughout and concluded rank recovery saturates
+near `τ = 0.68`. Sweeping pool size instead (`exp41`, σ = 0.001, spacing = 4.0):
+
+| n | τ | usable fraction | implied k | mean min-side | predicted τ |
+|---|---|---|---|---|---|
+| 5 | 0.627 | 0.507 | **2.47** | 3.1 | 0.194 |
+| 8 | 0.614 | 0.708 | **2.33** | 6.7 | 0.472 |
+| 12 | 0.757 | 0.786 | **2.57** | 9.3 | 0.603 |
+| 16 | 0.769 | 0.846 | **2.47** | 13.1 | 0.707 |
+| 22 | 0.840 | 0.877 | **2.70** | 19.0 | 0.764 |
+| 30 | **0.851** | 0.913 | **2.60** | 25.6 | 0.831 |
+
+**The implied number of positionally unusable arms is constant at `k ≈ 2.5`,
+independent of pool size.** The interpretation is direct: roughly the first arm
+destroyed and the last arm destroyed have one side of their transition nearly
+empty; every other arm sits in the interior with data on both sides. That is a
+constant, not a fraction.
+
+### Closed form
+
+Kendall's τ counts concordant minus discordant pairs. Pairs involving an unusable
+arm are coin flips contributing nothing in expectation, so
+
+```
+E[τ]  ≈  C(n−k, 2) / C(n, 2)  =  (n−k)(n−k−1) / (n(n−1))  →  1  as n → ∞
+```
+
+with `k ≈ 2.5`. The prediction tracks well at larger pools (0.831 predicted against
+0.851 observed at n = 30) and underestimates at small pools, where the
+usable/unusable split is not clean enough for a binary pair-counting model.
+
+### The contrast with cardinal recovery — and a normalisation trap
+
+A first comparison suggested cardinal recovery *also* improves with pool size
+(normalised RMSE falling 0.759 → 0.393). That was an artefact: normalising by the
+spread of the true values, which grows with `n` at fixed spacing, manufactures the
+improvement.
+
+Raw, unnormalised:
+
+| n | episode length N | mean min-side | raw cardinal RMSE | ordinal τ |
+|---|---|---|---|---|
+| 5 | 17 | 3.0 | **0.4439** | 0.608 |
+| 8 | 31 | 6.8 | 0.6695 | 0.597 |
+| 16 | 56 | 13.2 | 1.0996 | 0.752 |
+| 30 | 107 | 25.7 | **1.3533** | **0.853** |
+
+**Cardinal recovery gets worse with pool size; ordinal recovery gets better.** More
+arms means a larger accumulated burden and more coefficients to separate, so
+magnitudes become harder. But the positional damage that limits ranking stays fixed
+at ~2.5 arms, so ordering becomes easier.
+
+> **The two genuinely obey different laws, and now for a demonstrated reason rather
+> than a conjectured one.** Cardinal error is driven by the number of coefficients
+> and the burden scale, both growing in `n`. Ordinal error is driven by the number
+> of positionally compromised arms, which does not grow.
+
+### What this restores, and what it does not
+
+This partly revives the T-F reading, on firmer ground. Ordinal information is
+easier to obtain than cardinal information — but the mechanism is pool size, not
+noise. In large pools the ordering is largely recoverable (τ = 0.85 at n = 30);
+in small ones neither is.
+
+**The practical caveat matters.** Irreversible-action settings are typically
+small-pool: a handful of dose levels, a few process settings, a modest tool roster.
+That is the regime where both recoveries are weakest, and it is exactly the regime
+that motivates the problem. The corrected practical conclusion is therefore
+unchanged in substance: **specify, do not estimate** — with the refinement that in
+large pools the ordering may be recoverable, and that the specification burden is
+lighter than a full cardinal elicitation.

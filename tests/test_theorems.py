@@ -697,3 +697,22 @@ def test_rollout_helps_greedy_more_than_eci_proportionally():
     frac_eci = 1 - np.mean(RE) / np.mean(E)
     assert frac_greedy > frac_eci, (
         "rollout must close proportionally more of the weaker base policy's gap")
+
+
+def test_ordinal_saturation_is_a_pool_size_effect():
+    """tau ~ 0.68 was an n=8 artefact: rank recovery improves with pool size
+    because the number of positionally unusable arms stays roughly constant."""
+    from experiments.exp41_ordinal_closed_form import trial
+    res = {}
+    for n in [8, 30]:
+        taus, ks = [], []
+        for s in range(20):
+            t, u, _ = trial(n, seed=2000 + s)
+            if not np.isnan(t):
+                taus.append(t); ks.append(n * (1 - u))
+        res[n] = (float(np.mean(taus)), float(np.mean(ks)))
+    assert res[30][0] > res[8][0] + 0.10, "tau must rise with pool size"
+    # the implied unusable count is a constant, not a fraction of n
+    assert abs(res[30][1] - res[8][1]) < 1.5, (
+        f"unusable arm count must stay roughly constant "
+        f"(n=8: {res[8][1]:.2f}, n=30: {res[30][1]:.2f})")

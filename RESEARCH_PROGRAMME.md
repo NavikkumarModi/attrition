@@ -410,10 +410,28 @@ scaling; ordinal learnability; ECI exactness in pure sequencing; horizon-scaling
 the T4 gap; the endogenous/exogenous unification claim; the IPIC preservation
 heuristic; the effective-horizon index refinement.
 
-**Open.** Whether the ordinal saturation point (τ ≈ 0.68) has a closed form in terms
-of pool size and the distribution of destruction times. This is the natural next
-theorem: the transitions argument bounds cardinal estimation exactly, and an
-analogous positional argument should bound rank recovery.
+**Closed (August 2026).** The ordinal saturation point does have a closed form, and
+τ ≈ 0.68 turned out to be an artefact of holding the pool at n = 8. Sweeping pool
+size gives `E[τ] ≈ C(n−k,2)/C(n,2)` with **k ≈ 2.5 independent of n** — roughly the
+first and last arms destroyed have one side of their transition nearly empty, and
+every other arm sits in the interior. So τ → 1 as the pool grows.
+
+The contrast with cardinal recovery is now demonstrated rather than conjectured:
+raw cardinal RMSE *worsens* with pool size (0.44 → 1.35 from n=5 to n=30) while
+ordinal τ *improves* (0.61 → 0.85). Cardinal error is driven by the number of
+coefficients and the burden scale, both growing in n; ordinal error is driven by the
+count of positionally compromised arms, which does not.
+
+**Caveat that keeps the practical conclusion intact.** Irreversible-action settings
+are typically small-pool — a handful of doses, a few process settings, a modest tool
+roster — and that is the regime where both recoveries are weakest. "Specify, don't
+estimate" stands, with the refinement that the specification burden is ordinal
+rather than cardinal.
+
+**Now open.** Whether `k ≈ 2.5` is derivable from the destruction-time distribution
+in closed form, and whether it depends on the allocation rule. Under random
+allocation the first and last destructions are order statistics of the geometric
+lifetimes; a policy that deliberately sequences destructions might reduce k below 2.
 
 ---
 
