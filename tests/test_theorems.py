@@ -716,3 +716,30 @@ def test_ordinal_saturation_is_a_pool_size_effect():
     assert abs(res[30][1] - res[8][1]) < 1.5, (
         f"unusable arm count must stay roughly constant "
         f"(n=8: {res[8][1]:.2f}, n=30: {res[30][1]:.2f})")
+
+
+def test_identification_cannot_be_improved_by_allocation_design():
+    """Random allocation beats deliberate sequencing for rank recovery."""
+    from experiments.exp42_identification_by_design import run
+    taus = {}
+    for rule in ["random", "bracketed"]:
+        vals = []
+        for s in range(20):
+            t, _, _, _ = run(rule, n=12, seed=3000 + s)
+            if not np.isnan(t):
+                vals.append(t)
+        taus[rule] = float(np.mean(vals))
+    assert taus["random"] > taus["bracketed"], (
+        "deliberate sequencing must not beat random allocation")
+
+
+def test_k_is_structural_across_allocation_rules():
+    """k ~ 2.5 holds whatever the allocation rule: it is not an artefact of one."""
+    from experiments.exp42_identification_by_design import run
+    for rule in ["random", "delayed", "bracketed"]:
+        ks = []
+        for s in range(20):
+            _, k, _, _ = run(rule, n=16, seed=3000 + s)
+            if not np.isnan(k):
+                ks.append(k)
+        assert 1.5 < float(np.mean(ks)) < 3.5, f"{rule}: k must stay near 2.5"

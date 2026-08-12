@@ -1659,3 +1659,62 @@ that motivates the problem. The corrected practical conclusion is therefore
 unchanged in substance: **specify, do not estimate** — with the refinement that in
 large pools the ordering may be recoverable, and that the specification burden is
 lighter than a full cardinal elicitation.
+
+---
+
+## Can identification be improved by design? No.
+
+If `k ≈ 2.5` is caused by the first and last arms destroyed having one-sided data,
+a policy that sequences its consumption deliberately ought to reduce it. Three
+rules were tried against random allocation (`exp42`): **delayed** (spend early
+pulls on robust arms to build a baseline), **front-loaded** (destroy fragile arms
+early so every transition has a long after-period), and **bracketed** (both).
+
+| pool | allocation | τ | k | value |
+|---|---|---|---|---|
+| n=8 | **random** | **0.626** | 2.63 | −132.12 |
+| n=8 | delayed | 0.502 | 2.63 | −79.83 |
+| n=8 | front-loaded | 0.469 | 3.00 | −132.96 |
+| n=8 | bracketed | 0.443 | 2.60 | −83.16 |
+| n=16 | **random** | **0.761** | 2.37 | −1305.60 |
+| n=16 | delayed | 0.678 | 2.20 | −979.21 |
+| n=16 | front-loaded | 0.603 | 2.53 | −1544.33 |
+| n=16 | bracketed | 0.593 | 2.40 | −987.18 |
+
+**Every deliberate rule makes identification worse.** Random allocation gives the
+highest τ at both pool sizes.
+
+### Three explanations tested, three falsified
+
+1. **Collinearity from concentrating pulls.** Wrong: the structured rules have
+   *better* condition numbers (1.4e11 against random's 2.2e11) and *more* balanced
+   pull distributions (0.888 against 0.872).
+2. **Fewer positionally compromised arms.** Wrong: `k` stays near 2.5 under every
+   rule (2.20–2.53), confirming it as a structural constant but explaining nothing
+   about the variation.
+3. **Fewer transitions.** Wrong: all rules exhaust the pool, so all produce the
+   same 16 deaths.
+
+### What is actually established, and the model's limit
+
+The residual explanation is the **spread** of destruction times rather than the
+count of extremes. Random allocation distributes destructions evenly across the
+episode; structured rules cluster them into a phase.
+
+This exposes a limitation of the closed form worth stating plainly: the binary
+usable/unusable pair-counting model predicts 0.700–0.736 for all four rules, while
+observed τ ranges 0.593–0.761. **The model captures the pool-size scaling well but
+not the allocation-rule dependence.** A refinement would weight pairs by the
+precision of both estimates rather than thresholding them.
+
+### The practical conclusion, which is the useful part
+
+> **Identification cannot be bought by design.** Random allocation is already the
+> best of the rules tested, and the positional penalty is not something a cleverer
+> policy removes.
+
+Note also the value column: the two rules that improve realised value (delayed
++40%, bracketed +37% at n=8) are among the worst for identification. Playing well
+and learning why one should play well are in tension, which is the same tension
+Theorem 3 describes, now visible at the level of allocation design rather than
+sample size.

@@ -428,10 +428,26 @@ roster — and that is the regime where both recoveries are weakest. "Specify, d
 estimate" stands, with the refinement that the specification burden is ordinal
 rather than cardinal.
 
-**Now open.** Whether `k ≈ 2.5` is derivable from the destruction-time distribution
-in closed form, and whether it depends on the allocation rule. Under random
-allocation the first and last destructions are order statistics of the geometric
-lifetimes; a policy that deliberately sequences destructions might reduce k below 2.
+**Answered.** `k ≈ 2.5` is **structural, not an artefact of random allocation**. It
+holds at 2.20–3.00 across four allocation rules, and every deliberate sequencing
+rule tried makes rank recovery *worse* than random allocation, not better. Three
+candidate explanations for the degradation were tested and falsified: collinearity
+(structured rules are better conditioned), transition count (all rules exhaust the
+pool identically), and the count of compromised arms (`k` is flat). The residual
+explanation is the *spread* of destruction times, which the binary pair-counting
+model does not capture — it predicts 0.700–0.736 for all four rules against an
+observed 0.593–0.761.
+
+> **Identification cannot be bought by design.** Random allocation is already the
+> best of the rules tested.
+
+A further tension worth noting: the two rules that improve realised value are among
+the worst for identification. Playing well and learning why one should play well
+pull against each other at the level of allocation design, not just sample size.
+
+**Now open.** A refined model weighting pairs by the precision of both estimates
+rather than thresholding them, which would need to reproduce the allocation-rule
+dependence the current closed form misses.
 
 ---
 
