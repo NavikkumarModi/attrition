@@ -264,3 +264,33 @@ def test_t1_degrades_gracefully_for_nonseparable():
         const, vary = q1_theorem1(form, inst=5)
         assert const < 2.0, f"{form}: residual gap should stay small"
         assert vary > const, f"{form}: varying kappa still worse than constant"
+
+
+def test_t3_oracle_lower_bounds_joint_estimator():
+    """Theorem 3's repaired proof: the oracle-others-known estimator has weakly
+    smaller variance than the joint estimator, so its variance is a valid lower
+    bound. This is what makes the AM-HM floor apply to the real problem."""
+    from experiments.exp27_theorem3_repair import simulate, variances
+    rng = np.random.default_rng(4)
+    checked = 0
+    for _ in range(20):
+        n = int(rng.integers(4, 7))
+        T = int(rng.integers(25, 60))
+        p = np.clip(rng.uniform(0.15, 0.6, n), 0.05, 1.0)
+        e = np.clip(rng.uniform(0.2, 2.0, n), 0.0, None)
+        X, y, v, dt, rounds = simulate(n, T, p, e, 0.1, 0.3, rng)
+        cands = [i for i in range(n) if 0 < dt[i] < rounds - 1]
+        if not cands:
+            continue
+        target = int(rng.choice(cands))
+        n_b, n_a = int(dt[target]), int(rounds - dt[target] - 1)
+        if n_b < 1 or n_a < 1:
+            continue
+        joint, oracle = variances(X, 0.3, n, target)
+        if joint is None:
+            continue
+        floor = 0.3**2 * (1.0/n_b + 1.0/n_a)
+        assert joint >= oracle - 1e-9, "joint must be at least as hard as oracle"
+        assert oracle >= floor - 1e-6, "oracle must meet the AM-HM floor"
+        checked += 1
+    assert checked >= 5

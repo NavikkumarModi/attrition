@@ -803,3 +803,85 @@ needs. Second, the degradation is graceful — the residual gap under non-separa
 coupling is `0.10%`–`0.67%`, against the `6.6`–`12.2%` gap greedy incurs when `κ`
 genuinely varies. Greedy is *nearly* optimal under constant `κ` even when
 separability fails.
+
+---
+
+## Revisions following external review (v0.3)
+
+An external review identified two genuine errors and several overclaims. Both
+errors are recorded here rather than silently corrected.
+
+### Error 1 — Theorem 3's estimator argument was wrong
+
+**Objection.** The proof claimed the difference of pre- and post-destruction sample
+means is "the MLE" of `δe_i`. It is not. The burden is cumulative, so rounds after
+arm `i` dies generally contain the level shifts of several arms. A pre/post
+difference does not isolate `e_i`.
+
+**The objection is correct.** The empirical work was unaffected — `exp10`/`exp11`
+always used a full least-squares fit with dead-set indicator columns, which handles
+multiple deaths properly. Only the *proof* used the naive estimator.
+
+**Repair.** The difference-in-means estimator is the MLE of `δe_i` *conditional on
+all other `e_j` being known*. In the real problem they are estimated jointly, and
+adding free parameters to a linear model weakly increases the variance of every
+retained coefficient (the oracle design is a column submatrix; Schur complement).
+Hence
+
+```
+Var_joint ≥ Var_oracle = σ²(1/n_b + 1/n_a) ≥ 4σ²/N
+```
+
+so the floor survives as a **lower bound**, now correctly derived. Verified in
+`exp27`: the chain holds in 14/14 simulated episodes. In instances where several
+arms die in quick succession the joint design becomes near-collinear and
+`Var_joint` exceeds `Var_oracle` by seven orders of magnitude — the objection's own
+concern turns into supporting evidence.
+
+### Error 2 — Theorem 1's quantifiers were too strong
+
+**Objection.** "Greedy is optimal iff `κ` is constant" is too strong read
+instance-wise. If all `v_a` are equal, or the horizon is too short for the relevant
+arms to be reached, `κ` dispersion need not produce a strict gap.
+
+**Correct.** Restated with asymmetric quantifiers:
+
+- **Sufficiency:** constant `κ` ⟹ greedy optimal at *every* state and *every*
+  horizon, for every choice of `{v_a}`.
+- **Necessity:** `κ` varies ⟹ *there exist* `{v_a}` and `T` for which greedy is
+  strictly suboptimal.
+
+The one-line summary is valid only as universal optimality versus existence of a
+counterexample.
+
+### Sufficiency demoted to a proposition
+
+The interchange step is now stated as Proposition (verified, not proved in full
+generality) rather than folded into the theorem's proof. A theorem should not
+depend on exhaustive verification to fill a gap in its argument.
+
+### Overclaims corrected
+
+| was | now |
+|---|---|
+| "the externality cannot be learned" / "unlearnable" | "irreducible estimation error"; "cannot be estimated arbitrarily accurately" |
+| "ECI is a true index" | "approximate index"; explicitly no optimality guarantee |
+| "advantage grows without bound in std(κ)" | "increases throughout the range examined" |
+| "reproduces competitive release from first principles" | "captures a qualitative competitive-release mechanism"; explicit non-clinical disclaimer |
+| "dominates throughout", "pays everywhere" | "leads at every tested level", "in all four tested domains" |
+| `E[N] = Σ 1/p_j` | `N_exh = Σ G_j`, `G_j ~ Geom(p_j)`, under a pool-exhausting policy; `N = min(T, N_exh)` |
+
+### Other changes
+
+- **Related work** expanded with cascading/interacting bandits, combinatorial
+  bandits, RL with irreversible actions and safe exploration, and open multi-agent
+  bandits. The novelty claim is now stated as a specific four-part conjunction
+  rather than a blanket assertion, with an explicit invitation to correction.
+- **System value** `W(π) = E_π[Σ r_t]` defined formally, so the private/social
+  reading is grounded rather than rhetorical.
+- **Table 1's regret** column defined explicitly as per-step instantaneous regret.
+- **Sections reordered** to benchmark failure → optimality structure → estimation
+  limit → corrections.
+- **Shared `body.tex`** so the plain and arXiv builds cannot drift.
+- **Repository URL** flagged in bold as a pre-posting requirement rather than left
+  as a silent placeholder.
