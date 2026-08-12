@@ -885,3 +885,75 @@ depend on exhaustive verification to fill a gap in its argument.
 - **Shared `body.tex`** so the plain and arXiv builds cannot drift.
 - **Repository URL** flagged in bold as a pre-posting requirement rather than left
   as a silent placeholder.
+
+---
+
+## Theorem 1 sufficiency — CLOSED (v0.4)
+
+The coupling argument was the wrong route. A direct argument closes it.
+
+### The proof
+
+Total value decomposes as
+```
+W(π) = E_π[Σ_t v_{a_t}]  −  E_π[Σ_t B(S_t)]
+```
+
+Consider the burden term. A destruction at round `s` imposes `δe_{a_s}` on every
+later round, so
+
+```
+E_π[Σ_t B(S_t)] = δ · E_π[ Σ_s 1(destruction at s) · e_{a_s} · (N − s) ]
+```
+
+Conditioning on the arm chosen at `s`, the destruction indicator has mean `p_{a_s}`,
+so round `s` contributes `p_{a_s} e_{a_s} = κ_{a_s}` in expectation. **Under constant
+`κ` this is the same number whichever arm the policy picks**, giving
+
+```
+E_π[Σ_t B(S_t)] = δκ · E[ N(N−1)/2 ]
+```
+
+And `N` is policy-independent: arm `j` absorbs exactly `G_j ~ Geom(p_j)` pulls
+before destruction, every pull goes to exactly one arm, so
+`N_exh = Σ_j G_j` **regardless of allocation order**. Hence
+`N = min(T, N_exh)` has a policy-independent distribution.
+
+The burden term is therefore a constant common to all policies, so maximising `W`
+reduces to maximising `E[Σ_t v_{a_t}]` — the same problem with **no externality at
+all**. There, geometric destruction is memoryless and rewards stationary, so an
+arm's total expected yield `v_a/p_a` is independent of when harvesting starts:
+deferring buys no option value and costs the per-round gap. Greedy is optimal
+there, hence here, at every state and horizon. ∎
+
+### Why the earlier attempt failed
+
+We were trying to show the *per-arm* burden term drops out of the Bellman argmax,
+which left the option term `O_a` to handle separately — and that is where horizon
+truncation bit. The correct observation is stronger: constant `κ` makes the
+**entire expected burden** policy-invariant, so the option term never needs to be
+analysed at all. The identity holds over the realised episode however long it turns
+out to be, which is exactly what truncation was obstructing.
+
+### Exact verification (`exp28`)
+
+`E[Σ_t B(S_t)]` computed by DP for five structurally different policies
+(max `v`, min `v`, max `p`, min `p`, max `e`):
+
+| regime | expected burden | spread |
+|---|---|---|
+| constant `κ`, no exhaustion (T=5, n=10) | 0.4000000000 | **3.3e-16** |
+| constant `κ`, exhaustion (T=30, n=5) | 1.2873273922 | **2.2e-16** |
+| varying `κ` (control) | 0.4444–1.0261 | 7.3e-01 |
+
+Identical to machine precision in **both** regimes — including the exhausting case
+where `N` is random — and differing by three orders of magnitude when `κ` varies.
+
+### Consequences
+
+- **Theorem 1 is now fully proven**, both directions. Sufficiency by the argument
+  above; necessity by the Theorem 4 construction.
+- The interchange inequality (`exp18`, `exp23`) becomes a **corollary** rather than
+  a proof obligation. Its 44,860-pair audit is now confirmation, not scaffolding.
+- The Proposition introduced in v0.3 is withdrawn — no longer needed.
+- The limitations section loses its most serious entry.

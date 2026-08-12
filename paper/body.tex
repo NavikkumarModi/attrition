@@ -76,8 +76,9 @@ point.
 \includegraphics[width=\textwidth]{fig1_divergence.pdf}
 \caption{The central phenomenon. \textbf{(a)} Greedy's cumulative regret against
 the best-available-arm benchmark, computed exactly: identically zero at every
-coupling strength, because greedy never fails to pull the best arm currently
-available. \textbf{(b)} Realised value on the same instances. The shaded region is
+coupling strength. This is true by construction---greedy maximises the benchmark
+quantity at each step---and is shown not as a surprise in itself but as the
+reference against which panel (b) should be read. \textbf{(b)} Realised value on the same instances. The shaded region is
 the loss. At strong coupling the zero-regret policy finishes net-negative while the
 optimum stays positive. Averages over 20 instances, $n=6$, $T=10$, exact dynamic
 programming.}
@@ -270,56 +271,81 @@ not produce a strict gap. The one-line summary---``greedy is optimal iff $\kappa
 is constant''---is correct only when read as universal optimality versus existence
 of a counterexample.
 
-\begin{proof}[Proof sketch]
-Since $B(S)$ and $V(S,t{+}1)$ do not depend on the chosen arm, maximising the
-Bellman expression is equivalent to maximising $v_a - p_a D_a$ with
-$D_a = V(S,t{+}1) - V(S\setminus\{a\},t{+}1)$. Decompose
-$D_a = \delta e_a L(S,t) + O_a(S,t)$ into a burden and an option component. The
-burden component contributes $p_a \delta e_a L = \delta \kappa_a L$, which is
-identical across arms exactly when $\kappa$ is constant and hence drops out of the
-argmax.
+\begin{proof}
+Write the total value of a policy $\pi$ over its realised episode as
+\[
+W(\pi) \;=\; \mathbb{E}_\pi\Big[\textstyle\sum_{t} v_{a_t}\Big] \;-\; \mathbb{E}_\pi\Big[\textstyle\sum_{t} B(S_t)\Big],
+\]
+and consider the burden term. A destruction at round $s$ imposes $\delta e_{a_s}$
+on every later round of the episode, so
+\[
+\mathbb{E}_\pi\Big[\textstyle\sum_t B(S_t)\Big]
+\;=\; \delta\, \mathbb{E}_\pi\Big[\textstyle\sum_{s} \mathbf{1}[\text{destruction at } s]\; e_{a_s} \,(N-s)\Big],
+\]
+where $N$ is the episode length. Conditioning on the history and the arm chosen at
+round $s$, the destruction indicator has mean $p_{a_s}$, so round $s$ contributes
+$p_{a_s} e_{a_s} = \kappa_{a_s}$ in expectation. Under the hypothesis
+$\kappa_a \equiv \kappa$ this is the same constant \emph{whichever arm the policy
+selects}, giving
+\[
+\mathbb{E}_\pi\Big[\textstyle\sum_t B(S_t)\Big] \;=\; \delta\kappa\, \mathbb{E}\Big[\textstyle\sum_{s}(N-s)\Big]
+\;=\; \delta\kappa\, \mathbb{E}\!\left[\tfrac{N(N-1)}{2}\right].
+\]
+It remains to note that $N$ is itself policy-independent. Arm $j$ absorbs exactly
+$G_j \sim \mathrm{Geometric}(p_j)$ pulls before destruction, and every pull is
+allocated to exactly one arm, so the number of pulls until the pool is exhausted is
+$N_{\mathrm{exh}} = \sum_j G_j$ \emph{regardless of the order in which a policy
+allocates them}. Hence $N = \min(T, N_{\mathrm{exh}})$ has a policy-independent
+distribution.
 
-\emph{Sufficiency.} Under constant $\kappa$, couple the destruction randomness so a
-pair $\{a,b\}$ receives the same two draws in either order. The surviving-set
-distribution after both pulls is then identical, and since expected burden per pull
-is $\delta\kappa$ for both arms, the expected burden paths coincide. The only
-residual difference is which reward arrives first, giving $v_a - v_b \ge 0$.
-Iterating sorts any optimal policy into greedy order.
+The burden term is therefore a constant common to all policies, so
+\[
+\arg\max_\pi W(\pi) \;=\; \arg\max_\pi \mathbb{E}_\pi\Big[\textstyle\sum_t v_{a_t}\Big],
+\]
+which is the same problem with no externality at all ($e \equiv 0$). There
+destruction is geometric, hence memoryless, and rewards are stationary, so an arm's
+total expected yield $v_a/p_a$ is independent of when harvesting begins: deferring
+a pull buys no option value and costs the per-round gap. Greedy is optimal in that
+problem, and therefore in this one, at every state and every horizon.
 
 \emph{Necessity.} The construction of Theorem~\ref{thm:vacuity} has
-$\kappa_H = E > 0 = \kappa_S$ and a strictly positive gap $m\delta E$, exhibiting
-the required instance.
+$\kappa_H = E > 0 = \kappa_S$ and gap exactly $m\delta E > 0$, exhibiting the
+required instance. \qed
 \end{proof}
 
-\paragraph{Status of the sufficiency proof.} We are explicit about what is and is
-not established. The burden component of the argument is complete: constant
-$\kappa$ makes $\delta\kappa_a L$ arm-independent, so it cannot affect the argmax.
-The remaining obligation is the option component $O_a$, for which we state the
-coupling step as a proposition rather than claim it proved.
+The step that closes the argument is that constant $\kappa$ makes the \emph{entire}
+expected burden policy-invariant, not merely the per-arm burden term in the Bellman
+comparison. This removes the need for a coupling argument, and with it the
+horizon-truncation difficulty that obstructed our earlier attempt: the identity
+holds over the realised episode however long it turns out to be.
 
-\begin{proposition}[Interchange; verified, not proved in full generality]
-\label{prop:interchange}
-Under constant $\kappa$ and additively separable burden, for any $S$ and any
-$a,b \in S$ with $v_a \ge v_b$, pulling $a$ before $b$ is weakly better.
-\end{proposition}
+\paragraph{Exact verification of the invariance.} We confirm the key identity
+directly by dynamic programming, computing $\mathbb{E}[\sum_t B(S_t)]$ exactly for
+five structurally different deterministic policies (maximise $v$, minimise $v$,
+maximise $p$, minimise $p$, maximise $e$):
 
-The coupling argument above is complete except for its interaction with horizon
-truncation, where the two orderings can terminate at different states. We verify
-Proposition~\ref{prop:interchange} exhaustively over every reachable $(S,t)$ and
-every ordered pair in randomly generated instances: $0$ violations in $6{,}842$
-pairs under constant $\kappa$, against $56.2\%$ violations when $\kappa$ varies.
-The inequality is also tight---minimum slack exactly $0$, with $46.5\%$ of pairs
-binding---which matches the ties expected when every arm is consumed regardless of
-order. We regard sufficiency as strongly supported but not formally closed, and we
-do not claim otherwise elsewhere in the paper.
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+regime & expected burden & spread across policies \\
+\midrule
+constant $\kappa$, no exhaustion ($T{=}5$, $n{=}10$) & $0.4000000000$ & $3.3 \times 10^{-16}$ \\
+constant $\kappa$, exhaustion ($T{=}30$, $n{=}5$) & $1.2873273922$ & $2.2 \times 10^{-16}$ \\
+varying $\kappa$ (control, $T{=}5$, $n{=}10$) & $0.4444$--$1.0261$ & $7.3 \times 10^{-1}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Identical to machine precision in both regimes---including the exhausting case,
+where $N$ is random---and differing by three orders of magnitude when $\kappa$
+varies.
 
 Two empirical checks. Varying $p$ and $e$ widely while pinning $\kappa$ constant
 leaves greedy exactly optimal (0/10 instances broken, gap $0.000\%$); varying the
-product breaks it (10/10, gap $5.4$--$6.3\%$). Separately, the interchange
-inequality underlying sufficiency was audited exhaustively over all reachable
-states: $0$ violations in $6{,}842$ ordered pairs under constant $\kappa$, versus
-$56.2\%$ violations when $\kappa$ varies. The inequality holds precisely when the
-theorem says greedy is optimal.
+product breaks it (10/10, gap $5.4$--$6.3\%$). Separately, the interchange inequality
+$v_a - v_b \ge p_a D_a - p_b D_b$---now a corollary of the theorem rather than a
+step toward it---was audited exhaustively: $0$ violations in $6{,}842$ ordered
+pairs under constant $\kappa$, versus $56.2\%$ when $\kappa$ varies.
 
 The optimality gap grows monotonically with $\mathrm{std}(\kappa)$, from $5.9\%$ to
 $29.1\%$ across six bins over 240 instances. Figure~\ref{fig:char} summarises both
@@ -647,9 +673,9 @@ preservation}, and the standard metric records it as a defect.}
 \label{fig:trace}
 \end{figure}
 
-This is the practical form of Theorem~\ref{thm:vacuity}. Nothing in panel (a)
-would trigger an alert, a rollback, or a model review. The failure is invisible to
-the instrument.
+This is the practical form of Theorem~\ref{thm:vacuity}: the monitored quantity
+carries no signal of the loss, so no alerting threshold defined on it can detect
+the failure.
 
 \section{Robustness to the coupling form}
 \label{sec:robust}
@@ -695,10 +721,6 @@ larger-scale claims rest on rollout, and the coupling-robustness study of
 Section~\ref{sec:robust} inherits the same ceiling. Theorem~\ref{thm:vacuity} is a statement about
 the best-available-arm benchmark specifically---a forward-looking benchmark would
 not be fooled, but it is also not what deployed systems measure, which is the point.
-Theorem~\ref{thm:char}'s sufficiency proof relies on a coupling argument whose
-formalisation under horizon truncation we verify exhaustively rather than prove in
-full generality.
-
 The domain instantiations vary in fidelity. The agent and adaptive-therapy mappings
 are structurally faithful; the platform-trial mapping treats an inferential
 externality (loss of concurrent control) as if it were a reward penalty, and mixes

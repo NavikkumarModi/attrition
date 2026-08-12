@@ -294,3 +294,24 @@ def test_t3_oracle_lower_bounds_joint_estimator():
         assert oracle >= floor - 1e-6, "oracle must meet the AM-HM floor"
         checked += 1
     assert checked >= 5
+
+
+def test_t1_sufficiency_burden_is_policy_invariant():
+    """The closed sufficiency proof rests on this identity: under constant kappa,
+    E[total burden] is the same for every policy. Exact DP, no sampling."""
+    from experiments.exp28_sufficiency_proof import exact_expected_burden
+    rng = np.random.default_rng(3)
+    for T, n, const in [(5, 9, True), (25, 5, True), (5, 9, False)]:
+        v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
+        p = np.clip(rng.uniform(0.25, 1.0, n), 0.05, 1.0)
+        e = (0.4 / p) if const else np.clip(rng.uniform(0.0, 2.0, n), 0.0, None)
+        rules = [lambda S: max(S, key=lambda i: v[i]),
+                 lambda S: min(S, key=lambda i: v[i]),
+                 lambda S: max(S, key=lambda i: p[i]),
+                 lambda S: max(S, key=lambda i: e[i])]
+        vals = np.array([exact_expected_burden(v, p, e, 0.1, T, r) for r in rules])
+        spread = float(vals.max() - vals.min())
+        if const:
+            assert spread < 1e-9, f"constant kappa must give invariant burden"
+        else:
+            assert spread > 1e-3, "varying kappa must give policy-dependent burden"
