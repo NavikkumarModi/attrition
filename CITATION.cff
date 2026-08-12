@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+title: "No-Regret is Not No-Harm: Bandits with Consumable Action Sets"
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Modi
+    given-names: Navikkumar
+version: 0.1.0
+date-released: 2026-08-12
+license: MIT
