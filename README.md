@@ -239,6 +239,47 @@ ecosystem to a worse outcome with fewer tools remaining.
 
 ---
 
+## Environments and scenarios
+
+Gym- and PettingZoo-compatible interfaces, implemented natively so there is no
+RL-framework dependency:
+
+```python
+from evolving_bandits import load, describe
+
+describe()                              # list all scenarios and what they show
+
+env = load("shared-quota", seed=0)      # Gym API
+obs, info = env.reset(0)
+obs, reward, terminated, truncated, info = env.step(action)
+
+menv = load("shared-quota-competing")   # PettingZoo parallel API
+obs, rewards, terms, truncs, infos = menv.step({a: 0 for a in menv.agents})
+```
+
+**Observations deliberately hide the true externality coefficients.** Theorem 3
+says they cannot be reliably estimated from experience, so an agent that read them
+off the observation would be solving a different problem. Pass
+`reveal_externality=True` for oracle experiments.
+
+### Scenario packs
+
+Each scenario documents the phenomenon it should exhibit, and the test suite
+asserts it — so a scenario that drifts is a detectable regression.
+
+| scenario | std(κ) | corr(v,κ) | greedy loss | greedy regret |
+|---|---|---|---|---|
+| `high-dispersion` | 0.6285 | +1.000 | **176.5%** | 0.00000000 |
+| `design-space` | 0.2954 | +0.789 | 99.3% | 0.00000000 |
+| `adaptive-therapy` | 0.1705 | +0.614 | 36.9% | 0.00000000 |
+| `shared-quota` | 0.9948 | +0.315 | 3.7% | 0.00000000 |
+| `platform-trial` | 0.0371 | −0.938 | **0.0%** | 0.00000000 |
+| `aligned-control` | 0.6299 | −0.971 | **0.0%** | 0.00000000 |
+
+The last two are negative controls: κ is dispersed but *aligned* with value, so
+greedy is already optimal and the theory says so. `shared-quota-competing` adds a
+second agent for price-of-anarchy experiments.
+
 ## Paper
 
 Two builds from the same body text:

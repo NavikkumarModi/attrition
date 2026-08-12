@@ -26,6 +26,8 @@ from .policies import (State, Greedy, ECI, Conservative, SortByE, Rollout,
                        ThompsonSampling, UCB)
 from .domains import (agent_tools, adaptive_therapy, platform_trial,
                       design_space, DOMAIN_NOTES)
+from .envs import ConsumableBanditEnv, MultiAgentConsumableEnv
+from .scenarios import SCENARIOS, load, describe
 from .engines import (LotkaVolterraTumour, derive_arm_parameters,
                       PlatformTrialEngine, derive_trial_parameters,
                       DesignSpaceEngine, derive_design_space_parameters)
@@ -37,4 +39,6 @@ __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
            "DOMAIN_NOTES",
            "LotkaVolterraTumour", "derive_arm_parameters",
            "PlatformTrialEngine", "derive_trial_parameters",
-           "DesignSpaceEngine", "derive_design_space_parameters"]
+           "DesignSpaceEngine", "derive_design_space_parameters",
+           "ConsumableBanditEnv", "MultiAgentConsumableEnv",
+           "SCENARIOS", "load", "describe"]

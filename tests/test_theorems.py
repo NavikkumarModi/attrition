@@ -430,3 +430,84 @@ def test_greedy_fails_only_when_value_and_externality_conflict():
             assert vg < vs - 1e-6, f"{name}: conflict implies greedy loses"
         elif corr < -0.3:
             assert abs(vs - vg) < 1e-6, f"{name}: alignment implies greedy optimal"
+
+
+# ---------------------------------------------------------------- Stage 3 API
+def test_gym_api_roundtrip():
+    """Gym-style reset/step contract."""
+    from evolving_bandits import load
+    env = load("shared-quota", seed=0)
+    obs, info = env.reset(0)
+    assert obs.shape == (env.n, 3)
+    assert env.action_space["n"] == env.n
+    steps = 0
+    while True:
+        a = int(env.valid_actions()[0])
+        obs, r, term, trunc, info = env.step(a)
+        steps += 1
+        if term or trunc:
+            break
+    assert steps > 0
+    assert info["total_regret"] >= -1e-9
+    assert "realised_value" in info
+
+
+def test_gym_env_rejects_destroyed_arm():
+    from evolving_bandits import ConsumableBanditEnv
+    env = ConsumableBanditEnv(v=[1.0], p=[1.0], e=[0.0], horizon=5, seed=0)
+    env.step(0)
+    with pytest.raises(ValueError):
+        env.step(0)
+
+
+def test_pettingzoo_api_roundtrip():
+    """Parallel multi-agent contract; destruction by one agent affects all."""
+    from evolving_bandits import load
+    env = load("shared-quota-competing", seed=0)
+    obs, info = env.reset(0)
+    assert set(obs) == set(env.agents) and len(env.agents) == 2
+    steps = 0
+    while True:
+        va = env.valid_actions()
+        if len(va) == 0:
+            break
+        obs, rew, term, trunc, info = env.step({a: int(va[0]) for a in env.agents})
+        steps += 1
+        if all(term.values()) or all(trunc.values()):
+            break
+    assert steps > 0 and env.system_value != 0.0
+
+
+def test_observation_hides_externality_by_default():
+    """Theorem 3 says e is not reliably estimable, so it must not be observable."""
+    from evolving_bandits import load
+    env = load("shared-quota", seed=0)
+    assert env.reset(0)[0].shape[1] == 3
+    env2 = load("shared-quota", seed=0, reveal_externality=True)
+    assert env2.reset(0)[0].shape[1] == 5
+
+
+def test_every_scenario_matches_its_documented_behaviour():
+    """Each scenario asserts the phenomenon it claims to exhibit."""
+    from evolving_bandits import SCENARIOS, load
+    from experiments.exp35_scenario_suite import exact
+    checked = 0
+    for name, spec in SCENARIOS.items():
+        if spec["agents"] > 1:
+            continue
+        env = load(name, seed=0)
+        v, p, e = env.v, np.clip(env.p, 1e-6, 1.0), env.e
+        if len(v) > 9:
+            continue
+        T = min(env.horizon, 8)
+        vs, vg, vi, rg = exact(v, p, e, env.delta, T)
+        assert rg < 1e-9, f"{name}: greedy must record zero private regret"
+        k = p * e
+        corr = float(np.corrcoef(v, k)[0, 1]) if np.std(k) > 1e-12 else 0.0
+        if corr < -0.3:
+            assert abs(vs - vg) < 1e-6, f"{name}: alignment implies greedy optimal"
+        elif corr > 0.3:
+            assert vg < vs - 1e-6, f"{name}: conflict implies greedy loses"
+            assert vi > vg, f"{name}: ECI must beat greedy"
+        checked += 1
+    assert checked >= 5

@@ -1228,3 +1228,47 @@ is not universal, and the platform trial is a clean counterexample.
 as the case where the correction is *not* needed, which strengthens rather than
 weakens the argument: the theory predicts where the phenomenon appears and where it
 does not, and both predictions hold.
+
+---
+
+## Stage 3 — environment API and scenario packs
+
+**Interfaces implemented natively** rather than importing gymnasium/pettingzoo, so
+the package carries no RL-framework dependency while matching both signatures:
+
+- `ConsumableBanditEnv` — Gym: `reset() → (obs, info)`,
+  `step(a) → (obs, reward, terminated, truncated, info)`
+- `MultiAgentConsumableEnv` — PettingZoo parallel: dict-keyed observations,
+  rewards, terminations, truncations, infos
+
+**Design decision worth stating.** Observations expose availability, value
+estimates and pull counts, but **not** the true `(p, e)`. Theorem 3 establishes
+that the externality cannot be reliably estimated from experience; an agent that
+read it off the observation vector would be solving a different problem from the
+one the theory describes. `reveal_externality=True` lifts this for oracle
+experiments.
+
+### Scenario suite
+
+Seven named scenarios, each documenting the phenomenon it should exhibit, with the
+test suite asserting that it does:
+
+| scenario | arms | std(κ) | corr(v,κ) | greedy loss | ECI loss | greedy regret |
+|---|---|---|---|---|---|---|
+| high-dispersion | 9 | 0.6285 | +1.000 | **176.5%** | 0.1% | 0.00000000 |
+| design-space | 6 | 0.2954 | +0.789 | 99.3% | 1.1% | 0.00000000 |
+| adaptive-therapy | 6 | 0.1705 | +0.614 | 36.9% | 1.4% | 0.00000000 |
+| shared-quota | 6 | 0.9948 | +0.315 | 3.7% | 0.3% | 0.00000000 |
+| platform-trial | 6 | 0.0371 | −0.938 | **0.0%** | 0.0% | 0.00000000 |
+| aligned-control | 6 | 0.6299 | −0.971 | **0.0%** | 0.0% | 0.00000000 |
+
+Plus `shared-quota-competing` (2 agents) for price-of-anarchy work.
+
+**Both alignment controls behave as predicted.** `aligned-control` is synthetic
+with `std(κ) = 0.63` — larger dispersion than adaptive-therapy — yet a 0.0% gap,
+because `corr(v,κ) = −0.97`. Dispersion alone genuinely is not the criterion.
+
+Note `shared-quota` has the *highest* dispersion (0.9948) but the *smallest* loss
+(3.7%), because its correlation is weakest (+0.315). Across the suite the loss
+tracks the correlation, not the dispersion — which is the sharper statement of the
+condition.
