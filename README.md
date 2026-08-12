@@ -239,6 +239,43 @@ ecosystem to a worse outcome with fewer tools remaining.
 
 ---
 
+## Terminal commitment
+
+A distinct problem in the same family: a finite budget of irreversible experiments,
+then a **one-shot declaration** that fixes the feasible set for good. Motivated by
+CMC design-space filing under ICH Q8 — operating inside the declared envelope needs
+no approval, outside it triggers a variation.
+
+```python
+from evolving_bandits import (evaluate_commitment_policy, edge_first_policy,
+                              optimal_commitment_policy)
+evaluate_commitment_policy(optimal_commitment_policy, budget=2)
+```
+
+| budget | policy | operating value | envelope width |
+|---|---|---|---|
+| 2 | greedy (best yield first) | 36.908 | **1.00** |
+| 2 | edge-first (chase width) | 36.908 | **1.00** |
+| 2 | **expand outward** | **40.664 (+10.2%)** | **2.92** |
+| 6 | edge-first | 36.908 (**−18.1%**) | **1.00** |
+
+**Two failure modes, both absent from the sequential setting.**
+
+*Greedy buys yield it cannot claim.* An envelope is an interval containing the
+nominal point, so demonstrating a distant high-yield setting is worthless unless
+everything between is demonstrated too. At budget 2 greedy ends with width 1.00.
+
+*Ambition narrows the envelope it was trying to widen.* Edge-first targets the
+outermost settings to maximise claimable width — and each failure blocks that
+setting permanently. Its width is 1.00 at **every** budget, and it gets *worse* as
+budget grows (−10.8% → −18.1%). **Spending more to widen the envelope makes it
+narrower.**
+
+Note the advantage of the correct policy *shrinks* with budget, the opposite of the
+sequential setting. Terminal commitment is about scarcity of evidence at the moment
+of an irreversible decision; given enough evidence the problem dissolves. It is
+hardest exactly when experiments are expensive.
+
 ## Environments and scenarios
 
 Gym- and PettingZoo-compatible interfaces, implemented natively so there is no

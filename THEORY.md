@@ -1272,3 +1272,75 @@ Note `shared-quota` has the *highest* dispersion (0.9948) but the *smallest* los
 (3.7%), because its correlation is weakest (+0.315). Across the suite the loss
 tracks the correlation, not the dispersion — which is the sharper statement of the
 condition.
+
+---
+
+## Stage 4 — terminal commitment (T-E), implemented
+
+A distinct object from the rest of the library. Elsewhere the action set shrinks as
+a side effect of pulling arms; here there is an explicit **terminal action**: after
+a finite budget of irreversible experiments the learner must *declare* an operating
+envelope, and that declaration bounds every subsequent action for the whole
+operating phase.
+
+**Model** (`commitment.py`). Settings indexed `0..n−1` with a nominal point at the
+centre. Yield rises monotonically with intensity; failure probability rises with it
+too — the `corr(v, κ) > 0` structure. Each experiment either demonstrates viability
+or produces an out-of-spec result that **blocks that setting permanently**. The
+declared envelope is the widest contiguous interval of demonstrated settings
+containing the nominal point. During operation the process drifts; landing inside
+the envelope collects the yield there, landing outside forces reversion to nominal
+plus a variation penalty.
+
+Operating value is computed **exactly** via a discretised Gaussian drift PMF rather
+than sampled, so evaluation is deterministic.
+
+**Results** (300 seeds per cell):
+
+| budget | policy | operating value | envelope width | failed runs |
+|---|---|---|---|---|
+| 2 | greedy (best yield first) | 36.908 | **1.00** | 0.80 |
+| 2 | edge-first (max width) | 36.908 | **1.00** | 0.67 |
+| 2 | **expand-outward** | **40.664 (+10.2%)** | **2.92** | 0.08 |
+| 4 | greedy | 41.385 | 3.44 | 1.06 |
+| 4 | edge-first | 36.908 (−10.8%) | **1.00** | 1.14 |
+| 4 | **expand-outward** | **44.182 (+6.8%)** | **4.72** | 0.26 |
+| 6 | greedy | 45.058 | 5.35 | 1.14 |
+| 6 | edge-first | 36.908 (−18.1%) | **1.00** | 1.36 |
+| 6 | expand-outward | 45.069 | 6.20 | 0.61 |
+
+### Two distinct failure modes, both new
+
+**1. Greedy buys yield it cannot claim.** It spends the budget on the highest-yield
+settings wherever they sit. But an envelope is an *interval containing the nominal
+point*, so a demonstrated setting far from centre is worthless unless everything
+between is also demonstrated. At budget 2, greedy ends with envelope width
+**1.00** — it demonstrated high-yield settings and could claim none of them.
+
+**2. Ambition narrows the envelope it was trying to widen.** Edge-first targets the
+outermost settings to maximise claimable width. It pays the highest failure
+probability per experiment, and each failure blocks that setting *permanently*.
+Its envelope width is **1.00 at every budget**, and it gets monotonically worse as
+budget grows (−10.8% at 4, −18.1% at 6): more budget means more edge attempts, more
+blocked settings, and a worse terminal position. **Spending more to widen the
+envelope makes it narrower.**
+
+That second mode has no analogue in the sequential setting and is the distinctive
+contribution of the terminal-commitment formulation. It is also the failure mode
+practitioners describe: an aggressive characterisation campaign that ends with a
+*narrower* filed design space than a conservative one would have produced.
+
+**Expand-outward** — grow the interval one step at a time, taking the cheaper
+direction — dominates at small budgets, where the commitment bites hardest. At
+budget 6 greedy catches up, because with enough experiments the contiguity
+constraint stops binding.
+
+### Why the budget dependence matters
+
+The advantage of the correct policy *decreases* with budget (+10.2% → +6.8% →
++0.0%). This is the opposite of the sequential setting, where the gap grows with
+pool size. The reason is structural: terminal commitment is a problem about
+**scarcity of evidence at the moment of an irreversible decision**. Given enough
+evidence the commitment is no longer made under uncertainty and the problem
+dissolves. It is hardest exactly when experiments are expensive — which is the
+regime that motivates it.

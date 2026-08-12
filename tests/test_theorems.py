@@ -511,3 +511,48 @@ def test_every_scenario_matches_its_documented_behaviour():
             assert vi > vg, f"{name}: ECI must beat greedy"
         checked += 1
     assert checked >= 5
+
+
+# ------------------------------------------------------- terminal commitment
+def test_edge_first_narrows_the_envelope_it_seeks():
+    """Ambition destroys the very thing it targets: chasing width yields width 1."""
+    from evolving_bandits import (evaluate_commitment_policy, edge_first_policy,
+                                  optimal_commitment_policy)
+    for budget in [2, 4, 6]:
+        v_edge, w_edge, _ = evaluate_commitment_policy(
+            edge_first_policy, seeds=60, budget=budget)
+        v_out, w_out, _ = evaluate_commitment_policy(
+            optimal_commitment_policy, seeds=60, budget=budget)
+        assert w_edge < w_out, "edge-first must end narrower than expanding outward"
+        assert v_edge < v_out
+
+
+def test_more_budget_does_not_help_edge_first():
+    """Spending more on edges makes the terminal position worse, not better."""
+    from evolving_bandits import evaluate_commitment_policy, edge_first_policy
+    _, _, f2 = evaluate_commitment_policy(edge_first_policy, seeds=60, budget=2)
+    _, _, f6 = evaluate_commitment_policy(edge_first_policy, seeds=60, budget=6)
+    assert f6 > f2, "a larger budget must produce more blocked settings"
+
+
+def test_expand_outward_wins_most_at_small_budget():
+    """The commitment bites hardest when evidence is scarce."""
+    from evolving_bandits import (evaluate_commitment_policy,
+                                  greedy_commitment_policy,
+                                  optimal_commitment_policy)
+    gaps = []
+    for budget in [2, 6]:
+        g, _, _ = evaluate_commitment_policy(greedy_commitment_policy,
+                                             seeds=60, budget=budget)
+        o, _, _ = evaluate_commitment_policy(optimal_commitment_policy,
+                                             seeds=60, budget=budget)
+        gaps.append((o - g) / abs(g))
+    assert gaps[0] > gaps[1], "advantage must shrink as budget grows"
+
+
+def test_operating_value_is_deterministic():
+    """Exact PMF evaluation, not sampling."""
+    from evolving_bandits import TerminalCommitment
+    a = TerminalCommitment(seed=3); a.reset(3)
+    b = TerminalCommitment(seed=3); b.reset(3)
+    assert abs(a.operating_value() - b.operating_value()) < 1e-12
