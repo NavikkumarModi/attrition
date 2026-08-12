@@ -191,10 +191,28 @@ ecosystem to a worse outcome with fewer tools remaining.
 
 ---
 
+## Paper
+
+Two builds from the same body text:
+
+| file | format | use |
+|---|---|---|
+| `paper/no-regret-is-not-no-harm.pdf` | plain `article` | reading, internal review |
+| `paper/arxiv-no-regret-is-not-no-harm.pdf` | `arxiv.sty` | arXiv preprint submission |
+
+```bash
+cd paper && make                       # figures + both PDFs
+make arxiv-submission.tar.gz           # upload bundle for arXiv
+```
+
+arXiv imposes no mandatory template; `arxiv.sty` is the community convention for
+preprints and is based on the NeurIPS layout. For a venue submission, swap in that
+venue's style file (e.g. `icml2026.sty`) — the body text needs no changes.
+
 ## Reproducing
 
 ```bash
-python -m pytest tests/          # 13 tests, one per theorem
+python -m pytest tests/          # 21 tests, one per theorem
 python experiments/exp21_theorem4_construction.py    # T4, exact
 python experiments/exp22_theorem3_proof.py           # T3, three parts
 python experiments/exp24_remaining_theory.py         # T1 necessity, T2b
