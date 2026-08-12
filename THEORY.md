@@ -957,3 +957,130 @@ where `N` is random — and differing by three orders of magnitude when `κ` var
   a proof obligation. Its 44,860-pair audit is now confirmation, not scaffolding.
 - The Proposition introduced in v0.3 is withdrawn — no longer needed.
 - The limitations section loses its most serious entry.
+
+---
+
+## v0.5 — converse separation, second benchmark, scale, and multi-agent
+
+### Theorem 5 (converse) — PROVEN
+
+> In the hot/safe family the optimal policy incurs private regret **exactly `m·ε`**.
+> Hence for any `M` there are instances where every near-system-optimal policy has
+> private regret ≥ `M`.
+
+*Proof.* The optimum defers `H` to the last round. At each of the `m` earlier rounds
+`H` is the best available arm (value 1 vs 1−ε) and is declined, costing ε. Summing
+gives `m·ε`. For `ε < δE` deferral is necessary for near-optimality. ∎
+
+Exact DP confirms `m·ε` at all 8 settings to machine precision.
+
+**This closes the separation in both directions.** A zero-regret policy may destroy
+unbounded value; and a value-preserving policy **must** report regret. The metric
+does not merely fail to distinguish them — it orders them backwards.
+
+### Corollary — the dashboard reading tracks the benefit
+
+Private regret `m·ε`, system advantage `m·δE`, ratio `ε/(δE)` — independent of `m`.
+Sweeping ε at m=8, δE=1: system gain 8.0000 throughout, private regret
+0.08 / 0.40 / 0.80 / 1.60 / 3.20 — ratios exactly ε.
+
+> The worse a value-preserving policy looks, the more it is delivering.
+
+### Second benchmark (addressing the "convenient benchmark" objection)
+
+System-value regret `R_sys(π) = V* − W(π)` reported alongside private regret,
+n=6, T=8, exact DP:
+
+| policy | system value | system regret | private regret |
+|---|---|---|---|
+| optimal | 5.4048 | 0.0000 | 0.9489 |
+| ECI | 5.3315 | 0.0734 | 0.6332 |
+| greedy | 4.4061 | 0.9987 | **0.0000** |
+
+Opposite orderings. The algorithms are fixed; the benchmark decides the verdict.
+
+### Scale (n=50–100) and stronger baselines
+
+Added three consumption-aware methods: **lagrangian** (BwK-style dual price on
+expected consumption, mirror-descent updated), **ratio** (`v_a/(1+p_a e_a)`),
+**safe-filter** (burden-quantile exclusion then greedy).
+
+n=100, T=200, std(e)=2.5:
+
+| policy | value | private regret | vs greedy |
+|---|---|---|---|
+| **ECI** | **111.86** | 55.73 | **+52.3%** |
+| ratio | 111.23 | 55.12 | +51.4% |
+| safe-filter | 96.82 | 57.46 | +31.8% |
+| conservative | 83.54 | 34.67 | +13.7% |
+| lagrangian | 74.86 | 1.87 | +1.9% |
+| greedy | 73.46 | **0.00** | — |
+| Thompson | 71.02 | 9.30 | −3.3% |
+| UCB | 69.73 | 53.32 | −5.1% |
+
+**The Lagrangian result is the important one.** It is the closest existing approach
+and it barely helps: it prices consumption, but a scalar dual cannot express the
+horizon-dependent charge `δκ_a(T−t)`, which must shrink as the episode runs down.
+Resource-aware machinery is insufficient — the correction must be time-varying.
+
+**Honest qualification: `ratio` is competitive at this scale**, within 1% of ECI.
+Against exact optimum at n=6, though, ECI dominates at every setting
+(`exp31`):
+
+| T | std(κ) | greedy | ECI | ratio |
+|---|---|---|---|---|
+| 4 | 0.320 | 1.97% | **0.26%** | 1.27% |
+| 8 | 0.862 | 26.86% | **1.72%** | 11.19% |
+| 16 | 0.649 | 36.80% | **0.60%** | 13.41% |
+| 30 | 0.858 | 46.57% | **0.14%** | 15.77% |
+
+ECI's margin widens with horizon, exactly as the `(T−t)` term predicts. With many
+arms a good low-κ substitute is nearly always available, so fine-grained weighting
+matters less — which is why the two converge at large n.
+
+---
+
+## Multi-agent: price of anarchy under consumption (flagship material)
+
+Stage 1 of the programme, implemented (`exp32`). Several agents draw on one
+consumable pool; each collects its own reward but every destruction raises the
+burden for all. Restraint is a public good.
+
+`PoA = W(planner) / W(decentralised)`, exact DP planner over subsets, round-robin
+turn order:
+
+| agents | std(κ) | planner | dec-greedy | dec-ECI | **PoA greedy** | **PoA ECI** |
+|---|---|---|---|---|---|---|
+| 1 | 0.192 | 4.552 | 4.506 | 4.558 | 1.010 | 0.999 |
+| 1 | 0.544 | 4.216 | 4.005 | 4.203 | 1.053 | 1.003 |
+| 2 | 0.268 | 5.483 | 4.863 | 5.212 | 1.127 | 1.052 |
+| 2 | 0.465 | 6.460 | 5.396 | 6.157 | 1.197 | 1.049 |
+| 3 | 0.224 | 6.764 | 6.162 | 6.514 | 1.098 | 1.038 |
+| 3 | 0.583 | 6.152 | 4.743 | 6.129 | **1.297** | **1.004** |
+
+**Two results.**
+
+1. **Price of anarchy grows with both agent count and κ dispersion**, reaching
+   **1.297** at three greedy agents with high dispersion — decentralisation costs
+   30% of system value.
+2. **κ-aware agents nearly eliminate it.** PoA under ECI stays at 1.00–1.05
+   throughout, and at the worst greedy setting (1.297) ECI gives 1.004. Pricing the
+   externality locally recovers almost all of the central planner's value *without
+   any coordination*.
+
+Result 2 is the substantive finding: the commons problem here is not a coordination
+failure requiring a mechanism, it is a *mispricing* failure that each agent can fix
+unilaterally.
+
+### Free-riding
+
+An agent discounting the externality by its own expected share (÷3 for three
+agents) loses system value:
+
+| agents | social ECI | selfish ECI | loss |
+|---|---|---|---|
+| 2 | 6.122 | 5.386 | **12.0%** |
+| 3 | 6.061 | 5.225 | **13.8%** |
+
+Standard commons structure, with a bandit inside — and a target for the mechanism
+design direction (T-F).

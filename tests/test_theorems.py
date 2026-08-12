@@ -315,3 +315,59 @@ def test_t1_sufficiency_burden_is_policy_invariant():
             assert spread < 1e-9, f"constant kappa must give invariant burden"
         else:
             assert spread > 1e-3, "varying kappa must give policy-dependent burden"
+
+
+def test_converse_private_regret_of_optimal():
+    """Theorem 5: the optimal policy's private regret is exactly m*eps."""
+    from experiments.exp29_converse_separation import analyse, hot_safe
+    for m in [2, 4, 8]:
+        for E in [0.5, 1.5]:
+            eps = 0.05
+            v, p, e, delta, n = hot_safe(m, E, eps=eps)
+            r = analyse(v, p, e, delta, n)
+            assert abs(r["optimal"][1] - m * eps) < 1e-9
+            assert abs((r["Vstar"] - r["greedy"][0]) - m * delta * E) < 1e-9
+
+
+def test_benchmarks_rank_policies_oppositely():
+    """Private regret and system regret order the policies backwards."""
+    from experiments.exp29_converse_separation import analyse
+    rng = np.random.default_rng(17)
+    v = np.sort(rng.uniform(0.4, 1.2, 6))[::-1].copy()
+    p = np.clip(rng.uniform(0.3, 1.0, 6), 0.05, 1.0)
+    e = np.clip(1.0 + rng.normal(0, 1.2, 6), 0.0, None)
+    r = analyse(v, p, e, 0.12, 8)
+    assert r["greedy"][1] < r["optimal"][1]          # greedy looks better
+    assert r["greedy"][0] < r["optimal"][0]          # greedy is worse
+
+
+def test_eci_beats_ratio_against_exact_optimum():
+    """ECI dominates the scale-free ratio heuristic against truth."""
+    from experiments.exp31_eci_vs_ratio import gaps
+    rng = np.random.default_rng(61)
+    for T in [8, 16]:
+        E_, R_ = [], []
+        for _ in range(8):
+            v = np.sort(rng.uniform(0.4, 1.2, 6))[::-1].copy()
+            p = np.clip(rng.uniform(0.3, 1.0, 6), 0.05, 1.0)
+            e = np.clip(1.0 + rng.normal(0, 1.5, 6), 0.0, None)
+            _, b, c = gaps(v, p, e, 0.12, T)
+            E_.append(b); R_.append(c)
+        assert np.mean(E_) < np.mean(R_)
+
+
+def test_kappa_aware_agents_reduce_price_of_anarchy():
+    """Multi-agent: ECI agents recover most of the planner's value."""
+    from experiments.exp32_multiagent_poa import (planner_value,
+                                                  decentralised_value,
+                                                  rule_greedy, rule_eci)
+    rng = np.random.default_rng(5)
+    n, T, delta, m = 6, 4, 0.12, 2
+    v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
+    p = np.clip(rng.uniform(0.3, 0.9, n), 0.05, 1.0)
+    e = np.clip(1.0 + rng.normal(0, 1.2, n), 0.0, None)
+    pl = planner_value(v, p, e, delta, T, m)
+    dg = decentralised_value(v, p, e, delta, T, m, rule_greedy, seeds=200)
+    de = decentralised_value(v, p, e, delta, T, m, rule_eci, seeds=200)
+    assert de > dg, "kappa-aware agents must beat greedy agents"
+    assert pl / de < pl / dg, "and must have a lower price of anarchy"

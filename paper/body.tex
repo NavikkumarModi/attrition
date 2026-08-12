@@ -3,10 +3,13 @@ Sublinear regret is the standard justification for deploying sequential
 decision-making systems. We show that this justification is vacuous when actions
 consume the action set. We study bandits in which pulling an arm may destroy it,
 and in which each destroyed arm imposes a permanent negative externality on every
-subsequent reward. We prove that a policy achieving \emph{exactly zero} regret
+subsequent reward. We prove a two-sided separation: a policy achieving \emph{exactly zero} regret
 against the best-available-arm benchmark can incur value loss $m\delta E$, unbounded
 in both the pool size $m$ and the externality magnitude $\delta E$, and can drive
-total value negative while the optimal policy remains positive. The mechanism is
+total value negative while the optimal policy remains positive; conversely, any
+policy near the system optimum is \emph{forced} to report private regret
+$m\epsilon$. The metric does not merely fail to separate good from destructive
+policies---it orders them backwards. The mechanism is
 that regret is measured against an optimum the learner has itself degraded. We
 further establish that the parameter governing optimal play, the expected marginal
 externality $\kappa_a = p_a e_a$, is (i) exactly the quantity that determines
@@ -95,6 +98,10 @@ development---each simulated, with fit quality stated honestly
 \item \textbf{Theorem~\ref{thm:vacuity}} (main result). A zero-regret policy can
 incur value loss $m\delta E$, unbounded in pool size and externality magnitude, and
 can finish net-negative while the optimum is positive. No-regret is not no-harm.
+\item \textbf{Theorem~\ref{thm:converse}} (converse). Any near-system-optimal policy
+must incur private regret $m\epsilon$. Preserving value \emph{requires} looking bad
+on the standard metric, and by Corollary~\ref{cor:tracks} the amount it looks bad by
+is proportional to the value it delivers.
 \item \textbf{Theorem~\ref{thm:char}}. Greedy is optimal if and only if
 $\kappa_a = p_a e_a$ is constant across arms. Neither factor alone is the invariant.
 \item \textbf{Theorem~\ref{thm:floor}}. The externality cannot be estimated to
@@ -236,6 +243,67 @@ $T$ only until $T \approx \sum_j 1/p_j$, then saturates---the same sample-budget
 ceiling that appears independently in Theorem~\ref{thm:floor}. The correct scaling
 is linear in pool size, which is the meaningful quantity: greedy's error is paid
 once per subsequent pull.
+
+\begin{theorem}[Converse: optimality forces private regret]
+\label{thm:converse}
+In the family of Theorem~\ref{thm:vacuity}, the optimal policy incurs cumulative
+private regret exactly $m\epsilon$ against the best-available-arm benchmark. Hence
+for any $M>0$ there are instances on which every policy within $\epsilon m$ of the
+system optimum has private regret at least $M$.
+\end{theorem}
+
+\begin{proof}
+The optimal policy defers $H$ to the final round. At each of the $m$ earlier rounds
+the best available arm is $H$ (value $1$ against $1-\epsilon$), and the policy
+declines it, incurring instantaneous private regret $\epsilon$. Summing over the
+$m$ deferrals gives $m\epsilon$. Any policy that instead pulls $H$ early forfeits
+$\delta E$ per remaining round, so for $\epsilon < \delta E$ deferral is necessary
+for near-optimality. Taking $m \to \infty$ gives the second claim.
+\end{proof}
+
+Exact dynamic programming confirms the closed form at all eight settings tested,
+$m \in \{2,4,8,12\}$ and $\delta E \in \{0.5,1.5\}$: private regret of the optimal
+policy is $m\epsilon$ to machine precision while its system-value advantage over
+greedy is $m\delta E$.
+
+Together with Theorem~\ref{thm:vacuity} this closes the separation in both
+directions. A zero-regret policy may destroy unbounded value, and---the sharper
+statement---a policy that preserves value \emph{must} report regret. Being unable to
+tell the two apart is not an oversight in how the metric is read; the metric orders
+them backwards.
+
+\begin{corollary}[The dashboard reading tracks the benefit]
+\label{cor:tracks}
+In the same family, the optimal policy's private regret is $m\epsilon$ and its
+system-value advantage is $m\delta E$, so their ratio is $\epsilon/(\delta E)$,
+independent of $m$. The worse a value-preserving policy appears on the standard
+metric, the more value it is delivering.
+\end{corollary}
+
+Verified exactly: sweeping $\epsilon \in \{0.01,0.05,0.10,0.20,0.40\}$ at $m=8$,
+$\delta E = 1$, the system gain is $8.0000$ throughout while private regret runs
+$0.08, 0.40, 0.80, 1.60, 3.20$ --- ratios of exactly $\epsilon$.
+
+\paragraph{A second benchmark.} Because the choice of benchmark is doing the work,
+we report both. Define \emph{system-value regret} $R_{\mathrm{sys}}(\pi) = V^\star -
+W(\pi)$ against the ex-ante optimal policy. On random instances ($n=6$, $T=8$, 15
+instances, exact DP):
+
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+policy & system value & system regret & private regret \\
+\midrule
+optimal & $5.4048$ & $0.0000$ & $0.9489$ \\
+ECI & $5.3315$ & $0.0734$ & $0.6332$ \\
+greedy & $4.4061$ & $0.9987$ & $\mathbf{0.0000}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The two regret columns rank the three policies in opposite orders. This is the
+cleanest statement of the paper's point: the algorithms are fixed and the verdict is
+determined entirely by which benchmark is consulted.
 
 \paragraph{Interpretation: private versus system value.} Define the \emph{system
 value} of a policy $\pi$ as its expected total reward,
@@ -578,6 +646,47 @@ and cumulative regret side by side. The two orderings are close to reversed:
 records the highest regret and the highest value.}
 \label{fig:policies}
 \end{figure}
+
+\paragraph{Scale and stronger baselines.} Comparisons against greedy, UCB and
+Thompson sampling are weak, since none of them models consumption. We therefore add
+three methods that do, and run at $n=50$--$100$ where exact DP is infeasible:
+\textsc{lagrangian} (bandits-with-knapsacks style, maintaining a dual price on
+expected consumption updated by mirror descent on budget violation),
+\textsc{ratio} (maximise $v_a/(1+p_ae_a)$, the standard resource-aware heuristic),
+and \textsc{safe-filter} (exclude arms above a burden quantile, then act greedily).
+
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+policy & value ($n{=}100$, $T{=}200$, $\mathrm{std}(e){=}2.5$) & private regret & vs.\ greedy \\
+\midrule
+ECI & $\mathbf{111.86}$ & $55.73$ & $+52.3\%$ \\
+ratio & $111.23$ & $55.12$ & $+51.4\%$ \\
+safe-filter & $96.82$ & $57.46$ & $+31.8\%$ \\
+conservative & $83.54$ & $34.67$ & $+13.7\%$ \\
+lagrangian & $74.86$ & $1.87$ & $+1.9\%$ \\
+greedy & $73.46$ & $\mathbf{0.00}$ & --- \\
+Thompson & $71.02$ & $9.30$ & $-3.3\%$ \\
+UCB & $69.73$ & $53.32$ & $-5.1\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Two findings deserve emphasis, one supporting and one qualifying.
+
+\emph{The Lagrangian method barely helps} ($+1.9\%$), despite being the closest
+existing approach: it prices consumption, but a scalar dual cannot express the
+horizon-dependent charge $\delta\kappa_a(T-t)$, which must shrink as the episode
+runs down while $\lambda$ cannot. Resource-aware machinery is not sufficient; the
+correction has to be time-varying.
+
+\emph{The ratio heuristic is competitive at this scale}, within $1\%$ of ECI. We
+report this rather than only the greedy comparison. Against exact optimum at $n=6$,
+however, ECI dominates it at every setting tested---gaps of $0.14$--$2.31\%$ versus
+ratio's $1.27$--$15.77\%$---and the margin widens with the horizon, exactly as the
+$(T-t)$ term predicts. Our reading is that with many arms a good low-$\kappa$
+substitute is nearly always available, so the fine-grained weighting matters less;
+ECI's derivation, not its empirical margin at large $n$, is the contribution.
 
 Thompson sampling is consistently \emph{worse} than greedy under known parameters.
 Its exploration is not free here: sampling a suboptimal arm can destroy a
