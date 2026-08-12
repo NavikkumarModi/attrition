@@ -1,0 +1,425 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{graphicx}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+
+\title{No-Regret is Not No-Harm:\\ Bandits with Consumable Action Sets}
+\author{Navikkumar Modi}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Sublinear regret is the standard justification for deploying sequential
+decision-making systems. We show that this justification is vacuous when actions
+consume the action set. We study bandits in which pulling an arm may destroy it,
+and in which each destroyed arm imposes a permanent negative externality on every
+subsequent reward. We prove that a policy achieving \emph{exactly zero} regret
+against the best-available-arm benchmark can incur value loss $m\delta E$, unbounded
+in both the pool size $m$ and the externality magnitude $\delta E$, and can drive
+total value negative while the optimal policy remains positive. The mechanism is
+that regret is measured against an optimum the learner has itself degraded. We
+further establish that the parameter governing optimal play, the expected marginal
+externality $\kappa_a = p_a e_a$, is (i) exactly the quantity that determines
+whether greedy is optimal, and (ii) subject to an estimation error floor
+$2\sigma/\sqrt{\min(T,\sum_j 1/p_j)}$ that is \emph{independent of the horizon},
+because each arm supplies exactly one before/after transition and the sample budget
+is capped by consumption rather than time. The quantity that matters most becomes
+least estimable exactly as it becomes more important. We give a closed-form
+correction, characterise an exactly-solvable special case, and release an
+open-source testbed.
+\end{abstract}
+
+\section{Introduction}
+
+Consider an orchestrator routing tasks across API-backed tools. Some tools are
+robust; others trip a rate limit, exhaust a quota, or get a key revoked under heavy
+use, disappearing for the remainder of the session. Tools are not independent:
+those sharing upstream infrastructure---a vendor, an IP pool, a quota
+tier---degrade together when one is burned.
+
+Table~\ref{tab:trace} shows two routers on identical instances. The first has a
+flawless record: at every step it pulls the highest-value available tool, so its
+regret against the best-available benchmark is identically zero. It ends on a
+fallback tool worth $0.470$ per call with two tools remaining. The second reports
+regret of $0.25$ per step---and is sitting at $0.782$ per call, $66\%$ higher, with
+four tools remaining.
+
+\begin{table}[t]
+\centering
+\caption{Two routers, identical seed and tools. The policy that looks worse by the
+standard metric achieves the better outcome.}
+\label{tab:trace}
+\begin{tabular}{llrrr}
+\toprule
+router & step & realised & regret & tools left \\
+\midrule
+greedy & 0 & 1.150 & 0.0000 & 6 \\
+greedy & 2 & 0.844 & 0.0000 & 4 \\
+greedy & 7--13 & 0.470 & \textbf{0.0000} & \textbf{2} \\
+\midrule
+ECI & 0 & 1.150 & 0.0000 & 6 \\
+ECI & 1--4 & 0.988 & 0.0500 & 5 \\
+ECI & 5--13 & \textbf{0.782} & 0.2500 & \textbf{4} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The greedy router's zero-regret record is not evidence of good behaviour. It is an
+artefact of a benchmark that degrades in lockstep with the damage being done: every
+call greedy makes is optimal \emph{given the ecosystem it has already ruined}.
+
+This paper formalises that failure. Our contributions:
+
+\begin{itemize}
+\item \textbf{Theorem~\ref{thm:vacuity}} (main result). A zero-regret policy can
+incur value loss $m\delta E$, unbounded in pool size and externality magnitude, and
+can finish net-negative while the optimum is positive. No-regret is not no-harm.
+\item \textbf{Theorem~\ref{thm:char}}. Greedy is optimal if and only if
+$\kappa_a = p_a e_a$ is constant across arms. Neither factor alone is the invariant.
+\item \textbf{Theorem~\ref{thm:floor}}. The externality cannot be estimated to
+arbitrary precision: the error floor is horizon-independent, because the
+data-generating process is the consumption itself.
+\item \textbf{Theorem~\ref{thm:seq}}. In the pure-sequencing regime the optimal
+order is ascending in $e$; arm values are irrelevant.
+\item A closed-form correction (ECI), a rollout policy reaching 99.5--99.9\% of
+optimum, and an open-source testbed with one regression test per theorem.
+\end{itemize}
+
+\section{Related work}
+
+\textbf{Rotting bandits} \cite{levine2017,seznec2019,seznec2020} model rewards that
+decay with the number of pulls (\emph{rested}) or with elapsed time
+(\emph{restless}); Seznec et al.~\cite{seznec2020} give a single adaptive-window
+policy near-optimal for both. Decay there is gradual rather than removal, and
+critically the learner is assumed to know which regime it is in.
+\textbf{Mortal bandits} \cite{chakrabarti2008} have arms with stochastic lifetimes,
+but expiry is exogenous. \textbf{Blocking bandits} make a pulled arm temporarily
+unavailable. \textbf{Sleeping bandits} \cite{kleinberg2010} allow arbitrary
+exogenous availability. None of these couple arms: destroying one does not change
+another's reward distribution.
+
+\textbf{Bandits with knapsacks} \cite{badanidiyuru2013} is the closest structural
+neighbour: playing an arm consumes resources and the process halts when a budget is
+exhausted. The budget is global and exogenous, and consumption leaves other arms'
+rewards untouched. Here consumption permanently degrades \emph{every} future
+reward. That difference is why the governing quantity is $\kappa = p\cdot e$ rather
+than a consumption rate.
+
+\textbf{Bandit learning with positive externalities}
+\cite{shah2018} is the only prior work we are aware of that places externalities in
+a bandit model. There, satisfied users attract similar users, so externalities are
+positive and act on the \emph{arrival process}; the authors show UCB incurs linear
+regret and develop balanced exploration. Our externalities are negative, act on
+\emph{rewards}, and are triggered by irreversible destruction. The parallel is
+worth drawing: in both settings a standard algorithm fails badly, indicating that
+externality structure of either sign breaks classical guarantees.
+
+Work on safe and conservative bandits constrains reward or maintains a baseline
+while leaving arms available; work on open multi-agent systems models exogenous
+population churn. Neither addresses action-triggered removal with reward coupling.
+
+\section{Setting}
+
+Arms $1,\dots,n$. Arm $a$ has mean reward $v_a$, destruction probability
+$p_a \in (0,1]$, and externality coefficient $e_a \ge 0$. Let $S_t$ be the set of
+available arms at round $t$ and define the accumulated burden
+\[
+B(S) \;=\; \delta \sum_{i \notin S} e_i .
+\]
+Pulling $a \in S_t$ yields reward $v_a - B(S_t) + \eta_t$ with $\eta_t$
+sub-Gaussian with parameter $\sigma$, and destroys $a$ with probability $p_a$,
+permanently adding $\delta e_a$ to the burden. The horizon is $T$. The value
+function is
+\[
+V(S,t) = \max_{a \in S}\Big[ v_a - B(S) + p_a V(S\setminus\{a\}, t{+}1)
+  + (1-p_a) V(S, t{+}1) \Big].
+\]
+Define the \emph{expected marginal externality}
+\[
+\boxed{\;\kappa_a \;=\; p_a\, e_a\;}
+\]
+the expected permanent burden created by one pull of $a$.
+
+\textbf{Benchmark.} We measure regret against the best available arm,
+$\max_{a \in S_t}\big(v_a - B(S_t)\big)$. This is the benchmark deployed systems
+use, and Theorem~\ref{thm:vacuity} is a statement about that practice. Value is
+measured against the exact optimum $V(S_0,0)$, computed by dynamic programming over
+subsets for $n \le 8$ and by rollout above that.
+
+\section{When is greedy optimal?}
+
+\begin{theorem}[Characterisation]
+\label{thm:char}
+Greedy---pull $\arg\max_a v_a$---is optimal if and only if $\kappa_a$ is constant
+across arms.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Since $B(S)$ and $V(S,t{+}1)$ do not depend on the chosen arm, maximising the
+Bellman expression is equivalent to maximising $v_a - p_a D_a$ with
+$D_a = V(S,t{+}1) - V(S\setminus\{a\},t{+}1)$. Decompose
+$D_a = \delta e_a L(S,t) + O_a(S,t)$ into a burden and an option component. The
+burden component contributes $p_a \delta e_a L = \delta \kappa_a L$, which is
+identical across arms exactly when $\kappa$ is constant and hence drops out of the
+argmax.
+
+\emph{Sufficiency.} Under constant $\kappa$, couple the destruction randomness so a
+pair $\{a,b\}$ receives the same two draws in either order. The surviving-set
+distribution after both pulls is then identical, and since expected burden per pull
+is $\delta\kappa$ for both arms, the expected burden paths coincide. The only
+residual difference is which reward arrives first, giving $v_a - v_b \ge 0$.
+Iterating sorts any optimal policy into greedy order.
+
+\emph{Necessity.} The construction of Theorem~\ref{thm:vacuity} has
+$\kappa_H = E > 0 = \kappa_S$ and a strictly positive gap $m\delta E$.
+\end{proof}
+
+Two empirical checks. Varying $p$ and $e$ widely while pinning $\kappa$ constant
+leaves greedy exactly optimal (0/10 instances broken, gap $0.000\%$); varying the
+product breaks it (10/10, gap $5.4$--$6.3\%$). Separately, the interchange
+inequality underlying sufficiency was audited exhaustively over all reachable
+states: $0$ violations in $6{,}842$ ordered pairs under constant $\kappa$, versus
+$56.2\%$ violations when $\kappa$ varies. The inequality holds precisely when the
+theorem says greedy is optimal.
+
+The optimality gap grows monotonically with $\mathrm{std}(\kappa)$, from $5.9\%$ to
+$29.1\%$ across six bins over 240 instances.
+
+\section{A zero-regret policy can destroy unbounded value}
+
+\begin{theorem}[Vacuity of no-regret under consumption]
+\label{thm:vacuity}
+For any $M > 0$ there is an instance on which greedy attains regret exactly $0$
+against the best-available benchmark while $V^\star - V_{\mathrm{greedy}} \ge M$.
+Moreover the loss can exceed $V^\star$, making the zero-regret policy net-negative
+while the optimum is positive.
+\end{theorem}
+
+\begin{proof}
+Fix $m \ge 1$, $E > 0$, $0 < \epsilon < \delta E$. Take $n = m{+}1$ arms: one
+\emph{hot} arm $H$ with $v_H = 1$, $e_H = E$, and $m$ \emph{safe} arms with
+$v_S = 1-\epsilon$, $e_S = 0$. Set $p_a = 1$ for all arms and $T = n$, so each arm
+is pulled exactly once and only the order is chosen.
+
+Greedy pulls $H$ first since $1 > 1-\epsilon$. $H$ is destroyed, adding permanent
+burden $\delta E$, and each of the $m$ subsequent pulls yields
+$(1-\epsilon) - \delta E$:
+\[
+V_{\mathrm{greedy}} = 1 + m(1 - \epsilon - \delta E).
+\]
+Deferring $H$ to last yields $1-\epsilon$ on each safe pull with no burden, and $1$
+on the final pull of $H$, whose burden is charged only to later rounds, of which
+there are none:
+\[
+V^\star \ge m(1-\epsilon) + 1 .
+\]
+Subtracting, $V^\star - V_{\mathrm{greedy}} = m\,\delta E$, unbounded in $m$ and in
+$\delta E$. Choosing $\delta E > 1$ gives $V_{\mathrm{greedy}} < 0 < V^\star$.
+
+At every round greedy pulls $\arg\max_{a\in S} (v_a - B(S))$, which is the
+definition of the benchmark; its instantaneous regret is $0$ at every state.
+\end{proof}
+
+The closed form matches exact dynamic programming to machine precision at all $15$
+settings tested, $m \in \{1,2,4,8,12\}$ and $\delta E \in \{0.5,1,2\}$. At $m=12$,
+$\delta E = 2$: $V^\star = 12.88$, $V_{\mathrm{greedy}} = -11.12$, gap exactly
+$24.0000$, regret $0.0000$.
+
+\paragraph{A correction, recorded.} An earlier version of this construction claimed
+the gap grows linearly in $T$. That is false: with $p=1$ the pool is exhausted
+after $n$ pulls, so $T$ beyond $n$ is irrelevant. Under $p<1$ the gap grows with
+$T$ only until $T \approx \sum_j 1/p_j$, then saturates---the same sample-budget
+ceiling that appears independently in Theorem~\ref{thm:floor}. The correct scaling
+is linear in pool size, which is the meaningful quantity: greedy's error is paid
+once per subsequent pull.
+
+\paragraph{Interpretation.} Greedy maximises $v_a$, the arm's \emph{private} value.
+The optimal policy accounts for $\delta\kappa_a(T-t)$, the damage imposed on
+everything else. Regret is a private-value metric; under externalities private and
+social value diverge; therefore no-regret guarantees nothing about social outcome.
+
+\section{The externality cannot be learned}
+
+\begin{theorem}[Estimation floor]
+\label{thm:floor}
+For any estimator of $\delta e_i$,
+\[
+\mathrm{SE}(\delta \hat e_i) \;\ge\; \frac{2\sigma}{\sqrt{\,\min\!\big(T,\ \sum_j 1/p_j\big)}},
+\]
+which for $T > \sum_j 1/p_j$ is independent of the horizon.
+\end{theorem}
+
+\begin{proof}
+All information about $e_i$ enters through the level shift $\delta e_i$ in the
+reward process at the moment arm $i$ is destroyed. Conditioning on the destruction
+time with $n_b$ rounds before and $n_a$ after, the MLE is the difference of pre-
+and post-destruction sample means, with variance
+$\sigma^2(1/n_b + 1/n_a)$. By AM--HM,
+$1/n_b + 1/n_a \ge 4/(n_b+n_a) = 4/N$, with equality iff $n_b = n_a$, giving
+$\mathrm{SE} \ge 2\sigma/\sqrt{N}$. Arm $j$ survives $\mathrm{Geometric}(p_j)$
+pulls, so $\mathbb{E}[N] = \sum_j 1/p_j$, capped at $T$.
+\end{proof}
+
+All three components verify numerically: the variance formula matches Monte Carlo
+to within $0.1\%$; the AM--HM floor is attained exactly at the balanced split
+(ratio $1.0000$); and $\mathbb{E}[N] = \min(T, \sum_j 1/p_j)$ holds including when
+$T$ binds.
+
+The horizon-independence is stark. At $p = 0.9$, increasing $T$ from $20$ to $320$
+changes RMSE by \emph{zero}---$0.2329$ at every horizon, because the pool caps the
+data at $8.8$ rounds. At $p = 0.1$ the round count climbs $20 \to 40 \to 71 \to
+82.3 \to 83.2$, flattening exactly at the predicted $80$.
+
+\begin{corollary}[The central tension]
+As $p$ rises, $\kappa = p e$ grows, so the externality matters more; simultaneously
+$N \approx n/p$ shrinks and $\mathrm{SE} \ge 2\sigma\sqrt{p/n}$ degrades. The
+parameter governing optimal behaviour becomes less estimable exactly as it becomes
+more important.
+\end{corollary}
+
+This is not a sample-complexity result that more data resolves. The data-generating
+process is the consumption itself: observing arm $i$'s externality requires
+destroying arm $i$.
+
+\paragraph{Structure does not rescue it.} Suppose $e_a = \langle \psi, z_a\rangle$
+for known features $z_a \in \mathbb{R}^k$, $k \ll n$, so each destruction informs a
+shared $k$-vector. Per-arm least squares is exactly worthless (identical to greedy
+to three decimals at every coupling level); feature-based estimation recovers only
+$17$--$28\%$ of the available gap; and a \emph{conservative} policy that assumes a
+uniform upper bound and learns nothing outperforms both at every level. If the
+mechanism were sample-sharing, capture should rise as $k$ falls. It does not:
+capture is $4.5\%$ at $k=1$ and peaks at $30.3\%$ at $k=5$. At $k=1$ the
+externality is nearly uniform, so $\kappa$ has little dispersion and by
+Theorem~\ref{thm:char} there is nothing to capture. The obstacle is dispersion, not
+sample size: the externality must vary for the correction to matter, and variation
+is what makes it hard to estimate.
+
+\section{Corrections}
+
+\subsection{The externality-corrected index}
+
+Theorem~\ref{thm:char} hands over the correction. Pulling $a$ creates expected
+permanent burden $\delta\kappa_a$ charged against every remaining round:
+\[
+I(a,t) \;=\; v_a \;-\; \delta\,\kappa_a\,(T-t).
+\]
+Because $B(S)$ is common to all arms it drops out of the ranking, so ECI is a true
+index: each arm's score depends only on its own parameters and global time, and the
+ranking is invariant to accumulated damage.
+
+Against exact DP, ECI captures $52\%$--$99\%$ of the optimality gap, with capture
+improving as coupling strengthens. Its own gap is flat at $1.9$--$3.1\%$ across the
+entire dispersion range while greedy's grows five-fold, so ECI's advantage grows
+without bound in $\mathrm{std}(\kappa)$.
+
+\subsection{Rollout}
+
+No closed form exists for the option-loss term ECI omits. One step of policy
+improvement over ECI captures it implicitly, since
+$V_{\pi_0}(S) - V_{\pi_0}(S\setminus\{a\})$ is exactly the marginal value of
+holding $a$. This reaches $99.5$--$99.9\%$ of exact optimum, and with Monte Carlo
+policy evaluation runs at $n=40$ where exact DP is infeasible, adding $3.3\%$ over
+ECI at strong coupling.
+
+\subsection{An exactly solvable case}
+
+\begin{theorem}[Pure sequencing]
+\label{thm:seq}
+If $p_a = 1$ for all $a$ and $T = n$, the optimal order is ascending in $e$, and
+arm values are irrelevant to the optimal order.
+\end{theorem}
+
+\begin{proof}
+Every arm is pulled exactly once, so $\sum_a v_a$ is a constant. Total value is
+$\sum_a v_a - \delta \sum_s e_{a_s}(n-s)$: an arm at position $s$ pays its
+externality $(n-s)$ times. Minimising requires pairing large $e$ with small $(n-s)$.
+\end{proof}
+
+Verified by brute force over all $n!$ orderings, exact at 8/8 instances. Notably ECI
+is \emph{not} exactly optimal even here---a conjecture we falsified---and the exact
+rule inverts the usual intuition: when consumption is certain, an arm's value is
+irrelevant to scheduling; only its externality matters.
+
+\section{Experiments}
+
+Table~\ref{tab:main} compares policies on $20$ arms, $60$ rounds, $25$ seeds.
+
+\begin{table}[t]
+\centering
+\caption{The regret and value columns are ordered backwards relative to each other.}
+\label{tab:main}
+\begin{tabular}{lrr}
+\toprule
+policy & value & regret \\
+\midrule
+greedy & 14.449 & \textbf{0.000} \\
+Thompson sampling & 15.171 & 1.341 \\
+UCB & 13.257 & 6.136 \\
+conservative & 17.089 & 8.160 \\
+ECI & \textbf{21.214} & 10.069 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Thompson sampling is consistently \emph{worse} than greedy under known parameters.
+Its exploration is not free here: sampling a suboptimal arm can destroy a
+low-value, high-externality arm. At strong coupling the corrected index nearly
+triples Thompson's realised value ($20.8$ vs.\ $7.2$). The mechanisms compose
+rather than compete---TS handles uncertainty in $v$, ECI handles consumption---and
+TS+ECI dominates both.
+
+\section{Limitations}
+
+The burden model $B(S) = \delta\sum e_i$ is additive and the simplest coupling that
+exhibits the phenomenon; richer couplings (multiplicative, saturating, networked)
+are unexplored. Exact optimality results rest on dynamic programming at $n \le 8$;
+larger-scale claims rest on rollout. Theorem~\ref{thm:vacuity} is a statement about
+the best-available-arm benchmark specifically---a forward-looking benchmark would
+not be fooled, but it is also not what deployed systems measure, which is the point.
+Theorem~\ref{thm:char}'s sufficiency proof relies on a coupling argument whose
+formalisation under horizon truncation we verify exhaustively rather than prove in
+full generality.
+
+\section{Conclusion}
+
+When actions consume the action set, regret is measured against an optimum the
+learner has already degraded. A policy can hold regret at exactly zero while
+driving value arbitrarily negative, and the parameter that would let it do better
+becomes unlearnable precisely as it becomes important, because acquiring each
+observation destroys the resource being priced. The practical consequence is
+direct: for irreversible actions, externality costs must be \emph{specified}, not
+discovered. A crude uniform upper bound outperforms every learned estimator we
+tested.
+
+\paragraph{Code.} Library, all 24 experiments including the falsified ones, and one
+regression test per theorem: \url{https://github.com/<user>/consumable-bandits}
+
+\begin{thebibliography}{9}
+\bibitem{badanidiyuru2013} A.~Badanidiyuru, R.~Kleinberg, A.~Slivkins.
+  Bandits with knapsacks. \emph{FOCS}, 2013.
+\bibitem{chakrabarti2008} D.~Chakrabarti, R.~Kumar, F.~Radlinski, E.~Upfal.
+  Mortal multi-armed bandits. \emph{NeurIPS}, 2008.
+\bibitem{kleinberg2010} R.~Kleinberg, A.~Niculescu-Mizil, Y.~Sharma.
+  Regret bounds for sleeping experts and bandits. \emph{Machine Learning}, 2010.
+\bibitem{levine2017} N.~Levine, K.~Crammer, S.~Mannor.
+  Rotting bandits. \emph{NeurIPS}, 2017.
+\bibitem{seznec2019} J.~Seznec, A.~Locatelli, A.~Carpentier, A.~Lazaric,
+  M.~Valko. Rotting bandits are no harder than stochastic ones.
+  \emph{AISTATS}, 2019.
+\bibitem{seznec2020} J.~Seznec, P.~Menard, A.~Lazaric, M.~Valko.
+  A single algorithm for both restless and rested rotting bandits.
+  \emph{AISTATS}, 2020.
+\bibitem{shah2018} V.~Shah, R.~Johari, J.~Scheinkman.
+  Bandit learning with positive externalities. \emph{NeurIPS}, 2018.
+\end{thebibliography}
+
+\end{document}
