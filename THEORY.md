@@ -1344,3 +1344,122 @@ pool size. The reason is structural: terminal commitment is a problem about
 evidence the commitment is no longer made under uncertainty and the problem
 dissolves. It is hardest exactly when experiments are expensive — which is the
 regime that motivates it.
+
+---
+
+## T-C — multi-agent estimation, and a sharpening of Theorem 3
+
+### The hypothesis was wrong, and the correction is stronger
+
+Expected: with `m` agents sharing a pool, each sees roughly `N_exh/m` observations,
+so the per-agent floor should scale as `2σ√(m/N_exh)`. Communication should then
+recover the single-learner floor.
+
+**Neither holds** (`exp37`):
+
+| agents | private RMSE | obs seen | shared RMSE | obs seen | gain from sharing |
+|---|---|---|---|---|---|
+| 1 | 0.3283 | 36.8 | 0.3283 | 36.8 | 0.0% |
+| 2 | 0.3423 | 18.7 | 0.3283 | 36.8 | 4.1% |
+| 3 | 0.3121 | 12.6 | 0.3283 | 36.8 | −5.2% |
+| 4 | 0.3200 | 9.6 | 0.3283 | 36.8 | −2.6% |
+
+Observations fall almost four-fold and the error does not move. Sharing them back
+gains nothing.
+
+### Why: the floor is set by transitions, not observations
+
+| T | observations | deaths | RMSE |
+|---|---|---|---|
+| 40 | 33.1 | 7.35 | 0.3351 |
+| 100 | 36.8 | **8.00** | **0.3283** |
+| 200 | 36.8 | **8.00** | **0.3283** |
+| 400 | 36.8 | **8.00** | **0.3283** |
+| 900 | 36.8 | **8.00** | **0.3283** |
+
+RMSE saturates exactly when the death count saturates at `n = 8`, and is identical
+to four decimal places thereafter.
+
+> **Sharpened Theorem 3.** The binding constraint is not the number of
+> observations but the number of *transitions*. Each arm supplies exactly one
+> before/after transition, so the information available about `e` is bounded by
+> `n`, the pool size — not by `T`, not by `N_exh`, and not by the number of
+> observers.
+
+This is a stronger statement than the horizon-independence result and it subsumes
+it. It also explains the earlier feature-sharing finding: structure could not
+rescue estimation because the deficit was never a shortage of samples.
+
+**Corollary (communication is worthless here).** Ten agents watching an arm die
+still see one death. The information lives in the transition, and the transition is
+common property the moment it happens. This is unusual: in most multi-agent
+learning problems communication is valuable precisely because observations are
+private and additive. Here they are neither.
+
+### Withholding does not pay either
+
+If communication cannot help a rival, can ignorance be weaponised? No:
+
+| agents | both informed | one ignorant | both ignorant |
+|---|---|---|---|
+| 2 | 6.645 | 6.386 | 6.204 |
+| 3 | 6.160 | 5.438 | 5.262 |
+
+System value falls monotonically as agents are kept ignorant. An uninformed rival
+does not conserve the pool; it consumes the high-`κ` arms the informed agent was
+declining, and the damage is shared. **Withholding accelerates destruction rather
+than protecting the commons** — the opposite of the usual information-hoarding
+story, and a useful fact for the mechanism-design direction: there is no incentive
+problem to solve on the disclosure side.
+
+---
+
+## T-F — mechanism design when the externality cannot be measured
+
+Classical Pigouvian design charges each agent the marginal damage it causes, which
+presumes the damage is measurable. Theorem 3 (sharpened) says it is not: the
+information about `e` is bounded by the number of transitions, i.e. the pool size,
+and no horizon, agent count, or communication changes that.
+
+So: can a mechanism work without measurement?
+
+### The obvious answer fails
+
+A **uniform tax** — one number, no per-arm knowledge — was the natural candidate,
+and it worked in the single-agent case (`exp19`, where the conservative policy beat
+every learned estimator). In the multi-agent case it does not:
+
+| agents | greedy | uniform tax | rank only | ban worst ⅓ | true κ |
+|---|---|---|---|---|---|
+| 2 | 1.140 | **1.156** | 1.075 | 1.076 | 1.065 |
+| 3 | 1.227 | 1.186 | **1.035** | **1.031** | 0.961 |
+
+At `m = 2` the uniform tax is **worse than no charge at all**. The reason is
+structural: a flat charge does not distinguish arms, so it shifts every preference
+equally and leaves intact the ordering that caused the problem.
+
+### Ordinal knowledge suffices
+
+Two mechanisms that need no cardinal estimate recover nearly all the benefit:
+
+- **rank-based charge** — price by the arm's rank in `e`, not its value;
+- **ban the worst third** — exclude the highest-`e` arms, then act greedily.
+
+Both reach `PoA ≈ 1.03` at three agents, against greedy's `1.227` and true-κ
+pricing's `0.961`.
+
+> **The mechanism Theorem 3 rules out is not the one that is needed.** Theorem 3
+> bounds how precisely `e` can be *estimated*. It says nothing about recovering the
+> *ordering*, which requires far less information — a single well-resolved
+> comparison per pair rather than a calibrated magnitude.
+
+This is the productive form of the impossibility result. It does not say that
+externality-aware mechanism design is hopeless under consumption; it says that
+cardinal mechanisms are unavailable and ordinal ones are not, and that ordinal ones
+are nearly as good. For practice the implication is concrete: an operator does not
+need to know how damaging each action is, only which actions are more damaging than
+which — a far weaker elicitation problem.
+
+**Open.** Whether ordinal recovery has its own floor. The transitions argument
+bounds cardinal estimation; a matching analysis for rank recovery would complete
+the picture and is the natural next theorem.

@@ -556,3 +556,72 @@ def test_operating_value_is_deterministic():
     a = TerminalCommitment(seed=3); a.reset(3)
     b = TerminalCommitment(seed=3); b.reset(3)
     assert abs(a.operating_value() - b.operating_value()) < 1e-12
+
+
+# ------------------------------------------------------------ T-C and T-F
+def test_estimation_floor_is_set_by_transitions_not_observations():
+    """Sharpened Theorem 3: RMSE saturates when deaths saturate, not when
+    observations do. Extending the horizon adds observations and nothing else."""
+    from experiments.exp37_multiagent_estimation import episode, rmse_of_e
+    n, sigma, delta = 8, 0.3, 0.1
+    rm = np.random.default_rng(11)
+    p = np.clip(rm.uniform(0.15, 0.5, n), 0.05, 1.0)
+    e = np.clip(rm.uniform(0.2, 2.0, n), 0.0, None)
+    v = np.sort(rm.uniform(0.4, 1.2, n))[::-1].copy()
+    results = {}
+    for T in [200, 900]:
+        errs = []
+        for s in range(25):
+            rng = np.random.default_rng(4000 + s)
+            rows, ys, alive = episode(n, 1, p, e, v, delta, sigma, T, rng, False)
+            r = rmse_of_e(rows[0], ys[0], n, e, delta, alive)
+            if not np.isnan(r):
+                errs.append(r)
+        results[T] = float(np.mean(errs))
+    assert abs(results[200] - results[900]) < 1e-6, \
+        "a 4.5x longer horizon must not change the floor"
+
+
+def test_communication_does_not_help_under_shared_consumption():
+    """Ten agents watching an arm die still see one death.
+
+    The substantive claim is that pooling observations does not materially reduce
+    the error, so the test asserts sharing gives no meaningful improvement rather
+    than exact equality. Seed count matters here: at 25 seeds the comparison is
+    dominated by Monte Carlo noise.
+    """
+    from experiments.exp37_multiagent_estimation import run
+    for m in [2, 3, 4]:
+        private, n_priv = run(m, share=False, seeds=60)
+        shared, n_shared = run(m, share=True, seeds=60)
+        assert n_shared > n_priv * 1.5, "sharing must actually pool observations"
+        assert shared > private * 0.85, (
+            f"m={m}: sharing {n_shared:.0f} observations instead of {n_priv:.0f} "
+            f"must not cut the error materially ({private:.4f} -> {shared:.4f})")
+
+
+def test_ordinal_mechanism_beats_uniform_tax():
+    """T-F: cardinal pricing is unavailable, ordinal pricing is, and works."""
+    from experiments.exp32_multiagent_poa import (planner_value,
+                                                  decentralised_value,
+                                                  rule_greedy)
+    from experiments.exp38_mechanism_design import (make_uniform_tax,
+                                                    make_rank_based)
+    rng = np.random.default_rng(5)
+    n, T, delta, m = 6, 5, 0.12, 3
+    poa = {"greedy": [], "uniform": [], "rank": []}
+    for _ in range(4):
+        v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
+        p = np.clip(rng.uniform(0.3, 0.9, n), 0.05, 1.0)
+        e = np.clip(1.0 + rng.normal(0, 1.2, n), 0.0, None)
+        pl = planner_value(v, p, e, delta, T, m)
+        ebar = float(np.mean(e))
+        for key, rule in [("greedy", rule_greedy),
+                          ("uniform", make_uniform_tax(ebar)),
+                          ("rank", make_rank_based(2.0 * ebar))]:
+            d = decentralised_value(v, p, e, delta, T, m, rule, seeds=120)
+            poa[key].append(pl / max(d, 1e-9))
+    assert np.mean(poa["rank"]) < np.mean(poa["uniform"]), \
+        "ordinal pricing must beat a flat charge"
+    assert np.mean(poa["rank"]) < np.mean(poa["greedy"]), \
+        "ordinal pricing must beat no charge"
