@@ -389,6 +389,34 @@ slips.
 
 ---
 
+## 6b. Programme status (August 2026)
+
+All seven theoretical directions have been attempted. Five produced results; two
+produced corrections to their own premises, which is recorded rather than hidden.
+
+| item | status | outcome |
+|---|---|---|
+| **T-A** system/private separation | **done** | both directions proven; converse is the stronger half |
+| **T-B** multi-agent, price of anarchy | **done** | PoA reaches 1.297; κ-aware agents reduce it to 1.004 |
+| **T-C** multi-agent estimation | **done, hypothesis falsified** | floor is set by *transitions*, not observations; communication is worthless |
+| **T-D** non-separable coupling | **done** | T4 robust to all five forms; T1 requires additive separability |
+| **T-E** terminal commitment | **done** | two new failure modes; ambition narrows the envelope it targets |
+| **T-F** mechanism design | **done, overclaim corrected** | ordinal *suffices* but is not *learnable*; specification burden is lighter, not absent |
+| **T-G** rollout guarantees | **done, conjecture falsified** | closes a constant fraction, not the square; better base policies improve less |
+
+Falsified along the way and kept in the record: √m scaling of multi-agent
+estimation error; value of communication; uniform-tax mechanisms; quadratic rollout
+scaling; ordinal learnability; ECI exactness in pure sequencing; horizon-scaling of
+the T4 gap; the endogenous/exogenous unification claim; the IPIC preservation
+heuristic; the effective-horizon index refinement.
+
+**Open.** Whether the ordinal saturation point (τ ≈ 0.68) has a closed form in terms
+of pool size and the distribution of destruction times. This is the natural next
+theorem: the transitions argument bounds cardinal estimation exactly, and an
+analogous positional argument should bound rank recovery.
+
+---
+
 ## 7. What to do first
 
 1. **Post paper 1 to arXiv.** Not a venue submission — a timestamp. Removes the
