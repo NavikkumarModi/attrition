@@ -1,0 +1,202 @@
+% ============================================================================
+% Sections that appear only in the long-form (JMLR) version.
+% Included after the core single-agent material in body.tex.
+% ============================================================================
+
+\section{Multiple decision makers on a shared pool}
+\label{sec:multiagent}
+
+Consumption is rarely the act of a single learner. Two orchestrators draw on the
+same API quota; two sponsors compete for the same trial-eligible patients; two
+brand teams consume the same payer goodwill. Each collects its own reward, but a
+destruction by any of them raises the burden for all. Restraint becomes a public
+good: an agent that declines a high-$\kappa$ arm pays the cost alone and shares the
+benefit.
+
+\paragraph{Model.} $m$ agents act in a fixed order within each round on one shared
+pool, so an agent later in the order inherits the damage done earlier in the same
+round. System value is $W = \sum_{i} W_i$, the total collected by all agents. The
+\emph{central planner} chooses all $m$ pulls per round to maximise $W$; the
+\emph{decentralised} regime has each agent apply its own policy seeing only its own
+reward. Define the price of anarchy under consumption as
+\[
+\mathrm{PoA} \;=\; \frac{W(\text{planner})}{W(\text{decentralised})} .
+\]
+
+\paragraph{Results.} Exact dynamic programming for the planner over subsets, $n=6$,
+$T=5$, six instances per cell:
+
+\begin{center}
+\begin{tabular}{rrrrrrr}
+\toprule
+agents & $\mathrm{std}(\kappa)$ & planner & dec.\ greedy & dec.\ ECI &
+$\mathrm{PoA}$ greedy & $\mathrm{PoA}$ ECI \\
+\midrule
+1 & $0.192$ & $4.552$ & $4.506$ & $4.558$ & $1.010$ & $0.999$ \\
+1 & $0.544$ & $4.216$ & $4.005$ & $4.203$ & $1.053$ & $1.003$ \\
+2 & $0.268$ & $5.483$ & $4.863$ & $5.212$ & $1.127$ & $1.052$ \\
+2 & $0.465$ & $6.460$ & $5.396$ & $6.157$ & $1.197$ & $1.049$ \\
+3 & $0.224$ & $6.764$ & $6.162$ & $6.514$ & $1.098$ & $1.038$ \\
+3 & $0.583$ & $6.152$ & $4.743$ & $6.129$ & $\mathbf{1.297}$ & $\mathbf{1.004}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Two findings. First, the price of anarchy grows with both the number of agents and
+the dispersion of $\kappa$, reaching $1.297$ with three greedy agents at high
+dispersion: decentralisation destroys $30\%$ of system value. Second, and more
+useful, $\kappa$-aware agents nearly eliminate it. Under ECI the price of anarchy
+stays between $1.00$ and $1.05$ throughout, and at the setting where greedy agents
+lose $30\%$, ECI agents lose $0.4\%$.
+
+\paragraph{Interpretation.} The commons problem here is not a coordination failure.
+No agent needs to observe, signal to, or contract with any other. It is a
+\emph{mispricing} failure that each agent can repair unilaterally by charging
+itself the full externality of its own consumption. This is a stronger conclusion
+than the usual commons result, and it follows from Theorem~\ref{thm:char}: the
+quantity an agent must price is its own $\kappa_a$, which does not depend on what
+anyone else is doing.
+
+\paragraph{Free-riding.} An agent that prices only the share of the damage it
+expects to bear itself---dividing the externality by the number of agents---is
+behaving rationally in the narrow sense and destroys system value:
+
+\begin{center}
+\begin{tabular}{rrrr}
+\toprule
+agents & social pricing & self-share pricing & loss \\
+\midrule
+2 & $6.122$ & $5.386$ & $12.0\%$ \\
+3 & $6.061$ & $5.225$ & $13.8\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The gap widens with the number of agents, as the individual share shrinks. This is
+the standard commons structure with a bandit inside, and it identifies the target
+for mechanism design: the problem is not that agents cannot coordinate but that
+each has a private incentive to under-price a cost it partly externalises.
+
+\section{Terminal commitment}
+\label{sec:commitment}
+
+Everywhere above the action set contracts as a side effect of pulling arms. A
+distinct and practically important variant adds an explicit \emph{terminal action}:
+after a finite budget of irreversible experiments the learner must declare an
+operating envelope, and that declaration bounds every subsequent action.
+
+The motivating case is design-space filing under ICH~Q8. A finite quantity of
+active ingredient supports a finite number of process runs; each either
+demonstrates a parameter setting viable or produces an out-of-spec batch. At filing
+a design space is declared, and thereafter operating inside it requires no
+regulatory approval while operating outside triggers a variation procedure. The
+declared envelope is a permanent commitment made on incomplete evidence.
+
+\paragraph{Model.} Settings are indexed $0,\dots,n-1$ with a nominal point at the
+centre. Yield rises monotonically with process intensity and so does failure
+probability---the $\mathrm{corr}(v,\kappa)>0$ structure of
+Section~\ref{sec:alignment}. Each experiment either demonstrates viability or
+produces an out-of-spec result that blocks that setting permanently. The claimable
+envelope is the widest contiguous interval of demonstrated settings containing the
+nominal point. In the operating phase the process drifts; landing inside the
+envelope collects the yield at the realised setting, landing outside forces
+reversion to nominal and incurs a variation penalty. Operating value is computed
+exactly from a discretised drift distribution rather than sampled.
+
+\paragraph{Results} (300 seeds per cell):
+
+\begin{center}
+\begin{tabular}{rlrrr}
+\toprule
+budget & policy & operating value & envelope width & failed runs \\
+\midrule
+2 & greedy (highest yield first) & $36.908$ & $\mathbf{1.00}$ & $0.80$ \\
+2 & edge-first (maximise width) & $36.908$ & $\mathbf{1.00}$ & $0.67$ \\
+2 & \textbf{expand outward} & $\mathbf{40.664}$ & $\mathbf{2.92}$ & $0.08$ \\[2pt]
+4 & greedy & $41.385$ & $3.44$ & $1.06$ \\
+4 & edge-first & $36.908$ $(-10.8\%)$ & $\mathbf{1.00}$ & $1.14$ \\
+4 & \textbf{expand outward} & $\mathbf{44.182}$ $(+6.8\%)$ & $\mathbf{4.72}$ & $0.26$ \\[2pt]
+6 & greedy & $45.058$ & $5.35$ & $1.14$ \\
+6 & edge-first & $36.908$ $(-18.1\%)$ & $\mathbf{1.00}$ & $1.36$ \\
+6 & expand outward & $45.069$ & $6.20$ & $0.61$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Two failure modes appear that have no analogue in the sequential setting.
+
+\paragraph{Greedy buys yield it cannot claim.} It spends the budget on the
+highest-yield settings wherever they lie. But an envelope is an interval containing
+the nominal point, so a demonstrated setting far from centre is worthless unless
+everything between is also demonstrated. At budget $2$ greedy finishes with
+envelope width $1.00$: it demonstrated the best settings and could claim none of
+them.
+
+\paragraph{Ambition narrows the envelope it targets.} The edge-first policy tests
+the outermost settings precisely to maximise claimable width. It pays the highest
+failure probability per experiment, and each failure blocks that setting
+permanently. Its envelope width is $1.00$ at every budget, and its performance
+degrades monotonically as the budget grows: $-10.8\%$ at budget $4$, $-18.1\%$ at
+budget $6$. Spending more in order to widen the envelope makes it narrower. This is
+a failure mode practitioners describe directly---an aggressive characterisation
+campaign ending with a narrower filed design space than a conservative one would
+have produced.
+
+\paragraph{The budget dependence runs the other way.} The advantage of the correct
+policy \emph{decreases} with budget ($+10.2\%$, $+6.8\%$, $+0.0\%$), the opposite
+of the sequential setting where the gap grows with pool size. The reason is
+structural: terminal commitment is a problem about scarcity of evidence at the
+moment of an irreversible decision. With enough evidence the commitment is no
+longer made under uncertainty and the difficulty dissolves. It binds hardest
+exactly when experiments are expensive, which is the regime that motivates it.
+
+\section{Software}
+\label{sec:software}
+
+The accompanying library is released openly and is the artifact through which every
+claim in this paper can be checked.
+
+\paragraph{Design.} The core is dependency-free apart from NumPy. Gym- and
+PettingZoo-compatible interfaces are implemented natively rather than by importing
+either framework, so the package carries no reinforcement-learning dependency while
+matching both signatures.
+
+\paragraph{Observations withhold the externality.} By Theorem~\ref{thm:floor} the
+externality coefficients cannot be reliably estimated from experience. Exposing
+them in the observation vector would therefore let an agent solve a different
+problem from the one the theory describes, so the default observation contains
+availability, value estimates and pull counts only. A flag lifts this for oracle
+experiments.
+
+\paragraph{Scenario packs.} Seven named scenarios, each documenting the phenomenon
+it is intended to exhibit, with the test suite asserting that it does so---a
+scenario that drifts becomes a detectable regression rather than a silently wrong
+result.
+
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+scenario & $\mathrm{std}(\kappa)$ & $\mathrm{corr}(v,\kappa)$ & greedy loss & greedy regret \\
+\midrule
+high-dispersion & $0.6285$ & $+1.000$ & $176.5\%$ & $0.00000000$ \\
+design-space & $0.2954$ & $+0.789$ & $99.3\%$ & $0.00000000$ \\
+adaptive-therapy & $0.1705$ & $+0.614$ & $36.9\%$ & $0.00000000$ \\
+shared-quota & $0.9948$ & $+0.315$ & $3.7\%$ & $0.00000000$ \\
+platform-trial & $0.0371$ & $-0.938$ & $\mathbf{0.0\%}$ & $0.00000000$ \\
+aligned-control & $0.6299$ & $-0.971$ & $\mathbf{0.0\%}$ & $0.00000000$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This table also makes the alignment condition visible in a way the theory alone
+does not. The \texttt{shared-quota} scenario has the \emph{highest} dispersion in
+the suite and the \emph{smallest} loss, because its correlation is weakest; the
+synthetic \texttt{aligned-control} scenario has larger dispersion than
+\texttt{adaptive-therapy} and yet no loss at all. Across the suite the loss tracks
+$\mathrm{corr}(v,\kappa)$ rather than $\mathrm{std}(\kappa)$.
+
+\paragraph{Reproducibility.} Every figure regenerates from the library and the
+exact dynamic-programming reference through a single command. All random seeds are
+fixed in code. The test suite contains one regression test per theorem, so breaking
+a theorem's numerical claim breaks a test. Experiments that produced negative
+results are retained in the repository rather than removed.

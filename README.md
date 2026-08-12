@@ -321,19 +321,28 @@ second agent for price-of-anarchy experiments.
 
 Two builds from the same body text:
 
-| file | format | use |
-|---|---|---|
-| `paper/no-regret-is-not-no-harm.pdf` | plain `article` | reading, internal review |
-| `paper/arxiv-no-regret-is-not-no-harm.pdf` | `arxiv.sty` | arXiv preprint submission |
+Three builds from one shared `body.tex`, so they cannot drift apart:
+
+| file | pages | contents | use |
+|---|---|---|---|
+| `no-regret-is-not-no-harm.pdf` | 14 | core results | reading, internal review |
+| `arxiv-no-regret-is-not-no-harm.pdf` | 13 | core results | arXiv preprint |
+| **`jmlr-consumable-action-sets.pdf`** | **20** | **+ multi-agent, terminal commitment, software** | **JMLR submission** |
 
 ```bash
-cd paper && make                       # figures + both PDFs
-make arxiv-submission.tar.gz           # upload bundle for arXiv
+cd paper && make                      # figures + all three PDFs
+make arxiv-submission.tar.gz          # arXiv upload bundle
+make jmlr-submission.tar.gz           # JMLR upload bundle
 ```
 
-arXiv imposes no mandatory template; `arxiv.sty` is the community convention for
-preprints and is based on the NeurIPS layout. For a venue submission, swap in that
-venue's style file (e.g. `icml2026.sty`) — the body text needs no changes.
+The long-form version adds `sections_long.tex` via a `\LONGFORM` macro: price of
+anarchy under consumption, terminal commitment, a notation table, and a software
+section. The conference builds define the macro empty.
+
+arXiv imposes no mandatory template; `arxiv.sty` is the community convention. The
+official `jmlr.cls` is distributed from jmlr.org — swap the preamble for
+`\documentclass[wcp]{jmlr}` before submitting. All formatting is confined to the
+wrapper files, so the body needs no changes for any venue.
 
 ## Reproducing
 

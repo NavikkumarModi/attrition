@@ -167,6 +167,32 @@ produces Theorem~\ref{thm:vacuity}: the benchmark and the damage move together. 
 invite correction on this point and treat it as the claim most in need of
 scrutiny.
 
+
+\begin{table}[t]
+\centering
+\caption{Notation.}
+\label{tab:notation}
+\begin{tabular}{ll}
+\toprule
+symbol & meaning \\
+\midrule
+$v_a$ & mean reward of arm $a$ \\
+$p_a$ & probability that pulling $a$ destroys it \\
+$e_a$ & externality coefficient of $a$ \\
+$\delta$ & externality scale \\
+$\kappa_a = p_a e_a$ & expected marginal externality of one pull of $a$ \\
+$S_t$ & set of arms available at round $t$ \\
+$B(S) = \delta\sum_{i \notin S} e_i$ & accumulated burden \\
+$N_{\mathrm{exh}} = \sum_j G_j$, $G_j\sim\mathrm{Geom}(p_j)$ & pulls until the pool is exhausted \\
+$N = \min(T, N_{\mathrm{exh}})$ & realised episode length \\
+$W(\pi) = \mathbb{E}_\pi[\sum_t r_t]$ & system value of policy $\pi$ \\
+$V^\star = \max_\pi W(\pi)$ & optimal system value \\
+$R_{\mathrm{sys}}(\pi) = V^\star - W(\pi)$ & system-value regret \\
+$I(a,t) = v_a - \delta\kappa_a(T-t)$ & externality-corrected index (ECI) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \section{Setting}
 \label{sec:model}
 
@@ -746,6 +772,7 @@ exiting arm's tenure. The \emph{design-space} engine models process development:
 $v$ is yield, $p$ the out-of-spec probability rising near the specification limit,
 and $e$ the fraction of the defensible filing envelope forfeited by a failure there.
 
+\label{sec:alignment}
 \paragraph{A prediction that holds in both directions.} On these derived parameters
 greedy loses $26.8\%$--$121.1\%$ in the tumour engine and $17.3\%$--$106.9\%$ in the
 design-space engine, with private regret of exactly zero in both. In the
@@ -861,6 +888,8 @@ This is a sharper statement than the original, not a weaker one: it names the
 structural property the result requires. The degradation is also graceful---the
 residual gap under non-separable coupling is $0.10\%$--$0.67\%$, against the
 $6.6\%$--$12.2\%$ gap greedy incurs when $\kappa$ genuinely varies.
+
+\LONGFORM
 
 \section{Limitations}
 
