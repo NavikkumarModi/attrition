@@ -94,10 +94,14 @@ def make_solver(v, p, e, delta, T, form, adj=None):
 
 FORMS = ["additive", "multiplicative", "saturating", "networked", "concave"]
 
+# Deterministic per-form seeds. Python randomises str hashing per process, so
+# hash(form) would make these experiments irreproducible across runs.
+FORM_SEED = {f: 1000 + 7 * i for i, f in enumerate(FORMS)}
+
 
 def q1_theorem1(form, inst=10, n=5, T=7, delta=0.15):
     """Constant kappa => greedy optimal; varying kappa => greedy loses."""
-    rng = np.random.default_rng(hash(form) % 2**31)
+    rng = np.random.default_rng(FORM_SEED[form])
     const_gaps, vary_gaps = [], []
     for _ in range(inst):
         v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
@@ -121,7 +125,7 @@ def q1_theorem1(form, inst=10, n=5, T=7, delta=0.15):
 
 def q2_theorem4(form, inst=10, n=5, T=8, delta=0.25):
     """Greedy records zero regret while losing value."""
-    rng = np.random.default_rng(7 + hash(form) % 1000)
+    rng = np.random.default_rng(FORM_SEED[form] + 500)
     regs, gaps = [], []
     for _ in range(inst):
         v = np.sort(rng.uniform(0.5, 1.2, n))[::-1].copy()

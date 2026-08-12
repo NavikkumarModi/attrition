@@ -744,7 +744,7 @@ feature-based learning of `e`.
 ## Robustness to coupling form — one limitation closed, one sharpened
 
 The additive burden `B(S) = δ Σ_{dead} e_i` was stated as a modelling choice. It is
-now tested against four alternatives (`exp26`), with exact DP throughout:
+now tested (deterministic seeds; results reproduce exactly across runs) against four alternatives (`exp26`), with exact DP throughout:
 
 | form | burden |
 |---|---|
@@ -758,11 +758,11 @@ now tested against four alternatives (`exp26`), with exact DP throughout:
 
 | form | greedy regret | value loss |
 |---|---|---|
-| additive | 0.0000000000 | 1.8186 |
-| multiplicative | 0.0000000000 | 0.4419 |
-| saturating | 0.0000000000 | 0.6774 |
-| networked | 0.0000000000 | 1.3676 |
-| concave | 0.0000000000 | 0.7763 |
+| additive | 0.0000000000 | 1.3755 |
+| multiplicative | 0.0000000000 | 0.6684 |
+| saturating | 0.0000000000 | 0.6053 |
+| networked | 0.0000000000 | 0.9221 |
+| concave | 0.0000000000 | 0.4944 |
 
 Greedy records **exactly zero regret under every coupling form** while losing value
 under every one. The headline result does not depend on additivity at all — which
@@ -773,11 +773,11 @@ against the best-available benchmark, not from the burden's functional form.
 
 | form | gap, `κ` constant | gap, `κ` varies | T1 holds |
 |---|---|---|---|
-| additive | **0.000000%** | 11.943% | yes |
-| multiplicative | **0.000000%** | 6.472% | yes |
-| networked | **0.000000%** | 6.372% | yes |
-| saturating | 0.135105% | 10.335% | no |
-| concave | 0.708739% | 5.468% | no |
+| additive | **0.000000%** | 12.093% | yes |
+| multiplicative | **0.000000%** | 6.644% | yes |
+| networked | **0.000000%** | 10.584% | yes |
+| saturating | 0.097799% | 12.161% | no |
+| concave | 0.674457% | 7.296% | no |
 
 The pattern is exact and the mechanism is identifiable. Measuring the marginal
 burden of killing one arm (`e = 1`) at different levels of accumulated damage:
@@ -800,6 +800,6 @@ term arm-independent, and greedy acquires a residual gap.
 **Two things worth noting.** First, this is a sharper statement than the original
 theorem, not a weaker one: it identifies the precise structural property the result
 needs. Second, the degradation is graceful — the residual gap under non-separable
-coupling is `0.14%`–`0.71%`, against the `5`–`12%` gap greedy incurs when `κ`
+coupling is `0.10%`–`0.67%`, against the `6.6`–`12.2%` gap greedy incurs when `κ`
 genuinely varies. Greedy is *nearly* optimal under constant `κ` even when
 separability fails.
