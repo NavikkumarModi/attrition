@@ -371,3 +371,33 @@ def test_kappa_aware_agents_reduce_price_of_anarchy():
     de = decentralised_value(v, p, e, delta, T, m, rule_eci, seeds=200)
     assert de > dg, "kappa-aware agents must beat greedy agents"
     assert pl / de < pl / dg, "and must have a lower price of anarchy"
+
+
+# ---------------------------------------------------------------- engines
+def test_derived_parameters_have_competitive_release_signature():
+    """v, p and e derived from the dynamics all rise with dose intensity."""
+    from evolving_bandits import derive_arm_parameters
+    v, p, e, doses = derive_arm_parameters(engine_kwargs={"dt": 5.0}, s0_sd=0.26)
+    assert np.all(np.diff(v) > 0), "higher dose must give more immediate control"
+    assert np.all(np.diff(p) >= 0), "higher dose must be more likely to exhaust"
+    assert np.std(p * e) > 0.05, "kappa must be dispersed, else T1 says greedy is fine"
+
+
+def test_mtd_is_greedy_and_loses_on_derived_parameters():
+    """On mechanistically derived parameters, MTD has zero regret and loses."""
+    from evolving_bandits import derive_arm_parameters
+    from experiments.exp33_mechanistic_therapy import exact
+    v, p, e, _ = derive_arm_parameters(engine_kwargs={"dt": 5.0}, s0_sd=0.26)
+    vs, vg, vi, rg, ri = exact(v, p, e, 0.30, 8)
+    assert rg < 1e-9, "MTD/greedy must record zero private regret"
+    assert vg < vs, "and must lose system value"
+    assert vi > vg, "the corrected policy must beat it"
+
+
+def test_adaptive_dosing_extends_time_to_progression():
+    """The dynamics reproduce competitive release without any bandit layer."""
+    from experiments.exp33_mechanistic_therapy import (time_to_progression, mtd,
+                                                       make_adaptive)
+    t_mtd, _ = time_to_progression(mtd)
+    t_adapt, _ = time_to_progression(make_adaptive(backoff=0.20, floor=0.50))
+    assert t_adapt > t_mtd * 1.4, "adaptive dosing must substantially extend TTP"

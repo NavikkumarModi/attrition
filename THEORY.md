@@ -1084,3 +1084,84 @@ agents) loses system value:
 
 Standard commons structure, with a bandit inside — and a target for the mechanism
 design direction (T-F).
+
+---
+
+## Stage 2 — mechanistic grounding of the adaptive-therapy domain
+
+The reduced-form domain set `(v, p, e)` by hand, which invites the objection that
+the parameters were chosen to produce the phenomena. They are now **derived from
+Lotka–Volterra competition dynamics** (`engines.py`, `exp33`):
+
+```
+dS/dt = r_S S (1 − (S + a_SR R)/K) − kill(dose)·S
+dR/dt = r_R R (1 − (R + a_RS S)/K)
+```
+
+Sensitive cells grow faster and are killed by the drug; resistant cells grow slower
+and are not; both compete for one carrying capacity, so a large sensitive population
+suppresses the resistant clone.
+
+**Derivation, nothing hand-set:**
+- `v_a` = burden reduction achieved by dose `a` in one treatment period
+- `p_a` = probability dose `a` drives the sensitive compartment below a floor,
+  estimated by perturbing initial tumour composition
+- `e_a` = permanent loss of future control once that compartment is gone
+
+**Derived parameters:**
+
+| dose | v | p | e | κ |
+|---|---|---|---|---|
+| 0.49 | 0.4013 | 0.000 | 0.4456 | 0.0000 |
+| 0.66 | 0.5037 | 0.025 | 0.4456 | 0.0111 |
+| 0.83 | 0.5534 | 0.530 | 0.4456 | 0.2362 |
+| 1.00 | 0.5698 | 1.000 | 0.4456 | 0.4456 |
+
+`std(κ) = 0.1705`. Note `e` is constant across doses — the damage of losing the
+sensitive compartment does not depend on which dose caused it — so this is
+structurally **case D** from the taxonomy (`p` varies, `e` constant), which
+Theorem 1 predicts breaks greedy.
+
+**Theory survives grounding:**
+
+| δ | V* | MTD (= greedy) | ECI | MTD loss | MTD private regret |
+|---|---|---|---|---|---|
+| 0.05 | 4.0955 | 3.8843 | 4.0551 | 5.2% | **0.000000** |
+| 0.15 | 4.0317 | 3.3318 | 3.9952 | 17.4% | **0.000000** |
+| 0.30 | 3.9662 | 2.5032 | 3.9094 | **36.9%** | **0.000000** |
+
+Maximum tolerated dose *is* the greedy policy — it maximises immediate burden
+reduction at every step. It records zero private regret and loses up to 36.9% of
+system value, on parameters nobody chose.
+
+### Direct dynamics: time to progression
+
+Running the dynamics without any bandit abstraction. Final burden cannot
+distinguish protocols — over a long enough horizon the resistant clone reaches
+carrying capacity under any policy. What differs is *how long that takes*, which is
+the endpoint the adaptive-therapy literature reports.
+
+| protocol | TTP (periods) | resistant fraction | vs MTD |
+|---|---|---|---|
+| MTD (always max dose) | 26 | 1.000 | — |
+| fixed low dose 0.5 | 29 | 0.999 | +12% |
+| adaptive, back off S<0.30 | 34 | 0.953 | +31% |
+| adaptive, back off S<0.40 | 38 | 0.955 | +46% |
+| adaptive, back off S<0.50 | **44** | 0.911 | **+69%** |
+
+Competitive release is **reproduced**, not resembled: deliberately retaining
+sensitive cells to suppress the resistant clone extends time to progression by 69%.
+
+### Note on an endpoint that does not work
+
+Cumulative burden reduction and final burden are both useless as endpoints here —
+every protocol converges to the same terminal state (resistant fraction 1.000,
+burden ≈ 0.998). An earlier version of this experiment compared protocols on final
+burden and found no difference, which was a property of the endpoint rather than of
+the protocols. Time to progression is the correct measure and is what the clinical
+literature uses.
+
+**Status of the claim.** The paper may now say the model reproduces a
+competitive-release ordering, rather than resembles one. It remains a two-compartment
+reduced model without spatial structure, pharmacokinetics, or regrowth heterogeneity,
+and no clinical conclusion should be drawn from it.

@@ -179,10 +179,32 @@ beaten in all four — by 30–49% where `κ` dispersion is largest.
 **Adaptive therapy is the sharpest case.** Maximum tolerated dose — administer the
 highest tolerable dose — *is* the greedy policy. Dose intensity raises immediate
 tumour control, the chance of exhausting the drug-sensitive population, and the
-damage done when that happens, all together. So `κ = p·e` is highly dispersed,
-exactly the regime where Theorem 1 says greedy fails. The model reproduces
-competitive release from first principles. (A reduced form, not a clinical model:
-real tumour dynamics are a population process.)
+damage done when that happens, all together.
+
+This domain is now **mechanistically grounded**: `(v, p, e)` are derived from
+Lotka–Volterra competition dynamics rather than set by hand.
+
+```python
+from evolving_bandits import derive_arm_parameters
+v, p, e, doses = derive_arm_parameters(engine_kwargs={"dt": 5.0}, s0_sd=0.26)
+```
+
+On those derived parameters MTD records private regret of **exactly 0.000000** and
+loses 5.2% / 17.4% / 36.9% of system value at δ = 0.05 / 0.15 / 0.30.
+
+Running the dynamics with no bandit layer at all, and measuring time to progression
+(the clinical endpoint — final burden cannot distinguish protocols, since the
+resistant clone always reaches carrying capacity eventually):
+
+| protocol | time to progression | vs MTD |
+|---|---|---|
+| MTD (always max dose) | 26 | — |
+| adaptive, back off at S<0.40 | 38 | +46% |
+| adaptive, back off at S<0.50 | **44** | **+69%** |
+
+Competitive release is reproduced, not assumed. Still a two-compartment reduced
+model with no spatial structure or pharmacokinetics — no clinical conclusion should
+be drawn from it.
 
 See `experiments/exp25_domains.py` for all four, and
 `experiments/exp17_agent_ecosystem.py` for a session trace where the greedy
