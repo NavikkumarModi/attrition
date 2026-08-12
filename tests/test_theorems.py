@@ -743,3 +743,32 @@ def test_k_is_structural_across_allocation_rules():
             if not np.isnan(k):
                 ks.append(k)
         assert 1.5 < float(np.mean(ks)) < 3.5, f"{rule}: k must stay near 2.5"
+
+
+def test_k_is_independent_of_pool_size_as_derived():
+    """k = a + 2*c*pbar: the pool size cancels because N_exh grows linearly in n."""
+    from experiments.exp43_derive_k import measure_k
+    ks = [measure_k(n=n, seeds=40)[0] for n in [6, 16, 40]]
+    assert max(ks) - min(ks) < 0.6, f"k must be flat in n, got {ks}"
+
+
+def test_k_scales_with_threshold_and_rate():
+    """The derived leading term is linear in c and in pbar."""
+    from experiments.exp43_derive_k import measure_k
+    k1, _ = measure_k(n=16, threshold=1, seeds=40)
+    k8, _ = measure_k(n=16, threshold=8, seeds=40)
+    assert k8 > k1 * 2.5, "k must grow with the precision threshold"
+    k_lo, _ = measure_k(n=16, p_lo=0.05, p_hi=0.15, seeds=40)
+    k_hi, _ = measure_k(n=16, p_lo=0.5, p_hi=0.95, seeds=40)
+    assert k_hi > k_lo * 2.0, "k must grow with the destruction rate"
+
+
+def test_refined_k_formula_is_accurate():
+    """k = 0.6 + 2*c*pbar predicts within ~0.4 across the tested range."""
+    from experiments.exp43_derive_k import measure_k, predict_k
+    for kw in [dict(threshold=1), dict(threshold=3), dict(threshold=8),
+               dict(p_lo=0.3, p_hi=0.7)]:
+        measured, _ = measure_k(n=16, seeds=40, **kw)
+        predicted = predict_k(refined=True, **kw)
+        assert abs(measured - predicted) < 0.45, (
+            f"{kw}: measured {measured:.2f} vs predicted {predicted:.2f}")

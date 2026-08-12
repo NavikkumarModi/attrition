@@ -1718,3 +1718,132 @@ Note also the value column: the two rules that improve realised value (delayed
 and learning why one should play well are in tension, which is the same tension
 Theorem 3 describes, now visible at the level of allocation design rather than
 sample size.
+
+---
+
+## Closed form for k — derived
+
+`k ≈ 2.5` was an empirical constant in exp41 and invariant to allocation in exp42.
+It now has a derivation.
+
+### Derivation
+
+Arm `i` is destroyed at round `d_i`, and its transition has
+`m_i = min(d_i, N − d_i)` usable observations on the thinner side. Call it unusable
+if `m_i < c` for a precision threshold `c`.
+
+Under an allocation that spreads pulls evenly, one arm is pulled per round and dies
+with probability `≈ p̄`, so destructions occur at an approximately constant rate and
+`d_i/N` is approximately uniform on `[0,1]`. Then
+
+```
+P(unusable) = P(d_i < c) + P(d_i > N − c) = 2c/N
+```
+
+and the expected count over `n` arms is `k = 2cn/N`. The key step is that `N` is
+not free: by the argument in Theorem 3 the episode ends when the pool is exhausted,
+so `N = N_exh = Σ_j 1/p_j ≈ n/p̄`. Substituting:
+
+```
+k  =  n · 2c · p̄ / n  =  2 · c · p̄
+```
+
+**The pool size cancels.** `k` depends only on the precision threshold and the mean
+destruction rate. That is exactly the invariance exp41 observed and could not
+explain: `N_exh` grows linearly in `n`, so the fraction of arms falling in the two
+end-windows falls as `1/n` while the number of arms rises as `n`.
+
+### Verification
+
+**(P1) independent of n** — predicted 1.74 throughout:
+
+| n | 6 | 10 | 16 | 24 | 40 |
+|---|---|---|---|---|---|
+| measured k | 2.40 | 2.47 | 2.23 | 2.43 | 2.32 |
+
+**(P2) linear in threshold c** and **(P3) linear in rate p̄** — both confirmed
+(k rises 1.32 → 5.23 as c goes 1 → 8; and 1.47 → 4.47 as p̄ goes 0.09 → 0.70).
+
+### The residual is a constant, and it is interpretable
+
+The leading term systematically underestimates by a fixed amount:
+
+| residual across 13 settings | mean | sd | range |
+|---|---|---|---|
+| measured − 2cp̄ | **0.613** | 0.149 | [0.26, 0.92] |
+
+Constant across pool sizes 6–40, thresholds 1–8, and rates 0.09–0.70. Its source is
+identifiable: **the last arm destroyed has zero observations after its transition
+by construction**, whatever `c` and `p̄` are, so it is unusable regardless of the
+end-window argument. The uniform-density approximation cannot see this because it
+treats the boundary as a limit rather than an atom.
+
+### Final form
+
+```
+k  =  a + 2·c·p̄ ,        a ≈ 0.6
+```
+
+Mean absolute error **0.135** across the tested range.
+
+| setting | measured | predicted | error |
+|---|---|---|---|
+| c=1 | 1.32 | 1.18 | +0.14 |
+| c=3 | 2.23 | 2.34 | −0.11 |
+| c=8 | 5.23 | 5.25 | −0.02 |
+| p̄=0.09 | 1.47 | 1.15 | +0.32 |
+| p̄=0.70 | 4.47 | 4.81 | −0.34 |
+
+**Status.** The `2cp̄` term is derived; `a` is measured, with an identified cause but
+no closed form. Combining with the pair-counting model of exp41 gives a full
+prediction for ordinal recovery,
+`E[τ] ≈ C(n−k, 2)/C(n, 2)` with `k = 0.6 + 2cp̄` — which reproduces the pool-size
+scaling but, as recorded in exp42, not the allocation-rule dependence.
+
+
+---
+
+# Proof status — complete inventory
+
+Every claim in the project, classified by what actually supports it. This exists so
+that "we proved X" is never ambiguous.
+
+## Proven exactly
+
+| result | statement | proof |
+|---|---|---|
+| **T1 sufficiency** | constant `κ` ⟹ greedy optimal at every state and horizon | Expected burden is policy-invariant under constant `κ`, because each round contributes `κ` in expectation whatever arm is chosen, and `N = min(T, Σ G_j)` is allocation-order independent. Maximising value then reduces to the `e ≡ 0` problem, where memorylessness gives greedy. Verified exactly by DP: burden identical to 1e-16 across five structurally different policies, in both exhausting and non-exhausting regimes. |
+| **T1 necessity** | `κ` varies ⟹ ∃ instance where greedy is strictly suboptimal | The hot/safe construction gives gap exactly `m·δE > 0`. Exact at 8/8 settings. |
+| **T2b** | pure sequencing optimum is ascending in `e`; values irrelevant | `Σ v_a` is constant when every arm is pulled once, so only the burden schedule matters; an arm at position `s` pays `(n−s)` times. Brute force over all `n!` orderings: exact at 8/8. |
+| **T3** | `SE(δê_i) ≥ 2σ/√min(T, N_exh)`, non-decreasing in `T` | Difference-in-means is the MLE conditional on other `e_j` known; adding free parameters weakly increases variance (Schur complement), so the oracle variance lower-bounds the joint. AM–HM gives `4σ²/N`. Three-part numerical verification; inequality chain holds 14/14. |
+| **T4** | zero-regret policy loses `m·δE`, unbounded | Explicit construction. Greedy's regret is zero by definition of the benchmark; the gap is computed in closed form. Exact at 15/15 against DP. |
+| **T5** | near-optimal policies are *forced* to report private regret `m·ε` | Explicit construction; the optimum declines a strictly best-available arm at each of `m` deferrals. Exact at 8/8. |
+
+## Derived, with a measured constant
+
+| result | derived part | measured part |
+|---|---|---|
+| **k** (positional penalty) | `k = 2·c·p̄`, pool size cancels because `N_exh ∝ n` | additive `a ≈ 0.6` from the last-destroyed arm, which has zero after-data by construction. Mean abs. error 0.135–0.185. |
+
+## Empirical, with a mechanism identified but no proof
+
+| result | evidence | what is missing |
+|---|---|---|
+| ECI captures 52–99% of the gap | exact DP across dispersion levels | no bound on the omitted option term |
+| rollout closes a constant fraction | per-policy log-log slopes 1.11, 1.25 | no proof the fraction is constant |
+| price of anarchy ≤ 1.297; κ-aware agents → 1.004 | exact DP planner, 6 instances/cell | no bound on PoA in terms of `m` and `std(κ)` |
+| ordinal `E[τ] ≈ C(n−k,2)/C(n,2)` | tracks pool-size scaling (0.831 vs 0.851 at n=30) | fails to reproduce allocation-rule dependence (predicts 0.700–0.736 against observed 0.593–0.761) |
+| identification cannot be improved by design | 4 allocation rules, random best at both pool sizes | mechanism not isolated; three candidate explanations falsified |
+| terminal commitment failure modes | 300 seeds/cell, exact operating-value evaluation | no closed form for the optimal experiment allocation |
+
+## Falsified and retained in the record
+
+IPIC preservation heuristic · endogenous/exogenous unification claim ·
+effective-horizon index refinement · horizon-scaling of the T4 gap · ECI exactness
+in pure sequencing · per-arm and feature-based learning of `e` · `√m` scaling of
+multi-agent estimation error · value of communication · uniform-tax mechanisms ·
+quadratic rollout scaling · ordinal learnability from data · collinearity
+explanation for allocation-rule dependence · τ ≈ 0.68 as a universal ceiling
+
+**Thirteen falsified hypotheses, all mine.** The ratio of falsified to surviving
+claims is the reason the surviving ones are worth stating.
