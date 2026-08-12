@@ -1463,3 +1463,121 @@ which — a far weaker elicitation problem.
 **Open.** Whether ordinal recovery has its own floor. The transitions argument
 bounds cardinal estimation; a matching analysis for rank recovery would complete
 the picture and is the natural next theorem.
+
+---
+
+## Ordinal recovery has its own floor — and an earlier claim needs correcting
+
+### The conjecture, and what actually happens
+
+T-F concluded that "the mechanism ruled out by Theorem 3 is not the one required",
+on the grounds that ordinal knowledge suffices and ordinal recovery needs less
+information than cardinal. The first half is right. **The second half was wrong,
+and the error was a subtle one worth recording**: `make_rank_based` reads the
+ordering off the *true* `e`, so exp38 established what information *suffices*, not
+what is *recoverable*. It was an oracle mechanism.
+
+Testing recovery directly (`exp39`), with Kendall tau between estimated and true
+ordering alongside cardinal RMSE:
+
+**Varying noise** (spacing fixed at 0.25):
+
+| σ | cardinal RMSE | ordinal τ |
+|---|---|---|
+| 0.05 | 0.1654 | 0.386 |
+| 0.30 | 0.3194 | 0.163 |
+| 1.00 | 0.9407 | 0.068 |
+
+**Varying spacing** (σ fixed at 0.30):
+
+| spacing | cardinal RMSE | ordinal τ |
+|---|---|---|
+| 0.05 | 0.3165 | 0.091 |
+| 0.50 | 0.3271 | 0.254 |
+| 1.00 | 0.3539 | 0.391 |
+
+**Pushed to the limit:**
+
+| σ | spacing | ratio | τ |
+|---|---|---|---|
+| 0.020 | 1.0 | 50 | 0.569 |
+| 0.020 | 2.0 | 100 | 0.631 |
+| 0.005 | 2.0 | 400 | 0.626 |
+| 0.001 | 4.0 | **4000** | **0.676** |
+
+**Rank recovery saturates near τ ≈ 0.68 and does not approach 1**, even with the
+gap-to-noise ratio raised four thousand-fold.
+
+### Why, and why it is the same mechanism
+
+The saturation has the same cause as the cardinal floor. Each arm supplies exactly
+one transition, and arms destroyed very early or very late have almost no data on
+one side of it. Their estimates are poor regardless of noise, and a handful of
+badly-placed arms caps the achievable rank correlation. Reducing σ cannot help,
+because the deficit is positional, not statistical.
+
+> **Both cardinal and ordinal recovery are bounded by the transition structure.**
+> Widening the gaps improves ordinal recovery where it does nothing for cardinal
+> recovery, so the two obey different laws — but neither converges.
+
+### The corrected conclusion, which is stronger
+
+The practical implication changes and improves:
+
+- ordinal information **suffices** for mechanism design (exp38, oracle ordering);
+- ordinal information is **not learnable** from consumption data (exp39);
+- therefore the ordering must be **supplied from domain knowledge**.
+
+This reinforces rather than weakens the paper's central practical claim. "Specify,
+don't estimate" now covers both magnitudes and order. What T-F genuinely
+contributes is that the *specification burden is lighter than it appeared*: an
+operator must say which actions are more damaging than which, not how damaging each
+one is. That is a real reduction in what must be elicited — and it is elicitation,
+not estimation, either way.
+
+---
+
+## T-G — why rollout reaches 99.5–99.9%
+
+### The conjecture was wrong
+
+Proposed: an error survives one improvement step only if the base policy is wrong
+at *two* separate points, so the rollout gap should scale as the **square** of the
+base gap. Predicted log-log slope 2.
+
+Measured (`exp40`, exact DP reference, 12 instances per cell):
+
+| base policy | mean ratio (rollout gap / base gap) | std | gap closed | log-log slope |
+|---|---|---|---|---|
+| greedy | 0.0406 | 0.0117 | **95.9%** | **1.11** |
+| ECI | 0.1067 | 0.0265 | **89.3%** | **1.25** |
+
+Slopes are ~1.1–1.25, not 2. **One improvement step closes a fixed fraction of the
+base gap; it does not square it.** The ratio is near-constant within each base
+policy across a base gap ranging from 1.9% to 31.9%.
+
+(An initial pooled fit gave slope 0.59, which is meaningless — pooling two base
+policies with different constants produces a spurious exponent. The per-policy fits
+are the correct analysis.)
+
+### The finding that came out instead
+
+Rollout closes **95.9%** of greedy's gap but only **89.3%** of ECI's. That looks
+backwards — the better base policy is improved *less*, proportionally.
+
+The explanation is that the two base policies leave behind different kinds of
+error. Greedy's mistakes are mostly shallow: a single bad choice that one step of
+lookahead can see and correct. ECI has already removed those, by construction — the
+`δκ_a(T-t)` charge is exactly a one-step correction. What remains under ECI are
+errors that genuinely require deeper lookahead, and a single improvement step
+recovers proportionally less of them.
+
+> **Corollary.** The value of one rollout step is inversely related to how much
+> one-step correction the base policy already applies. This predicts diminishing
+> returns from stacking corrections: ECI plus rollout is close to what a single
+> improvement step can deliver, and further gains need genuinely deeper search.
+
+Practically this settles the design question the empirical results raised. ECI alone
+where compute is tight; ECI plus one rollout step where decisions are expensive
+enough to justify `m·K·T` simulations; and beyond that, deeper search rather than
+more corrections at the same depth.

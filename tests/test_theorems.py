@@ -625,3 +625,71 @@ def test_ordinal_mechanism_beats_uniform_tax():
         "ordinal pricing must beat a flat charge"
     assert np.mean(poa["rank"]) < np.mean(poa["greedy"]), \
         "ordinal pricing must beat no charge"
+
+
+def test_ordinal_recovery_also_saturates():
+    """Rank recovery does not approach 1 even at vanishing noise: each arm still
+    supplies one transition, and early/late deaths leave one side empty."""
+    from experiments.exp39_ordinal_floor import trial
+    taus = []
+    for s in range(25):
+        r, t = trial(n=8, sigma=0.001, spacing=4.0, seed=1000 + s)
+        if not np.isnan(t):
+            taus.append(t)
+    tau = float(np.mean(taus))
+    assert tau < 0.85, ("ordinal recovery must saturate below perfect even at "
+                        f"a gap-to-noise ratio of 4000 (got tau={tau:.3f})")
+    assert tau > 0.4, "but must still be better than chance"
+
+
+def test_ordinal_improves_with_spacing_cardinal_does_not():
+    """The two obey different laws: widening gaps helps ranking, not magnitudes."""
+    from experiments.exp39_ordinal_floor import sweep
+    res = sweep("spacing", [0.05, 1.00], n=8, seeds=25)
+    (_, rmse_lo, tau_lo), (_, rmse_hi, tau_hi) = res
+    assert tau_hi > tau_lo * 1.5, "wider spacing must improve rank recovery"
+    assert rmse_hi >= rmse_lo * 0.9, "but must not improve cardinal recovery"
+
+
+def test_rollout_closes_a_constant_fraction_not_the_square():
+    """T-G: one improvement step closes a fixed fraction of the base gap.
+    The compounding conjecture (quadratic) is falsified."""
+    from experiments.exp40_rollout_guarantee import gaps
+    rng = np.random.default_rng(77)
+    ratios = []
+    bases = []
+    for spread in [0.3, 1.2]:
+        G, RG = [], []
+        for _ in range(8):
+            n, T, delta = 6, 8, 0.12
+            v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
+            p = np.clip(rng.uniform(0.3, 1.0, n), 0.05, 1.0)
+            e = np.clip(1.0 + rng.normal(0, spread, n), 0.0, None)
+            a, b, _, _ = gaps(v, p, e, delta, T)
+            G.append(a); RG.append(b)
+        base, roll = float(np.mean(G)), float(np.mean(RG))
+        bases.append(base)
+        ratios.append(roll / max(base, 1e-12))
+    assert bases[1] > bases[0] * 1.5, "the two cells must differ in base gap"
+    # ratio roughly constant => linear, not quadratic
+    assert abs(ratios[1] - ratios[0]) < 0.5 * max(ratios), \
+        "the closed fraction must be roughly constant across base gap sizes"
+    assert all(r < 0.3 for r in ratios), "rollout must close most of the gap"
+
+
+def test_rollout_helps_greedy_more_than_eci_proportionally():
+    """ECI has already removed the shallow errors one step of lookahead sees."""
+    from experiments.exp40_rollout_guarantee import gaps
+    rng = np.random.default_rng(77)
+    G, RG, E, RE = [], [], [], []
+    for _ in range(10):
+        n, T, delta = 6, 8, 0.12
+        v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
+        p = np.clip(rng.uniform(0.3, 1.0, n), 0.05, 1.0)
+        e = np.clip(1.0 + rng.normal(0, 1.0, n), 0.0, None)
+        a, b, c, d = gaps(v, p, e, delta, T)
+        G.append(a); RG.append(b); E.append(c); RE.append(d)
+    frac_greedy = 1 - np.mean(RG) / np.mean(G)
+    frac_eci = 1 - np.mean(RE) / np.mean(E)
+    assert frac_greedy > frac_eci, (
+        "rollout must close proportionally more of the weaker base policy's gap")

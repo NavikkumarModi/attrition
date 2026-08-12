@@ -28,11 +28,18 @@ def make_uniform_tax(tax):
     return rule
 
 def make_rank_based(scale):
-    """Uses only the ORDERING of externalities, not their values.
+    """Prices by the ORDERING of externalities rather than their values.
 
-    This is the key object: Theorem 3 bounds how precisely e can be estimated, but
-    it says nothing about recovering the ordering, which needs far less
-    information. A rank-based charge is implementable where a Pigouvian one is not.
+    IMPORTANT: this rule reads the ordering off the true `e`, so it is an ORACLE
+    ordinal mechanism. It establishes what information SUFFICES -- ordinal is
+    enough, cardinal is not required -- and says nothing about whether the ordering
+    can be learned. exp39 shows it largely cannot: rank recovery saturates around
+    tau = 0.68 even as noise goes to zero, because each arm still supplies one
+    transition and arms dying early or late have almost no data on one side.
+
+    The practical reading is therefore that the ordering must be SUPPLIED from
+    domain knowledge. That is a weaker elicitation requirement than magnitudes, but
+    it is still elicitation, not estimation.
     """
     def rule(idx, v, p, e, delta, T, t, b):
         rank = np.argsort(np.argsort(e)) / max(len(e) - 1, 1)
@@ -81,8 +88,12 @@ if __name__ == "__main__":
     print("  preference equally and leaves the ordering that caused the problem")
     print("  intact. At m=2 it is worse than no charge at all.")
     print()
-    print("  ORDINAL knowledge suffices. Charging by rank -- or simply banning the")
+    print("  ORDINAL knowledge SUFFICES. Charging by rank -- or simply banning the")
     print("  worst third -- recovers nearly all of what true kappa pricing achieves.")
-    print("  Theorem 3 bounds how precisely e can be ESTIMATED; it says nothing")
-    print("  about recovering the ORDER, which needs far less information. The")
-    print("  mechanism ruled out by Theorem 3 is not the one that is needed.")
+    print()
+    print("  Caveat, established in exp39: these rules read the ordering off the")
+    print("  true e, so they are ORACLE ordinal mechanisms. They show what")
+    print("  information is enough, not that it can be learned -- rank recovery")
+    print("  from data saturates near tau = 0.68 even at vanishing noise. The")
+    print("  ordering must be supplied from domain knowledge. Weaker elicitation")
+    print("  than magnitudes, but elicitation nonetheless.")
