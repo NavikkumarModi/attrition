@@ -26,11 +26,15 @@ from .policies import (State, Greedy, ECI, Conservative, SortByE, Rollout,
                        ThompsonSampling, UCB)
 from .domains import (agent_tools, adaptive_therapy, platform_trial,
                       design_space, DOMAIN_NOTES)
-from .engines import LotkaVolterraTumour, derive_arm_parameters
+from .engines import (LotkaVolterraTumour, derive_arm_parameters,
+                      PlatformTrialEngine, derive_trial_parameters,
+                      DesignSpaceEngine, derive_design_space_parameters)
 
 __version__ = "0.1.0"
 __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
            "Conservative", "SortByE", "Rollout", "ThompsonSampling", "UCB",
            "agent_tools", "adaptive_therapy", "platform_trial", "design_space",
            "DOMAIN_NOTES",
-           "LotkaVolterraTumour", "derive_arm_parameters"]
+           "LotkaVolterraTumour", "derive_arm_parameters",
+           "PlatformTrialEngine", "derive_trial_parameters",
+           "DesignSpaceEngine", "derive_design_space_parameters"]

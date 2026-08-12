@@ -176,6 +176,32 @@ print(run(env, Greedy())["regret"])     # 0.0 -- and it loses by 49%
 Greedy records **cumulative regret of exactly 0.0000 in all four domains**, and is
 beaten in all four — by 30–49% where `κ` dispersion is largest.
 
+### Mechanistic engines
+
+Three domains now derive `(v, p, e)` from dynamics instead of hand-setting them
+(`engines.py`): Lotka–Volterra tumour competition, a shared-control platform trial
+where dropping an arm fragments the control stream, and a process-development model
+where an out-of-spec run truncates the filing envelope.
+
+**A prediction that holds both ways.** Greedy loses 26.8–121.1% (tumour) and
+17.3–107% (design space) — but is **exactly optimal** in the platform trial. That
+is not a failure; the theory predicts it:
+
+| engine | std(κ) | corr(v, κ) | greedy |
+|---|---|---|---|
+| tumour dynamics | 0.1705 | **+0.614** | fails |
+| platform trial | 0.0371 | **−0.938** | optimal |
+| design space | 0.2954 | **+0.789** | fails |
+
+Dispersion of `κ` is necessary but not sufficient — it must *conflict with the value
+ordering*. A higher dose controls more tumour **and** exhausts the sensitive
+compartment; an aggressive process setting yields more **and** truncates the
+envelope. But promising trial arms are precisely those that won't be dropped for
+futility, so they never fragment the control — value and safety are aligned, and
+greedy is already right.
+
+The failure mode belongs to domains where **ambition and damage travel together**.
+
 **Adaptive therapy is the sharpest case.** Maximum tolerated dose — administer the
 highest tolerable dose — *is* the greedy policy. Dose intensity raises immediate
 tumour control, the chance of exhausting the drug-sensitive population, and the

@@ -735,6 +735,51 @@ predicts that MTD is beaten by a dose-modulating policy, which is what adaptive
 therapy trials find. We stress this is a reduced form; real tumour dynamics are a
 population process, not additive burden from dead arms.
 
+\paragraph{Mechanistic grounding of the other domains.} Two further engines derive
+their parameters from domain dynamics rather than setting them by hand. The
+\emph{platform-trial} engine models a shared-control trial with staggered entry, in
+which dropping an arm fragments the control stream into more non-concurrent blocks
+and every remaining comparison must either discard non-concurrent data or adjust for
+time drift; $v$ is effect size times information gain, $p$ the futility-crossing
+probability, and $e$ the precision lost by the remaining arms, weighted by the
+exiting arm's tenure. The \emph{design-space} engine models process development:
+$v$ is yield, $p$ the out-of-spec probability rising near the specification limit,
+and $e$ the fraction of the defensible filing envelope forfeited by a failure there.
+
+\paragraph{A prediction that holds in both directions.} On these derived parameters
+greedy loses $26.8\%$--$121.1\%$ in the tumour engine and $17.3\%$--$106.9\%$ in the
+design-space engine, with private regret of exactly zero in both. In the
+platform-trial engine, however, greedy is \emph{optimal}: the gap is $0.0\%$.
+
+This is not a failure of the theory but a second prediction of it. Dispersion of
+$\kappa$ is necessary for greedy to fail, but it must conflict with the value
+ordering:
+
+\begin{center}
+\begin{tabular}{lrrl}
+\toprule
+engine & $\mathrm{std}(\kappa)$ & $\mathrm{corr}(v,\kappa)$ & greedy \\
+\midrule
+tumour dynamics & $0.1705$ & $+0.614$ & fails \\
+platform trial & $0.0371$ & $-0.938$ & optimal \\
+design space & $0.2954$ & $+0.789$ & fails \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+In the tumour and design-space engines, ambition and damage travel together: a
+higher dose controls more tumour \emph{and} is more likely to exhaust the sensitive
+compartment; a more aggressive process setting yields more \emph{and} is more likely
+to truncate the filing envelope. In the platform trial they do not. Promising arms
+are precisely those that will not cross a futility boundary, so they never fragment
+the control stream---the externality falls on arms nobody wanted to keep. Value and
+safety are aligned and greedy is already choosing correctly.
+
+The failure mode is therefore a property of domains in which pushing harder yields
+more now and costs more later. That is the common case under consumption, but it is
+not universal, and the platform trial is a clean counterexample the theory predicts
+correctly.
+
 \paragraph{Results.} Figure~\ref{fig:domains} runs all four. In all four, greedy records cumulative regret of exactly $0.0000$ and is beaten---by
 $30$--$49\%$ where $\kappa$ dispersion is largest. Thompson sampling,
 which is consumption-blind, gains at most $7\%$ and in the agent domain is

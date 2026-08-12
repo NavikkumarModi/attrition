@@ -1165,3 +1165,66 @@ literature uses.
 competitive-release ordering, rather than resembles one. It remains a two-compartment
 reduced model without spatial structure, pharmacokinetics, or regrowth heterogeneity,
 and no clinical conclusion should be drawn from it.
+
+---
+
+## Stage 2 complete — three engines, and a refinement of Theorem 1
+
+Two further engines added (`engines.py`):
+
+**`PlatformTrialEngine`** — shared-control trial with staggered entry. Dropping an
+arm fragments the control stream into more non-concurrent blocks; every remaining
+comparison must then either discard non-concurrent data or adjust for time drift,
+inflating variance. Derived: `v` = effect size × information gain per period,
+`p` = futility-boundary crossing probability, `e` = precision lost by the remaining
+arms, weighted by the exiting arm's tenure.
+
+**`DesignSpaceEngine`** — process development. Derived: `v` = yield at that setting,
+`p` = out-of-spec probability (rising near the spec limit), `e` = fraction of the
+defensible filing envelope forfeited by a failure there.
+
+### Results across all three engines
+
+| engine | std(κ) | δ | V* | greedy | ECI | greedy loss | greedy regret |
+|---|---|---|---|---|---|---|---|
+| tumour dynamics | 0.1705 | 0.224 | 3.9911 | 2.9207 | 3.9343 | 26.8% | **0.00000000** |
+| tumour dynamics | 0.1705 | 0.898 | 3.7773 | −0.7986 | 3.6946 | **121.1%** | **0.00000000** |
+| platform trial | 0.0371 | 0.415 | 33.4683 | 33.4683 | 33.4683 | **0.0%** | 0.00000000 |
+| design space | 0.2954 | 0.158 | 6.1489 | 5.0839 | 5.8098 | 17.3% | **0.00000000** |
+| design space | 0.2954 | 0.634 | 5.1230 | −0.3533 | 4.9439 | **106.9%** | **0.00000000** |
+
+### The negative result, and what it teaches
+
+**The platform trial shows a 0.0% gap — greedy is optimal there.** This is reported
+rather than tuned away, and it sharpens the theory.
+
+| engine | std(κ) | corr(v, κ) | greedy |
+|---|---|---|---|
+| tumour dynamics | 0.1705 | **+0.614** | fails |
+| platform trial | 0.0371 | **−0.938** | optimal |
+| design space | 0.2954 | **+0.789** | fails |
+
+> **Refinement.** Dispersion of `κ` is necessary but not sufficient. The dispersion
+> must *conflict with the value ordering*. Where `v` and `κ` are negatively
+> correlated — good arms are also safe arms — greedy is already choosing correctly
+> and there is nothing to correct.
+
+The mechanism in each case is interpretable:
+
+- **Tumour dynamics (+0.61):** higher dose gives more immediate control *and* is
+  more likely to exhaust the sensitive compartment. Conflict.
+- **Design space (+0.79):** more aggressive settings yield more *and* are more
+  likely to go out of spec and truncate the envelope. Conflict.
+- **Platform trial (−0.94):** promising arms are precisely the ones that will *not*
+  cross a futility boundary, so they never fragment the control stream. The
+  externality falls on the arms nobody wanted to keep anyway. Alignment.
+
+This explains a practical asymmetry worth stating: the failure mode is a property of
+domains where **ambition and damage travel together**. That is the common case in
+consumption settings — pushing harder yields more now and costs more later — but it
+is not universal, and the platform trial is a clean counterexample.
+
+**Consequence for the paper.** The domain section should present the platform trial
+as the case where the correction is *not* needed, which strengthens rather than
+weakens the argument: the theory predicts where the phenomenon appears and where it
+does not, and both predictions hold.

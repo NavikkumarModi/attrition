@@ -401,3 +401,32 @@ def test_adaptive_dosing_extends_time_to_progression():
     t_mtd, _ = time_to_progression(mtd)
     t_adapt, _ = time_to_progression(make_adaptive(backoff=0.20, floor=0.50))
     assert t_adapt > t_mtd * 1.4, "adaptive dosing must substantially extend TTP"
+
+
+def test_all_three_engines_produce_dispersed_kappa():
+    from evolving_bandits import (derive_arm_parameters, derive_trial_parameters,
+                                  derive_design_space_parameters)
+    for fn in [lambda: derive_arm_parameters(engine_kwargs={"dt": 5.0},
+                                             s0_sd=0.26)[:3],
+               lambda: derive_trial_parameters(periods=5)[:3],
+               lambda: derive_design_space_parameters(n_settings=6)[:3]]:
+        v, p, e = fn()
+        assert np.std(np.asarray(p) * np.asarray(e)) > 0.01
+
+
+def test_greedy_fails_only_when_value_and_externality_conflict():
+    """The refinement: dispersion alone is not enough, it must oppose value."""
+    from experiments.exp34_all_engines import analyse, ENGINES
+    for name, fn in ENGINES:
+        v, p, e = fn()
+        v = np.asarray(v, float)
+        p = np.clip(np.asarray(p, float), 1e-6, 1.0)
+        e = np.asarray(e, float)
+        corr = float(np.corrcoef(v, p * e)[0, 1])
+        delta = 0.4 / max(float(np.mean(e)), 1e-9)
+        vs, vg, vi, rg = analyse(v, p, e, delta, 8)
+        assert rg < 1e-9, f"{name}: greedy must have zero private regret"
+        if corr > 0.3:
+            assert vg < vs - 1e-6, f"{name}: conflict implies greedy loses"
+        elif corr < -0.3:
+            assert abs(vs - vg) < 1e-6, f"{name}: alignment implies greedy optimal"
