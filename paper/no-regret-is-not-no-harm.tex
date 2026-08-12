@@ -77,6 +77,27 @@ The greedy router's zero-regret record is not evidence of good behaviour. It is 
 artefact of a benchmark that degrades in lockstep with the damage being done: every
 call greedy makes is optimal \emph{given the ecosystem it has already ruined}.
 
+Figure~\ref{fig:divergence} shows the phenomenon in its cleanest form. As the
+coupling between arms strengthens, the greedy policy's cumulative regret stays
+pinned at exactly zero while its realised value falls monotonically and eventually
+turns negative---below the value of taking no action at all---even as the optimal
+policy remains comfortably positive. The two panels are computed on the same
+instances. A practitioner monitoring the left panel would see nothing wrong at any
+point.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{fig1_divergence.pdf}
+\caption{The central phenomenon. \textbf{(a)} Greedy's cumulative regret against
+the best-available-arm benchmark, computed exactly: identically zero at every
+coupling strength, because greedy never fails to pull the best arm currently
+available. \textbf{(b)} Realised value on the same instances. The shaded region is
+the loss. At strong coupling the zero-regret policy finishes net-negative while the
+optimum stays positive. Averages over 20 instances, $n=6$, $T=10$, exact dynamic
+programming.}
+\label{fig:divergence}
+\end{figure}
+
 This paper formalises that failure. Our contributions:
 
 \begin{itemize}
@@ -192,7 +213,28 @@ $56.2\%$ violations when $\kappa$ varies. The inequality holds precisely when th
 theorem says greedy is optimal.
 
 The optimality gap grows monotonically with $\mathrm{std}(\kappa)$, from $5.9\%$ to
-$29.1\%$ across six bins over 240 instances.
+$29.1\%$ across six bins over 240 instances. Figure~\ref{fig:char} summarises both
+findings.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{fig2_characterisation.pdf}
+\caption{Theorem~\ref{thm:char}. \textbf{(a)} Five structural cases. Greedy is
+exactly optimal whenever $\kappa=p\,e$ is constant, and fails whenever it is not.
+Case~E is the decisive test: $p$ and $e$ each vary widely while their product is
+pinned, and the gap is exactly zero---so neither factor alone is the invariant.
+Case~D was a prediction of the refined conjecture and broke greedy as predicted.
+\textbf{(b)} The gap grows monotonically with the dispersion of $\kappa$, while the
+corrected index (Section~\ref{sec:eci}) stays flat, so its advantage grows without
+bound. Error bars are standard errors over 12 instances.}
+\label{fig:char}
+\end{figure}
+
+The practical reading of the characterisation is that neither high destruction
+probability nor high externality is by itself a reason to deviate from greedy. An
+arm that is fragile but harmless, or damaging but robust, can be treated normally.
+Only the \emph{product}---the damage a pull is expected to cause---distinguishes
+arms for planning purposes.
 
 \section{A zero-regret policy can destroy unbounded value}
 
@@ -274,10 +316,30 @@ to within $0.1\%$; the AM--HM floor is attained exactly at the balanced split
 (ratio $1.0000$); and $\mathbb{E}[N] = \min(T, \sum_j 1/p_j)$ holds including when
 $T$ binds.
 
-The horizon-independence is stark. At $p = 0.9$, increasing $T$ from $20$ to $320$
-changes RMSE by \emph{zero}---$0.2329$ at every horizon, because the pool caps the
-data at $8.8$ rounds. At $p = 0.1$ the round count climbs $20 \to 40 \to 71 \to
-82.3 \to 83.2$, flattening exactly at the predicted $80$.
+The horizon-independence is stark, and Figure~\ref{fig:floor} makes it visible. At
+$p = 0.9$, increasing $T$ from $20$ to $320$---a sixteenfold increase---changes RMSE
+by \emph{zero} to four decimal places, because the pool caps the available data at
+$8.8$ rounds no matter how long we wait. At $p = 0.1$ the round count climbs
+$20 \to 40 \to 71 \to 82.3 \to 83.2$, flattening exactly at the predicted
+$\sum_j 1/p_j = 80$, and the error curve flattens with it.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{fig3_estimation_floor.pdf}
+\caption{Theorem~\ref{thm:floor}. \textbf{(a)} Estimation error for the externality
+vector as a function of horizon. At high consumption rates the curve is perfectly
+flat: waiting longer yields no additional information. Only at $p=0.1$, where the
+horizon binds before the pool does, does more time help---and only until the pool
+becomes the binding constraint. \textbf{(b)} The mechanism. Dotted lines mark the
+predicted budget $\sum_j 1/p_j$; the realised number of rounds saturates there. The
+data-generating process is the consumption itself. Averages over 40 runs.}
+\label{fig:floor}
+\end{figure}
+
+The consequence for practice is uncomfortable. In precisely the regimes where
+irreversible actions matter most---high $p$, where a single call can permanently
+remove a resource---the agent has the least opportunity to learn what those actions
+cost, because every observation is purchased by destroying the thing being priced.
 
 \begin{corollary}[The central tension]
 As $p$ rises, $\kappa = p e$ grows, so the externality matters more; simultaneously
@@ -306,6 +368,7 @@ is what makes it hard to estimate.
 \section{Corrections}
 
 \subsection{The externality-corrected index}
+\label{sec:eci}
 
 Theorem~\ref{thm:char} hands over the correction. Pulling $a$ creates expected
 permanent burden $\delta\kappa_a$ charged against every remaining round:
@@ -370,12 +433,53 @@ ECI & \textbf{21.214} & 10.069 \\
 \end{tabular}
 \end{table}
 
+Figure~\ref{fig:policies} extends this across coupling strengths.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{fig4_policies.pdf}
+\caption{Policy comparison, $n=20$, $T=60$, 25 seeds. \textbf{(a)} Realised value
+against externality dispersion. The corrected index dominates throughout, and its
+margin widens as coupling strengthens. \texttt{conservative} uses no per-arm
+knowledge at all and still beats every consumption-blind method. \textbf{(b)} Value
+and cumulative regret side by side. The two orderings are close to reversed:
+\texttt{greedy} records the lowest regret and near-lowest value; \texttt{eci}
+records the highest regret and the highest value.}
+\label{fig:policies}
+\end{figure}
+
 Thompson sampling is consistently \emph{worse} than greedy under known parameters.
 Its exploration is not free here: sampling a suboptimal arm can destroy a
 low-value, high-externality arm. At strong coupling the corrected index nearly
 triples Thompson's realised value ($20.8$ vs.\ $7.2$). The mechanisms compose
 rather than compete---TS handles uncertainty in $v$, ECI handles consumption---and
 TS+ECI dominates both.
+
+\subsection{Agent tool ecosystems}
+
+Figure~\ref{fig:trace} returns to the routing example of Section~1 and shows the
+three quantities side by side over a single session. Panel (a) is what an
+operations dashboard displays; panels (b) and (c) are what is actually happening.
+The greedy router's regret trace is a flat line at zero for the entire session. Its
+value per call steps downward three times, and its tool count falls to one. The
+corrected router shows visible, non-zero regret throughout---and ends the session
+delivering more value per call with more tools still alive.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{fig5_agent_trace.pdf}
+\caption{A single routing session, identical seed and tool set. \textbf{(a)} The
+metric: greedy's per-step regret is zero throughout, while the corrected router
+accrues visible regret. \textbf{(b)} Value per call: the router with worse regret
+delivers more. \textbf{(c)} Surviving tools: the router with worse regret preserves
+more of the ecosystem. The visible regret in (a) is the \emph{price of
+preservation}, and the standard metric records it as a defect.}
+\label{fig:trace}
+\end{figure}
+
+This is the practical form of Theorem~\ref{thm:vacuity}. Nothing in panel (a)
+would trigger an alert, a rollback, or a model review. The failure is invisible to
+the instrument.
 
 \section{Limitations}
 
