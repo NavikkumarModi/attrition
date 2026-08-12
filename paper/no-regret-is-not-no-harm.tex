@@ -550,12 +550,48 @@ This is the practical form of Theorem~\ref{thm:vacuity}. Nothing in panel (a)
 would trigger an alert, a rollback, or a model review. The failure is invisible to
 the instrument.
 
+\section{Robustness to the coupling form}
+\label{sec:robust}
+
+The additive burden $B(S) = \delta\sum_{\text{dead}} e_i$ is a modelling choice, so
+we test it against four alternatives under exact dynamic programming:
+multiplicative (rewards scaled by $\prod(1-\delta e_i)$), saturating
+($B_{\max}(1-e^{-\delta\sum e_i})$), networked (only graph-neighbours of the dead
+arm are harmed), and concave ($\delta(\sum e_i)^{0.6}$).
+
+\paragraph{Theorem~\ref{thm:vacuity} is robust to all five.} Greedy records regret
+of exactly $0.0000000000$ under every coupling form while incurring positive value
+loss under every one ($0.44$--$1.82$). This follows from the proof: zero regret is a
+consequence of greedy's definition against the best-available benchmark, not of the
+burden's functional form.
+
+\paragraph{Theorem~\ref{thm:char} requires separability.} Here the picture is more
+interesting. The characterisation holds exactly for additive, multiplicative and
+networked coupling (gap $0.000000\%$ under constant $\kappa$), and fails slightly
+for saturating ($0.135\%$) and concave ($0.709\%$). Measuring the marginal burden of
+destroying one arm at different levels of accumulated damage identifies why: for
+additive and multiplicative coupling that marginal burden is invariant
+($0.15000$ at zero, three and six units of prior damage), whereas for saturating and
+concave it falls as damage accumulates ($0.167 \to 0.107 \to 0.068$ and
+$0.150 \to 0.055 \to 0.043$ respectively).
+
+\begin{corollary}[Scope of Theorem~\ref{thm:char}]
+The characterisation holds exactly when the burden is \emph{additively separable}
+across destroyed arms---when an arm's contribution does not depend on what else has
+already been destroyed. Under non-separable aggregation, constant $\kappa$ no longer
+renders the burden term arm-independent.
+\end{corollary}
+
+This is a sharper statement than the original, not a weaker one: it names the
+structural property the result requires. The degradation is also graceful---the
+residual gap under non-separable coupling is $0.14\%$--$0.71\%$, against the
+$5\%$--$12\%$ gap greedy incurs when $\kappa$ genuinely varies.
+
 \section{Limitations}
 
-The burden model $B(S) = \delta\sum e_i$ is additive and the simplest coupling that
-exhibits the phenomenon; richer couplings (multiplicative, saturating, networked)
-are unexplored. Exact optimality results rest on dynamic programming at $n \le 8$;
-larger-scale claims rest on rollout. Theorem~\ref{thm:vacuity} is a statement about
+Exact optimality results rest on dynamic programming at $n \le 8$;
+larger-scale claims rest on rollout, and the coupling-robustness study of
+Section~\ref{sec:robust} inherits the same ceiling. Theorem~\ref{thm:vacuity} is a statement about
 the best-available-arm benchmark specifically---a forward-looking benchmark would
 not be fooled, but it is also not what deployed systems measure, which is the point.
 Theorem~\ref{thm:char}'s sufficiency proof relies on a coupling argument whose

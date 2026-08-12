@@ -738,3 +738,68 @@ Falsified along the way and recorded: IPIC preservation heuristic; the
 endogenous/exogenous unification claim; the effective-horizon index refinement;
 horizon-scaling of the T4 gap; ECI exactness in pure sequencing; per-arm and
 feature-based learning of `e`.
+
+---
+
+## Robustness to coupling form — one limitation closed, one sharpened
+
+The additive burden `B(S) = δ Σ_{dead} e_i` was stated as a modelling choice. It is
+now tested against four alternatives (`exp26`), with exact DP throughout:
+
+| form | burden |
+|---|---|
+| additive | `δ Σ e_i` |
+| multiplicative | rewards scaled by `Π (1 − δe_i)` |
+| saturating | `B_max(1 − e^{−δ Σ e_i})` |
+| networked | only graph-neighbours of the dead arm are harmed |
+| concave | `δ (Σ e_i)^{0.6}` |
+
+### Theorem 4 is robust to all five — limitation closed
+
+| form | greedy regret | value loss |
+|---|---|---|
+| additive | 0.0000000000 | 1.8186 |
+| multiplicative | 0.0000000000 | 0.4419 |
+| saturating | 0.0000000000 | 0.6774 |
+| networked | 0.0000000000 | 1.3676 |
+| concave | 0.0000000000 | 0.7763 |
+
+Greedy records **exactly zero regret under every coupling form** while losing value
+under every one. The headline result does not depend on additivity at all — which
+makes sense from the proof, since zero regret follows from greedy's *definition*
+against the best-available benchmark, not from the burden's functional form.
+
+### Theorem 1 requires separability — limitation sharpened, not closed
+
+| form | gap, `κ` constant | gap, `κ` varies | T1 holds |
+|---|---|---|---|
+| additive | **0.000000%** | 11.943% | yes |
+| multiplicative | **0.000000%** | 6.472% | yes |
+| networked | **0.000000%** | 6.372% | yes |
+| saturating | 0.135105% | 10.335% | no |
+| concave | 0.708739% | 5.468% | no |
+
+The pattern is exact and the mechanism is identifiable. Measuring the marginal
+burden of killing one arm (`e = 1`) at different levels of accumulated damage:
+
+| form | no prior deaths | 3 units dead | 6 units dead | separable |
+|---|---|---|---|---|
+| additive | 0.15000 | 0.15000 | 0.15000 | **yes** |
+| multiplicative | 0.15000 | 0.15000 | 0.15000 | **yes** |
+| saturating | 0.16715 | 0.10658 | 0.06796 | no |
+| concave | 0.15000 | 0.05463 | 0.04259 | no |
+
+> **Theorem 1 holds exactly when the burden is additively separable across dead
+> arms** — that is, when an arm's contribution to the burden does not depend on
+> what else has already died.
+
+Saturating and concave forms apply a nonlinear function to the *sum*, so marginal
+damage falls as damage accumulates. Then "constant `κ`" no longer makes the burden
+term arm-independent, and greedy acquires a residual gap.
+
+**Two things worth noting.** First, this is a sharper statement than the original
+theorem, not a weaker one: it identifies the precise structural property the result
+needs. Second, the degradation is graceful — the residual gap under non-separable
+coupling is `0.14%`–`0.71%`, against the `5`–`12%` gap greedy incurs when `κ`
+genuinely varies. Greedy is *nearly* optimal under constant `κ` even when
+separability fails.

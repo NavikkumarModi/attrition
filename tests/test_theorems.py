@@ -235,3 +235,32 @@ def test_domain_notes_present():
     for k in ["agent_tools", "adaptive_therapy", "platform_trial",
               "design_space"]:
         assert k in DOMAIN_NOTES and len(DOMAIN_NOTES[k]) > 100
+
+
+# ---------------------------------------------------------------- robustness
+def test_t4_robust_to_coupling_form():
+    """Theorem 4 holds under additive, multiplicative, saturating, networked
+    and concave coupling: zero regret, positive loss, in all five."""
+    from experiments.exp26_coupling_robustness import q2_theorem4, FORMS
+    for form in FORMS:
+        reg, gap = q2_theorem4(form, inst=5)
+        assert reg < 1e-9, f"{form}: greedy regret should be zero"
+        assert gap > 0.05, f"{form}: greedy should still lose value"
+
+
+def test_t1_holds_for_separable_coupling():
+    """Theorem 1 holds exactly for additively separable burden forms."""
+    from experiments.exp26_coupling_robustness import q1_theorem1
+    for form in ["additive", "multiplicative", "networked"]:
+        const, vary = q1_theorem1(form, inst=5)
+        assert const < 1e-6, f"{form}: constant kappa should give zero gap"
+        assert vary > 0.5, f"{form}: varying kappa should break greedy"
+
+
+def test_t1_degrades_gracefully_for_nonseparable():
+    """Under non-separable coupling the gap is small, not catastrophic."""
+    from experiments.exp26_coupling_robustness import q1_theorem1
+    for form in ["saturating", "concave"]:
+        const, vary = q1_theorem1(form, inst=5)
+        assert const < 2.0, f"{form}: residual gap should stay small"
+        assert vary > const, f"{form}: varying kappa still worse than constant"
