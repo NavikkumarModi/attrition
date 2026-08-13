@@ -28,6 +28,8 @@ from .domains import (agent_tools, adaptive_therapy, platform_trial,
                       design_space, DOMAIN_NOTES)
 from .envs import ConsumableBanditEnv, MultiAgentConsumableEnv
 from .scenarios import SCENARIOS, load, describe
+from .simultaneous import (SimultaneousPool, planner_value_simultaneous,
+                           decentralised_value_simultaneous, price_of_anarchy)
 from .commitment import (TerminalCommitment, optimal_commitment_policy,
                          greedy_commitment_policy, edge_first_policy,
                          evaluate_commitment_policy)
@@ -47,4 +49,6 @@ __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
            "SCENARIOS", "load", "describe",
            "TerminalCommitment", "optimal_commitment_policy",
            "greedy_commitment_policy", "edge_first_policy",
-           "evaluate_commitment_policy"]
+           "evaluate_commitment_policy",
+           "SimultaneousPool", "planner_value_simultaneous",
+           "decentralised_value_simultaneous", "price_of_anarchy"]

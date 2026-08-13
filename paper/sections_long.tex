@@ -7,75 +7,74 @@
 \label{sec:multiagent}
 
 Consumption is rarely the act of a single learner. Two orchestrators draw on the
-same API quota; two sponsors compete for the same trial-eligible patients; two
-brand teams consume the same payer goodwill. Each collects its own reward, but a
-destruction by any of them raises the burden for all. Restraint becomes a public
-good: an agent that declines a high-$\kappa$ arm pays the cost alone and shares the
-benefit.
+same API quota; two sponsors compete for the same trial-eligible patients. Each
+collects its own reward, but a destruction by any of them raises the burden for
+all. It is natural to expect a commons problem and a corresponding price of
+anarchy. There is none, and the reason is instructive.
 
-\paragraph{Model.} $m$ agents act in a fixed order within each round on one shared
-pool, so an agent later in the order inherits the damage done earlier in the same
-round. System value is $W = \sum_{i} W_i$, the total collected by all agents. The
-\emph{central planner} chooses all $m$ pulls per round to maximise $W$; the
-\emph{decentralised} regime has each agent apply its own policy seeing only its own
-reward. Define the price of anarchy under consumption as
-\[
-\mathrm{PoA} \;=\; \frac{W(\text{planner})}{W(\text{decentralised})} .
-\]
+\begin{theorem}[Sequential equivalence]
+\label{thm:seqequiv}
+On a shared consumable pool, if agents act one after another within a round and
+each observes the state left by its predecessors, then $m$ agents over $T$ rounds
+is exactly one learner over $mT$ pulls.
+\end{theorem}
 
-\paragraph{Results.} Exact dynamic programming for the planner over subsets, $n=6$,
-$T=5$, six instances per cell:
+\begin{proof}
+The state is the surviving set together with its accumulated burden. Agent $i$
+acting at position $j$ of round $t$ faces exactly the state a single learner faces
+at pull index $tm+j$; the immediate reward $v_a - B(S)$ is the same function of
+that state, and the transition---destruction with probability $p_a$---is identical.
+The two processes are the same Markov decision process, so any policy in one
+induces a policy of equal value in the other.
+\end{proof}
+
+Verified at five $(m,T)$ combinations: sequential agents and a single greedy
+learner agree to within $0.015$.
+
+Theorem~\ref{thm:seqequiv} says decentralised greedy agents behave \emph{identically}
+to one greedy learner, so any price of anarchy computed in this model measures
+nothing about decentralisation.
+
+\paragraph{Simultaneity does not change the conclusion.} Genuine decentralisation
+requires that agents cannot condition on each other's current choices, so we also
+implement simultaneous action: all agents choose at once, pulls resolve together,
+and an arm chosen by several agents faces several independent destruction trials.
 
 \begin{center}
-\begin{tabular}{rrrrrrr}
+\begin{tabular}{rrrrr}
 \toprule
-agents & $\mathrm{std}(\kappa)$ & planner & dec.\ greedy & dec.\ ECI &
-$\mathrm{PoA}$ greedy & $\mathrm{PoA}$ ECI \\
+$m$ & $\mathrm{std}(\kappa)$ & PoA greedy & PoA ECI & single-agent ratio at $mT$ \\
 \midrule
-1 & $0.192$ & $4.552$ & $4.506$ & $4.558$ & $1.010$ & $0.999$ \\
-1 & $0.544$ & $4.216$ & $4.005$ & $4.203$ & $1.053$ & $1.003$ \\
-2 & $0.268$ & $5.483$ & $4.863$ & $5.212$ & $1.127$ & $1.052$ \\
-2 & $0.465$ & $6.460$ & $5.396$ & $6.157$ & $1.197$ & $1.049$ \\
-3 & $0.224$ & $6.764$ & $6.162$ & $6.514$ & $1.098$ & $1.038$ \\
-3 & $0.583$ & $6.152$ & $4.743$ & $6.129$ & $\mathbf{1.297}$ & $\mathbf{1.004}$ \\
+2 & $0.000$ & $\mathbf{0.9999}$ & $0.9999$ & $1.0000$ \\
+2 & $0.635$ & $1.1016$ & $1.0342$ & $1.1916$ \\
+3 & $0.000$ & $\mathbf{1.0029}$ & $1.0052$ & $1.0000$ \\
+3 & $0.635$ & $1.1526$ & $1.0567$ & $1.2772$ \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Two findings. First, the price of anarchy grows with both the number of agents and
-the dispersion of $\kappa$, reaching $1.297$ with three greedy agents at high
-dispersion: decentralisation destroys $30\%$ of system value. Second, and more
-useful, $\kappa$-aware agents nearly eliminate it. Under ECI the price of anarchy
-stays between $1.00$ and $1.05$ throughout, and at the setting where greedy agents
-lose $30\%$, ECI agents lose $0.4\%$.
+At zero dispersion the price of anarchy is $1.00$ even under simultaneity, and with
+dispersion it sits \emph{below} the single-agent gap at the same total pull count.
 
-\paragraph{Interpretation.} The commons problem here is not a coordination failure.
-No agent needs to observe, signal to, or contract with any other. It is a
-\emph{mispricing} failure that each agent can repair unilaterally by charging
-itself the full externality of its own consumption. This is a stronger conclusion
-than the usual commons result, and it follows from Theorem~\ref{thm:char}: the
-quantity an agent must price is its own $\kappa_a$, which does not depend on what
-anyone else is doing.
+\paragraph{Why there is no commons problem.} In a classical commons my consumption
+harms you and not me. Here the burden $B(S)$ is subtracted from \emph{every}
+agent's reward including my own, on every subsequent pull. The externality is
+symmetric, and a greedy agent that ignores it entirely behaves identically whether
+$m=1$ or $m=10$. There is nothing to free-ride on when no one is paying.
 
-\paragraph{Free-riding.} An agent that prices only the share of the damage it
-expects to bear itself---dividing the externality by the number of agents---is
-behaving rationally in the narrow sense and destroys system value:
+\begin{corollary}
+Consumption externalities on a shared pool do not create a price of anarchy. The
+cost attributable to decentralisation is the single-agent pricing failure, counted
+once per agent.
+\end{corollary}
 
-\begin{center}
-\begin{tabular}{rrrr}
-\toprule
-agents & social pricing & self-share pricing & loss \\
-\midrule
-2 & $6.122$ & $5.386$ & $12.0\%$ \\
-3 & $6.061$ & $5.225$ & $13.8\%$ \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-The gap widens with the number of agents, as the individual share shrinks. This is
-the standard commons structure with a bandit inside, and it identifies the target
-for mechanism design: the problem is not that agents cannot coordinate but that
-each has a private incentive to under-price a cost it partly externalises.
+\paragraph{What is genuinely multi-agent.} Free-riding is real, because it changes
+the objective rather than the action space. An agent that prices the externality but
+discounts it by its own expected share---charging $\delta\kappa_a(T-t)/m$ instead of
+the full amount---destroys system value: $12.0\%$ at two agents and $13.8\%$ at
+three, the gap widening as the individual share shrinks. This identifies the target
+for mechanism design precisely: not the failure to coordinate, which costs nothing
+here, but the incentive to under-price a cost that is partly borne by others.
 
 \section{Terminal commitment}
 \label{sec:commitment}

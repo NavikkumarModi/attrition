@@ -862,3 +862,56 @@ def test_eci_relative_error_falls_with_coupling():
             G.append(g); I.append(i)
         ratios.append(float(np.mean(I)) / max(float(np.mean(G)), 1e-9))
     assert ratios[1] < ratios[0] * 0.5, "relative error must fall with coupling"
+
+
+# --------------------------------------------------------------- multi-agent
+def test_sequential_multiagent_equals_single_learner():
+    """Theorem 6: m agents x T rounds == 1 learner x m*T pulls, exactly."""
+    from experiments.exp46_sequential_equivalence import (single_learner,
+                                                          sequential_agents)
+    rng = np.random.default_rng(5)
+    for m, T in [(2, 3), (3, 2), (2, 4)]:
+        D, G = [], []
+        for _ in range(3):
+            n = 6
+            v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
+            p = np.clip(rng.uniform(0.3, 0.9, n), 0.05, 1.0)
+            e = np.clip(1.0 + rng.normal(0, 1.0, n), 0.0, None)
+            D.append(sequential_agents(v, p, e, 0.12, T, m, seeds=1500))
+            G.append(single_learner(v, p, e, 0.12, m * T)[1])
+        assert abs(np.mean(D) - np.mean(G)) < 0.05, (
+            f"m={m},T={T}: sequential agents must equal a single learner")
+
+
+def test_no_price_of_anarchy_at_zero_dispersion():
+    """Even under simultaneous action, decentralisation costs nothing when the
+    externality is uniformly priced -- there is no commons problem here."""
+    from evolving_bandits import price_of_anarchy
+    rng = np.random.default_rng(5)
+    for m in [2, 3]:
+        R = []
+        for _ in range(4):
+            n = 5
+            v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
+            p = np.clip(rng.uniform(0.3, 0.9, n), 0.05, 1.0)
+            e = 0.4 / p                        # kappa exactly constant
+            r, _, _ = price_of_anarchy(v, p, e, 0.12, 4, m)
+            R.append(r)
+        assert abs(float(np.mean(R)) - 1.0) < 0.03, (
+            f"m={m}: PoA must be ~1 at zero kappa dispersion")
+
+
+def test_spreading_out_is_worse_than_colliding():
+    """Collisions are not the problem: concentrating on the best arm beats
+    spreading agents across inferior ones."""
+    from evolving_bandits import decentralised_value_simultaneous
+    rng = np.random.default_rng(5)
+    n = 5
+    v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
+    p = np.clip(rng.uniform(0.3, 0.9, n), 0.05, 1.0)
+    e = np.clip(1.0 + rng.normal(0, 1.0, n), 0.0, None)
+    same = decentralised_value_simultaneous(v, p, e, 0.12, 4, 3,
+                                            tie_break="same", seeds=300)
+    spread = decentralised_value_simultaneous(v, p, e, 0.12, 4, 3,
+                                              tie_break="random", seeds=300)
+    assert same > spread, "colliding on the best arm must beat spreading out"

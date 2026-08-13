@@ -299,6 +299,27 @@ says they cannot be reliably estimated from experience, so an agent that read th
 off the observation would be solving a different problem. Pass
 `reveal_externality=True` for oracle experiments.
 
+### Multi-agent: there is no price of anarchy
+
+**Theorem (sequential equivalence).** On a shared pool, if agents act one after
+another and observe each other's results, *m* agents over *T* rounds is **exactly**
+one learner over *m·T* pulls. Decentralised greedy agents therefore behave
+identically to a single greedy learner.
+
+Simultaneous action doesn't change it — PoA is 1.00 at zero κ dispersion even when
+agents cannot see each other's current choices, and below the single-agent gap
+otherwise.
+
+**Why:** in a classical commons my consumption harms you and not me. Here the burden
+is subtracted from *every* agent's reward including my own. The externality is
+symmetric, so a greedy agent behaves the same whether m=1 or m=10. There is nothing
+to free-ride on when no one is paying.
+
+What *is* genuinely multi-agent: an agent that prices the externality but discounts
+it by its own share (δκ/m instead of δκ) destroys 12–14% of system value. That's an
+objective change, not an action-space one — and it's the real target for mechanism
+design.
+
 ### Scenario packs
 
 Each scenario documents the phenomenon it should exhibit, and the test suite

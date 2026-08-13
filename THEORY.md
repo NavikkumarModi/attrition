@@ -1040,37 +1040,79 @@ matters less — which is why the two converge at large n.
 
 ---
 
-## Multi-agent: price of anarchy under consumption (flagship material)
+## Multi-agent: the price of anarchy does not exist here — RETRACTED AND REPLACED
 
-Stage 1 of the programme, implemented (`exp32`). Several agents draw on one
-consumable pool; each collects its own reward but every destruction raises the
-burden for all. Restraint is a public good.
+An earlier version of this section reported a price of anarchy reaching 1.297 under
+sequential multi-agent play, and claimed κ-aware agents reduce it to 1.004. **The
+measurement was invalid** and is retracted. What replaced it is a theorem.
 
-`PoA = W(planner) / W(decentralised)`, exact DP planner over subsets, round-robin
-turn order:
+### Theorem 6 (sequential equivalence) — PROVEN
 
-| agents | std(κ) | planner | dec-greedy | dec-ECI | **PoA greedy** | **PoA ECI** |
-|---|---|---|---|---|---|---|
-| 1 | 0.192 | 4.552 | 4.506 | 4.558 | 1.010 | 0.999 |
-| 1 | 0.544 | 4.216 | 4.005 | 4.203 | 1.053 | 1.003 |
-| 2 | 0.268 | 5.483 | 4.863 | 5.212 | 1.127 | 1.052 |
-| 2 | 0.465 | 6.460 | 5.396 | 6.157 | 1.197 | 1.049 |
-| 3 | 0.224 | 6.764 | 6.162 | 6.514 | 1.098 | 1.038 |
-| 3 | 0.583 | 6.152 | 4.743 | 6.129 | **1.297** | **1.004** |
+> On a shared consumable pool, if agents act one after another within a round and
+> each observes the state left by its predecessors, then `m` agents over `T` rounds
+> is exactly one learner over `m·T` pulls.
 
-**Two results.**
+**Proof.** The state is the surviving set with its accumulated burden. Agent `i` at
+position `j` of round `t` faces exactly the state a single learner faces at pull
+index `tm + j`; the immediate reward `v_a − B(S)` is the same function of that
+state, and the transition — destruction with probability `p_a` — is identical. The
+two processes have the same MDP, so any policy in one induces a policy of equal
+value in the other. ∎
 
-1. **Price of anarchy grows with both agent count and κ dispersion**, reaching
-   **1.297** at three greedy agents with high dispersion — decentralisation costs
-   30% of system value.
-2. **κ-aware agents nearly eliminate it.** PoA under ECI stays at 1.00–1.05
-   throughout, and at the worst greedy setting (1.297) ECI gives 1.004. Pricing the
-   externality locally recovers almost all of the central planner's value *without
-   any coordination*.
+Verified at five `(m,T)` combinations with `mT ∈ {6, 8}`: sequential agents and a
+single greedy learner agree to within 0.015.
 
-Result 2 is the substantive finding: the commons problem here is not a coordination
-failure requiring a mechanism, it is a *mispricing* failure that each agent can fix
-unilaterally.
+**Consequence.** Decentralised greedy agents behave *identically* to one greedy
+learner, so a price of anarchy computed in this model measures nothing about
+decentralisation. The 1.297 figure came from comparing against a planner restricted
+to **distinct** arms per round while the agents could re-target within the round —
+a difference of action spaces, not incentives.
+
+**The tell was already in the data.** At zero κ dispersion, where Theorem 1 forces
+decentralisation to be costless, the sweep measured PoA = 1.0230 rather than 1.
+
+### Simultaneous action does not rescue it either
+
+Genuine decentralisation needs agents unable to condition on each other's current
+choices. A simultaneous-action model was built (`simultaneous.py`): all agents
+choose at once, pulls resolve together, and an arm chosen by several agents faces
+several independent destruction trials.
+
+| m | κ dispersion | PoA greedy | PoA ECI | single-agent ratio at horizon mT |
+|---|---|---|---|---|
+| 2 | 0.000 | **0.9999** | 0.9999 | 1.0000 |
+| 2 | 0.635 | 1.1016 | 1.0342 | 1.1916 |
+| 3 | 0.000 | **1.0029** | 1.0052 | 1.0000 |
+| 3 | 0.635 | 1.1526 | 1.0567 | 1.2772 |
+
+**At zero dispersion PoA is 1.00 even under simultaneity**, and with dispersion it
+sits *below* the single-agent gap at the same total pull count. There is no
+coordination cost to find.
+
+Two further predictions of mine failed here and are worth recording. I expected
+**collisions** to be costly — several agents converging on one arm and destroying it
+faster than intended. They are not: concentrating on the best arm is worth more than
+the extra destruction hazard costs. And I expected a **spread-out** rule (agents
+taking distinct arms) to help. It is far worse — PoA 1.25 to 2.07 — because
+spreading means most agents pull inferior arms.
+
+### Why there is no commons problem, and this is the substantive finding
+
+In a classical commons, my consumption harms you and not me. Here the burden
+`B(S)` is subtracted from **every** agent's reward including my own, on every
+subsequent pull. The externality is symmetric, and a greedy agent that ignores it
+entirely behaves the same whether `m = 1` or `m = 10`. There is nothing to
+free-ride on when no one is paying in the first place.
+
+> **Consumption externalities on a shared pool do not create a price of anarchy.**
+> The cost attributed to decentralisation is the single-agent pricing failure,
+> counted once per agent.
+
+### What survives, and it is the genuinely multi-agent part
+
+Free-riding is real, because it changes the *objective* rather than the action
+space. An agent that prices the externality but discounts it by its own expected
+share — `δκ_a(T−t)/m` instead of the full charge — destroys system value:
 
 ### Free-riding
 
@@ -1818,6 +1860,8 @@ that "we proved X" is never ambiguous.
 | **T3** | `SE(δê_i) ≥ 2σ/√min(T, N_exh)`, non-decreasing in `T` | Difference-in-means is the MLE conditional on other `e_j` known; adding free parameters weakly increases variance (Schur complement), so the oracle variance lower-bounds the joint. AM–HM gives `4σ²/N`. Three-part numerical verification; inequality chain holds 14/14. |
 | **T4** | zero-regret policy loses `m·δE`, unbounded | Explicit construction. Greedy's regret is zero by definition of the benchmark; the gap is computed in closed form. Exact at 15/15 against DP. |
 | **T5** | near-optimal policies are *forced* to report private regret `m·ε` | Explicit construction; the optimum declines a strictly best-available arm at each of `m` deferrals. Exact at 8/8. |
+| **T6** | sequential `m`-agent play ≡ one learner over `mT` pulls | Identical MDP: same state, same reward function of state, same transition. Verified at five `(m,T)` pairs to within 0.015. |
+| **ECI exactness** | constant `κ` ⟹ ECI optimal | The charge is arm-independent, so ECI reduces to greedy; Theorem 1 applies. Verified at std(κ) ≈ 1e-17. |
 
 ## Derived, with a measured constant
 
@@ -1831,7 +1875,7 @@ that "we proved X" is never ambiguous.
 |---|---|---|
 | ECI captures 52–99% of the gap | exact DP across dispersion levels | no bound on the omitted option term |
 | rollout closes a constant fraction | per-policy log-log slopes 1.11, 1.25 | no proof the fraction is constant |
-| price of anarchy ≤ 1.297; κ-aware agents → 1.004 | exact DP planner, 6 instances/cell | no bound on PoA in terms of `m` and `std(κ)` |
+| free-riding costs 12–14% of system value | decentralised simulation, 2 and 3 agents | no bound in terms of `m` |
 | ordinal `E[τ] ≈ C(n−k,2)/C(n,2)` | tracks pool-size scaling (0.831 vs 0.851 at n=30) | fails to reproduce allocation-rule dependence (predicts 0.700–0.736 against observed 0.593–0.761) |
 | identification cannot be improved by design | 4 allocation rules, random best at both pool sizes | mechanism not isolated; three candidate explanations falsified |
 | terminal commitment failure modes | 300 seeds/cell, exact operating-value evaluation | no closed form for the optimal experiment allocation |
@@ -1845,7 +1889,10 @@ multi-agent estimation error · value of communication · uniform-tax mechanisms
 quadratic rollout scaling · ordinal learnability from data · collinearity
 explanation for allocation-rule dependence · τ ≈ 0.68 as a universal ceiling
 
-**Thirteen falsified hypotheses, all mine.** The ratio of falsified to surviving
+Added to the falsified list: price of anarchy under sequential consumption ·
+collisions as a coordination cost · spreading agents across arms as a remedy.
+
+**Sixteen falsified hypotheses, all mine.** The ratio of falsified to surviving
 claims is the reason the surviving ones are worth stating.
 
 ---
