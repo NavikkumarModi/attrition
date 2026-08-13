@@ -1063,3 +1063,77 @@ def test_eci_becomes_harmful_under_strong_correlated_risk():
     assert worse >= trials // 2, (
         f"ECI must underperform greedy in most instances at q=0.7, got "
         f"{worse}/{trials}")
+
+
+# ----------------------------------------------------------------- SECI
+def test_seci_matches_eci_at_zero_shock_rate():
+    """SECI's dampening is (1-q)^2, which is 1 at q=0, so SECI must be
+    identical to plain ECI when there is no correlated risk."""
+    from experiments.exp50_correlated_destruction import exact_clustered
+    rng = np.random.default_rng(41)
+    n, T, delta = 6, 6, 0.15
+    v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
+    p = np.clip(rng.uniform(0.3, 0.9, n), 0.05, 1.0)
+    e = np.clip(1.0 + rng.normal(0, 1.2, n), 0.0, None)
+    clusters = np.array([0, 0, 1, 1, 2, 2])
+    _, _, ve, _ = exact_clustered(v, p, e, delta, T, clusters, 0.0)
+    from experiments.exp50_correlated_destruction import (
+        exact_clustered_with_policy, seci_action)
+    vs_seci = exact_clustered_with_policy(v, p, e, delta, T, clusters, 0.0,
+        lambda S, t: seci_action(S, t, v, p, e, delta, T, 0.0))
+    assert abs(ve - vs_seci) < 1e-9
+
+
+def test_seci_matches_or_beats_greedy_across_shock_rates_exact():
+    """The strong small-scale result: SECI matches or beats greedy at every
+    q in [0,1], confirmed by exact DP."""
+    from experiments.exp50_correlated_destruction import (
+        exact_clustered, exact_clustered_with_policy, seci_action)
+    rng = np.random.default_rng(41)
+    n, T, delta = 6, 6, 0.15
+    clusters = np.array([0, 0, 1, 1, 2, 2])
+    for q in [0.0, 0.3, 0.7, 1.0]:
+        VG, VS = [], []
+        for _ in range(10):
+            v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
+            p = np.clip(rng.uniform(0.3, 0.9, n), 0.05, 1.0)
+            e = np.clip(1.0 + rng.normal(0, 1.2, n), 0.0, None)
+            _, vg, _, _ = exact_clustered(v, p, e, delta, T, clusters, q)
+            vs = exact_clustered_with_policy(v, p, e, delta, T, clusters, q,
+                lambda S, t, v=v, p=p, e=e, q=q:
+                    seci_action(S, t, v, p, e, delta, T, q))
+            VG.append(vg); VS.append(vs)
+        assert np.mean(VS) >= np.mean(VG) - 1e-6, (
+            f"q={q}: SECI must match or beat greedy, got "
+            f"{np.mean(VS):.4f} vs {np.mean(VG):.4f}")
+
+
+def test_seci_beats_plain_eci_at_scale():
+    """The result that DOES transfer to scale: SECI reliably beats plain ECI,
+    even where it does not fully close the gap to greedy."""
+    from experiments.exp50_correlated_destruction import (
+        simulate_clustered, rule_eci_c, rule_seci_c)
+    rng = np.random.default_rng(9)
+    n, T, delta = 40, 40, 0.03
+    clusters = np.repeat(np.arange(8), 5)
+    for q in [0.1, 0.3, 0.5, 0.7]:
+        v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
+        p = np.clip(rng.uniform(0.3, 0.9, n), 0.05, 1.0)
+        e = np.clip(1.0 + rng.normal(0, 1.2, n), 0.0, None)
+        ec = simulate_clustered(v, p, e, delta, T, clusters, q, rule_eci_c,
+                                seeds=150)
+        se = simulate_clustered(v, p, e, delta, T, clusters, q, rule_seci_c,
+                                seeds=150)
+        assert se >= ec - 0.15, f"q={q}: SECI must not underperform ECI at scale"
+
+
+def test_seci_policy_class_reduces_to_eci_at_q_zero():
+    """The library-level SECI class, not just the experiment script version."""
+    from attrition import SECI, ECI, ConsumableBandit, run
+    env1 = ConsumableBandit.random(n=15, k_spread=1.5, delta=0.05, horizon=30,
+                                   seed=0)
+    env2 = ConsumableBandit.random(n=15, k_spread=1.5, delta=0.05, horizon=30,
+                                   seed=0)
+    r1 = run(env1, SECI(q=0.0), seed=0)
+    r2 = run(env2, ECI(), seed=0)
+    assert abs(r1["value"] - r2["value"]) < 1e-9

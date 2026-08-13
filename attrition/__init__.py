@@ -22,8 +22,8 @@ Quick start
 """
 
 from .consumable import ConsumableBandit, run, compare
-from .policies import (State, Greedy, ECI, Conservative, SortByE, Rollout,
-                       ThompsonSampling, UCB)
+from .policies import (State, Greedy, ECI, SECI, Conservative, SortByE,
+                       Rollout, ThompsonSampling, UCB)
 from .domains import (agent_tools, adaptive_therapy, platform_trial,
                       design_space, DOMAIN_NOTES)
 from .envs import ConsumableBanditEnv, MultiAgentConsumableEnv
@@ -39,7 +39,7 @@ from .engines import (LotkaVolterraTumour, derive_arm_parameters,
 
 __version__ = "0.2.0"
 __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
-           "Conservative", "SortByE", "Rollout", "ThompsonSampling", "UCB",
+           "Conservative", "SortByE", "Rollout", "ThompsonSampling", "UCB", "SECI",
            "agent_tools", "adaptive_therapy", "platform_trial", "design_space",
            "DOMAIN_NOTES",
            "LotkaVolterraTumour", "derive_arm_parameters",

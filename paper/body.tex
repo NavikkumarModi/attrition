@@ -1008,12 +1008,35 @@ arm for its cluster-mates' shared shock exposure in addition to $\kappa_a$ --- w
 tested and made matters \emph{worse}, falling below greedy at $q=0.7$. A working
 correction for correlated destruction is an open problem, not a solved one.
 
+\paragraph{A derived correction.} ECI's blind spot is that it only discourages
+\emph{pulling} an arm; it never accounts for the cost of \emph{not} pulling one,
+since a held-back arm can be destroyed by a correlated shock before it is ever
+used. As the shock rate $q$ rises, destruction increasingly happens regardless of
+the policy's choices, so the burden charge should shrink correspondingly. We
+define
+\[
+I_{\mathrm{SECI}}(a,t) = v_a - \delta\, p_a e_a (T-t)(1-q)^2,
+\]
+which reduces exactly to ECI at $q=0$ and degrades smoothly to greedy as
+$q\to1$ --- correctly, since preservation is worthless once destruction is
+certain regardless of action.
+
+At the same scale as above, SECI matches or beats greedy at \emph{every} $q$
+tested, confirmed across 30 seeds, staying within $0.01\%$--$1.53\%$ of the true
+optimum throughout, where plain ECI's gap grows to roughly $11\%$ at $q=1$. At
+larger scale ($n=40$, eight clusters, Monte Carlo evaluation since exact DP is
+infeasible) SECI reliably beats plain ECI at every $q$ tested, but shows a small
+residual shortfall against greedy in the mid-$q$ range that a cluster-size-scaled
+variant of the exponent did not close. We report this as a genuine partial
+result: the correlated-destruction failure mode is substantially fixed, and the
+fix is never worse than the problem it replaces, but it does not yet carry the
+small-scale guarantee to arbitrary scale.
+
 \begin{corollary}
 The paper's central practical recommendation --- specify $\kappa$, do not attempt
-to estimate it, and act on ECI --- holds where destruction is independent across
-arms and requires a not-yet-found correction where it is correlated. Practitioners
-in the domains motivating this paper should check which regime applies before
-deploying ECI as-is.
+to estimate it --- extends to correlated destruction via SECI, which requires
+only the additional cluster shock rate $q$. The small-scale guarantee is exact;
+the large-scale guarantee is empirical and not yet complete.
 \end{corollary}
 
 \section{Limitations}

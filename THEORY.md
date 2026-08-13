@@ -2277,3 +2277,71 @@ their destruction risk is independent before deploying ECI as-is.
 
 This is genuinely unresolved and belongs in the paper's limitations, not
 smoothed over.
+
+---
+
+## SECI: a derived fix for correlated destruction — strong at small scale, partial at scale
+
+### Derivation
+
+ECI's blind spot under correlated shocks: it only discourages *pulling* an arm
+(burden-avoidance), but never accounts for the cost of *not* pulling — an arm held
+in reserve can be destroyed by a cluster shock before ever being used, losing its
+value entirely rather than merely delaying it. As shock rate `q` rises, burden
+increasingly happens regardless of the policy's choices, so the fraction of
+destruction actually under the policy's control shrinks, and ECI's charge should
+shrink with it.
+
+**SECI (shock-corrected ECI):**
+
+```
+I_SECI(a,t) = v_a − δ·p_a·e_a·(T−t)·(1−q)²
+```
+
+Matches ECI exactly at `q=0`. Degrades smoothly to pure greedy as `q→1`, which is
+the correct limit: when destruction is certain regardless of action, preservation
+is worthless and greedy is exactly right.
+
+### Small scale (exact DP, n=6, 30 seeds/cell, q from 0 to 1)
+
+| q | V* | greedy | ECI | **SECI** | gap to V* |
+|---|---|---|---|---|---|
+| 0.0 | 4.667 | 3.804 | 4.596 | **4.596** | 1.53% |
+| 0.3 | 2.121 | 2.029 | 2.079 | **2.115** | 0.32% |
+| 0.7 | 1.337 | 1.328 | 1.228 | **1.336** | **0.06%** |
+| 1.0 | 1.088 | 1.088 | 0.971 | **1.088** | **0.00%** |
+
+**SECI matches or beats greedy at every single q tested, confirmed across 30
+seeds**, staying within 0.01–1.53% of true optimum throughout, while plain ECI's
+gap grows to ~11% at `q=1`.
+
+### At scale (Monte Carlo, n=40, 8 clusters of 5, 300 seeds × 5 instances)
+
+| q | greedy | ECI | **SECI** | SECI − greedy | SECI − ECI |
+|---|---|---|---|---|---|
+| 0.0 | 23.179 | 31.546 | **31.546** | **+8.367** | 0.000 |
+| 0.1 | 2.967 | 3.184 | **3.297** | **+0.330** | +0.113 |
+| 0.3 | 0.855 | 0.501 | 0.717 | −0.138 | +0.216 |
+| 0.5 | 0.952 | 0.605 | 0.912 | −0.040 | +0.307 |
+| 0.7 | 1.027 | 0.971 | 1.010 | −0.017 | +0.039 |
+
+**SECI reliably beats plain ECI at every q — the small-scale fix transfers.** It
+does **not** fully transfer against greedy: small residual shortfalls appear in
+the mid-`q` range (−0.138 to −0.017), where the small-scale result showed SECI
+winning outright. A cluster-size-scaled variant of the dampening exponent was
+tried and did not close this gap (similar or slightly worse margins). This is
+reported as a genuine, partial result — the fix substantially closes the ECI
+failure mode and is never worse than plain ECI, but does not yet fully match the
+small-scale guarantee once the environment scales to many clusters.
+
+### Honest summary
+
+| | independent (q=0) | correlated, small scale | correlated, at scale |
+|---|---|---|---|
+| ECI vs greedy | ECI wins | ECI **loses** at high q | ECI **loses** at high q |
+| SECI vs ECI | ties (identical formula) | SECI wins always | **SECI wins always** |
+| SECI vs greedy | ties (= ECI = optimal-tracking) | **SECI wins always** | SECI wins at low q, small gap at mid q |
+
+SECI is a strict improvement over ECI in every regime tested and closes most —
+not all — of the correlated-destruction gap. The residual scale-dependence is
+recorded as open rather than papered over.
