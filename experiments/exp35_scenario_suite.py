@@ -6,8 +6,8 @@ detected rather than silently wrong.
 """
 from functools import lru_cache
 import numpy as np
-from evolving_bandits import SCENARIOS, load
-from evolving_bandits.scenarios import SCENARIOS as S
+from attrition import SCENARIOS, load
+from attrition.scenarios import SCENARIOS as S
 
 
 def exact(v, p, e, delta, T):

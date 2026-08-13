@@ -6,7 +6,7 @@ that optimises the *visible* experimental-phase quantity destroys terminal value
 as it does in the sequential setting.
 """
 import numpy as np
-from evolving_bandits.commitment import (TerminalCommitment,
+from attrition.commitment import (TerminalCommitment,
                                          greedy_commitment_policy,
                                          edge_first_policy,
                                          optimal_commitment_policy,

@@ -20,7 +20,7 @@ from functools import lru_cache
 
 import numpy as np
 
-from evolving_bandits.engines import derive_arm_parameters, LotkaVolterraTumour
+from attrition.engines import derive_arm_parameters, LotkaVolterraTumour
 
 
 def exact(v, p, e, delta, T):

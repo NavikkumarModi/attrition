@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from evolving_bandits import (ConsumableBandit, Greedy, ECI, Conservative,
+from attrition import (ConsumableBandit, Greedy, ECI, Conservative,
                               ThompsonSampling, UCB, compare)
 
 OUT = os.path.dirname(os.path.abspath(__file__))
@@ -379,7 +379,7 @@ def fig5_agent_trace():
 # =============================================================== FIGURE 6
 def fig6_domains():
     """Four domain instantiations: greedy at zero regret loses in all of them."""
-    from evolving_bandits import (agent_tools, adaptive_therapy,
+    from attrition import (agent_tools, adaptive_therapy,
                                   platform_trial, design_space,
                                   Greedy, ECI, Conservative, ThompsonSampling,
                                   run)

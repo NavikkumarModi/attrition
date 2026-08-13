@@ -4,7 +4,7 @@ Each domain supplies its own (v, p, e, delta). No domain is illustrated; every
 one is simulated, and every number below comes from a run.
 """
 import numpy as np
-from evolving_bandits import (agent_tools, adaptive_therapy, platform_trial,
+from attrition import (agent_tools, adaptive_therapy, platform_trial,
                               design_space, Greedy, ECI, Conservative,
                               ThompsonSampling, run, DOMAIN_NOTES)
 

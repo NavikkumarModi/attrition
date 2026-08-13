@@ -25,8 +25,8 @@ shrinks as the episode progresses, while lambda is a scalar.
 
 import numpy as np
 
-from evolving_bandits import ConsumableBandit, run
-from evolving_bandits.policies import Policy, Greedy, ECI, Conservative, \
+from attrition import ConsumableBandit, run
+from attrition.policies import Policy, Greedy, ECI, Conservative, \
     ThompsonSampling, UCB
 
 

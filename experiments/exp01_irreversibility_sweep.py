@@ -5,8 +5,8 @@ irreversibility) with no exogenous churn and no arrivals, so the effect is
 attributable to irreversibility alone.
 """
 import numpy as np
-from evolving_bandits.runner import sweep
-from evolving_bandits.agents import LinUCBAgent, RandomAgent, IPICAgent
+from attrition.runner import sweep
+from attrition.agents import LinUCBAgent, RandomAgent, IPICAgent
 
 ENV = dict(d=5, n_init=60, mu=0.0, lam=0.0, sigma=0.1, horizon=1500)
 PS = [0.0, 0.05, 0.1, 0.25, 0.5, 1.0]

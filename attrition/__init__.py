@@ -15,7 +15,7 @@ T4  A zero-regret policy can incur value loss m*delta*E, unbounded in the pool
 
 Quick start
 -----------
->>> from evolving_bandits import ConsumableBandit, Greedy, ECI, compare
+>>> from attrition import ConsumableBandit, Greedy, ECI, compare
 >>> f = lambda s: ConsumableBandit.random(n=20, k_spread=1.5, delta=0.03,
 ...                                       horizon=60, seed=s)
 >>> compare(f, [Greedy(), ECI()], seeds=20)          # doctest: +SKIP

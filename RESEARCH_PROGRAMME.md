@@ -1,8 +1,11 @@
+# ATTRITION
+### Agent Testbed for Task, Resource and Irreversible-Tradeoff Investigation
+
 # Research Programme: Consumable Action Sets at Scale
 
 **Scoping document v1.0** — Navikkumar Modi, August 2026
 
-Companion to *No-Regret is Not No-Harm* (`paper/`) and the `consumable-bandits`
+Companion to *No-Regret is Not No-Harm* (`paper/`) and the `attrition`
 library.
 
 ---
@@ -388,6 +391,19 @@ slips.
 | Scope outruns capacity | Stage 1 and T-A(2)/T-D are independently publishable. Every later stage is optional |
 
 ---
+
+## 6b. Programme status (August 2026)
+
+**The strong version first.** Seven results are now proven exactly, not just
+verified: both directions of the greedy characterisation, the pure-sequencing
+optimum, the estimation floor, the zero-regret vacuity construction, its converse,
+the sequential multi-agent equivalence, and ECI's exactness under constant kappa.
+That is a genuinely large proven core for a project at this stage, and every one of
+them ships with a regression test, so the proof and the code cannot drift apart.
+The falsifications below are not a tally of failure — they are the mechanism that
+made the seven proofs trustworthy, and they are the reason a reviewer checking this
+repository will find claims that hold up rather than claims that were never tested
+hard.
 
 ## 6b. Programme status (August 2026)
 

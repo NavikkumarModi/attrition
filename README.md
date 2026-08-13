@@ -1,4 +1,7 @@
-# Bandits with Consumable Action Sets
+# ATTRITION
+### Agent Testbed for Task, Resource and Irreversible-Tradeoff Investigation
+
+Bandits with Consumable Action Sets
 
 **No-regret is not no-harm.**
 
@@ -56,7 +59,7 @@ Requires Python 3.9+ and NumPy.
 ## Quick start
 
 ```python
-from evolving_bandits import ConsumableBandit, Greedy, ECI, Conservative, compare
+from attrition import ConsumableBandit, Greedy, ECI, Conservative, compare
 
 env = lambda seed: ConsumableBandit.random(
     n=20, k_spread=1.5, delta=0.03, horizon=60, seed=seed)
@@ -70,7 +73,7 @@ for name, stats in results.items():
 Inspect a single session step by step:
 
 ```python
-from evolving_bandits import run
+from attrition import run
 result = run(env(0), Greedy(), log=True)
 for row in result["log"][:10]:
     print(row)          # {'t':.., 'arm':.., 'value':.., 'regret':.., 'alive':..}
@@ -166,7 +169,7 @@ than an illustration. Fit quality is stated honestly.
 | `design_space` | process parameter setting | run consumes material or goes out of spec | narrows the defensible filing envelope | partial |
 
 ```python
-from evolving_bandits import adaptive_therapy, Greedy, ECI, run, DOMAIN_NOTES
+from attrition import adaptive_therapy, Greedy, ECI, run, DOMAIN_NOTES
 
 env = adaptive_therapy(seed=0)
 print(DOMAIN_NOTES["adaptive_therapy"])
@@ -211,7 +214,7 @@ This domain is now **mechanistically grounded**: `(v, p, e)` are derived from
 Lotka–Volterra competition dynamics rather than set by hand.
 
 ```python
-from evolving_bandits import derive_arm_parameters
+from attrition import derive_arm_parameters
 v, p, e, doses = derive_arm_parameters(engine_kwargs={"dt": 5.0}, s0_sd=0.26)
 ```
 
@@ -247,7 +250,7 @@ CMC design-space filing under ICH Q8 — operating inside the declared envelope 
 no approval, outside it triggers a variation.
 
 ```python
-from evolving_bandits import (evaluate_commitment_policy, edge_first_policy,
+from attrition import (evaluate_commitment_policy, edge_first_policy,
                               optimal_commitment_policy)
 evaluate_commitment_policy(optimal_commitment_policy, budget=2)
 ```
@@ -282,7 +285,7 @@ Gym- and PettingZoo-compatible interfaces, implemented natively so there is no
 RL-framework dependency:
 
 ```python
-from evolving_bandits import load, describe
+from attrition import load, describe
 
 describe()                              # list all scenarios and what they show
 

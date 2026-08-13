@@ -14,7 +14,7 @@ should show PoA > 1 even at zero dispersion -- which distinguishes a genuine
 coordination cost from the pricing cost the earlier model conflated it with.
 """
 import numpy as np
-from evolving_bandits.simultaneous import (planner_value_simultaneous,
+from attrition.simultaneous import (planner_value_simultaneous,
                                            decentralised_value_simultaneous,
                                            price_of_anarchy)
 

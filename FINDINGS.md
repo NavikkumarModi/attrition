@@ -123,7 +123,7 @@ Better here than in Phase 4.
 
 Rather than approximate with a Whittle index, I computed the **exact** optimal
 policy by dynamic programming over subsets of available arms
-(`evolving_bandits/oracle.py`), for 12 random instances spanning
+(`attrition/oracle.py`), for 12 random instances spanning
 `n ∈ [4,7]`, `T ∈ [3,9]`, `p ∈ {0.2,0.5,0.8,1.0}`, `mu ∈ {0,0.05}`.
 
 **Result: greedy achieves the optimum in every instance.** All gaps sit within

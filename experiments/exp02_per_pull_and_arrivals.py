@@ -9,9 +9,9 @@ Two corrections to exp01:
      pay when an arm can be re-pulled, i.e. p<1 with a live population.
 """
 import numpy as np
-from evolving_bandits.env import EvolvingBanditEnv
-from evolving_bandits.runner import run_episode
-from evolving_bandits.agents import LinUCBAgent, IPICAgent, RandomAgent
+from attrition.env import EvolvingBanditEnv
+from attrition.runner import run_episode
+from attrition.agents import LinUCBAgent, IPICAgent, RandomAgent
 
 SEEDS = 10
 

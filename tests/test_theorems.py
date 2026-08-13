@@ -9,7 +9,7 @@ from itertools import permutations
 import numpy as np
 import pytest
 
-from evolving_bandits import (ConsumableBandit, Greedy, ECI, Conservative,
+from attrition import (ConsumableBandit, Greedy, ECI, Conservative,
                               SortByE, ThompsonSampling, UCB, run, compare)
 
 
@@ -190,7 +190,7 @@ def test_cannot_pull_dead_arm():
 def test_all_domains_run_and_have_kappa_dispersion():
     """Every domain instantiates, and each has non-zero kappa dispersion,
     so by Theorem 1 greedy is suboptimal in all of them."""
-    from evolving_bandits import (agent_tools, adaptive_therapy,
+    from attrition import (agent_tools, adaptive_therapy,
                                   platform_trial, design_space)
     for factory in [agent_tools, adaptive_therapy, platform_trial, design_space]:
         env = factory(seed=0)
@@ -202,7 +202,7 @@ def test_all_domains_run_and_have_kappa_dispersion():
 
 def test_greedy_zero_regret_in_every_domain():
     """The headline claim holds in all four instantiations."""
-    from evolving_bandits import (agent_tools, adaptive_therapy,
+    from attrition import (agent_tools, adaptive_therapy,
                                   platform_trial, design_space)
     for factory in [agent_tools, adaptive_therapy, platform_trial, design_space]:
         res = run(factory(seed=2), Greedy(), seed=2)
@@ -211,7 +211,7 @@ def test_greedy_zero_regret_in_every_domain():
 
 def test_correction_beats_greedy_in_every_domain():
     """And greedy loses in all four despite its perfect regret record."""
-    from evolving_bandits import (agent_tools, adaptive_therapy,
+    from attrition import (agent_tools, adaptive_therapy,
                                   platform_trial, design_space)
     for factory in [agent_tools, adaptive_therapy, platform_trial, design_space]:
         g = np.mean([run(factory(seed=s), Greedy(), seed=s)["value"]
@@ -224,14 +224,14 @@ def test_correction_beats_greedy_in_every_domain():
 def test_adaptive_therapy_mtd_is_greedy():
     """In the therapy domain, dose intensity orders v, p and e together,
     so maximum tolerated dose is exactly the greedy policy."""
-    from evolving_bandits import adaptive_therapy
+    from attrition import adaptive_therapy
     env = adaptive_therapy(seed=0)
     assert np.argmax(env.v) == np.argmax(env.p) == np.argmax(env.e)
     assert np.std(env.kappa) > 0.5
 
 
 def test_domain_notes_present():
-    from evolving_bandits import DOMAIN_NOTES
+    from attrition import DOMAIN_NOTES
     for k in ["agent_tools", "adaptive_therapy", "platform_trial",
               "design_space"]:
         assert k in DOMAIN_NOTES and len(DOMAIN_NOTES[k]) > 100
@@ -376,7 +376,7 @@ def test_kappa_aware_agents_reduce_price_of_anarchy():
 # ---------------------------------------------------------------- engines
 def test_derived_parameters_have_competitive_release_signature():
     """v, p and e derived from the dynamics all rise with dose intensity."""
-    from evolving_bandits import derive_arm_parameters
+    from attrition import derive_arm_parameters
     v, p, e, doses = derive_arm_parameters(engine_kwargs={"dt": 5.0}, s0_sd=0.26)
     assert np.all(np.diff(v) > 0), "higher dose must give more immediate control"
     assert np.all(np.diff(p) >= 0), "higher dose must be more likely to exhaust"
@@ -385,7 +385,7 @@ def test_derived_parameters_have_competitive_release_signature():
 
 def test_mtd_is_greedy_and_loses_on_derived_parameters():
     """On mechanistically derived parameters, MTD has zero regret and loses."""
-    from evolving_bandits import derive_arm_parameters
+    from attrition import derive_arm_parameters
     from experiments.exp33_mechanistic_therapy import exact
     v, p, e, _ = derive_arm_parameters(engine_kwargs={"dt": 5.0}, s0_sd=0.26)
     vs, vg, vi, rg, ri = exact(v, p, e, 0.30, 8)
@@ -404,7 +404,7 @@ def test_adaptive_dosing_extends_time_to_progression():
 
 
 def test_all_three_engines_produce_dispersed_kappa():
-    from evolving_bandits import (derive_arm_parameters, derive_trial_parameters,
+    from attrition import (derive_arm_parameters, derive_trial_parameters,
                                   derive_design_space_parameters)
     for fn in [lambda: derive_arm_parameters(engine_kwargs={"dt": 5.0},
                                              s0_sd=0.26)[:3],
@@ -435,7 +435,7 @@ def test_greedy_fails_only_when_value_and_externality_conflict():
 # ---------------------------------------------------------------- Stage 3 API
 def test_gym_api_roundtrip():
     """Gym-style reset/step contract."""
-    from evolving_bandits import load
+    from attrition import load
     env = load("shared-quota", seed=0)
     obs, info = env.reset(0)
     assert obs.shape == (env.n, 3)
@@ -453,7 +453,7 @@ def test_gym_api_roundtrip():
 
 
 def test_gym_env_rejects_destroyed_arm():
-    from evolving_bandits import ConsumableBanditEnv
+    from attrition import ConsumableBanditEnv
     env = ConsumableBanditEnv(v=[1.0], p=[1.0], e=[0.0], horizon=5, seed=0)
     env.step(0)
     with pytest.raises(ValueError):
@@ -462,7 +462,7 @@ def test_gym_env_rejects_destroyed_arm():
 
 def test_pettingzoo_api_roundtrip():
     """Parallel multi-agent contract; destruction by one agent affects all."""
-    from evolving_bandits import load
+    from attrition import load
     env = load("shared-quota-competing", seed=0)
     obs, info = env.reset(0)
     assert set(obs) == set(env.agents) and len(env.agents) == 2
@@ -480,7 +480,7 @@ def test_pettingzoo_api_roundtrip():
 
 def test_observation_hides_externality_by_default():
     """Theorem 3 says e is not reliably estimable, so it must not be observable."""
-    from evolving_bandits import load
+    from attrition import load
     env = load("shared-quota", seed=0)
     assert env.reset(0)[0].shape[1] == 3
     env2 = load("shared-quota", seed=0, reveal_externality=True)
@@ -489,7 +489,7 @@ def test_observation_hides_externality_by_default():
 
 def test_every_scenario_matches_its_documented_behaviour():
     """Each scenario asserts the phenomenon it claims to exhibit."""
-    from evolving_bandits import SCENARIOS, load
+    from attrition import SCENARIOS, load
     from experiments.exp35_scenario_suite import exact
     checked = 0
     for name, spec in SCENARIOS.items():
@@ -516,7 +516,7 @@ def test_every_scenario_matches_its_documented_behaviour():
 # ------------------------------------------------------- terminal commitment
 def test_edge_first_narrows_the_envelope_it_seeks():
     """Ambition destroys the very thing it targets: chasing width yields width 1."""
-    from evolving_bandits import (evaluate_commitment_policy, edge_first_policy,
+    from attrition import (evaluate_commitment_policy, edge_first_policy,
                                   optimal_commitment_policy)
     for budget in [2, 4, 6]:
         v_edge, w_edge, _ = evaluate_commitment_policy(
@@ -529,7 +529,7 @@ def test_edge_first_narrows_the_envelope_it_seeks():
 
 def test_more_budget_does_not_help_edge_first():
     """Spending more on edges makes the terminal position worse, not better."""
-    from evolving_bandits import evaluate_commitment_policy, edge_first_policy
+    from attrition import evaluate_commitment_policy, edge_first_policy
     _, _, f2 = evaluate_commitment_policy(edge_first_policy, seeds=60, budget=2)
     _, _, f6 = evaluate_commitment_policy(edge_first_policy, seeds=60, budget=6)
     assert f6 > f2, "a larger budget must produce more blocked settings"
@@ -537,7 +537,7 @@ def test_more_budget_does_not_help_edge_first():
 
 def test_expand_outward_wins_most_at_small_budget():
     """The commitment bites hardest when evidence is scarce."""
-    from evolving_bandits import (evaluate_commitment_policy,
+    from attrition import (evaluate_commitment_policy,
                                   greedy_commitment_policy,
                                   optimal_commitment_policy)
     gaps = []
@@ -552,7 +552,7 @@ def test_expand_outward_wins_most_at_small_budget():
 
 def test_operating_value_is_deterministic():
     """Exact PMF evaluation, not sampling."""
-    from evolving_bandits import TerminalCommitment
+    from attrition import TerminalCommitment
     a = TerminalCommitment(seed=3); a.reset(3)
     b = TerminalCommitment(seed=3); b.reset(3)
     assert abs(a.operating_value() - b.operating_value()) < 1e-12
@@ -886,7 +886,7 @@ def test_sequential_multiagent_equals_single_learner():
 def test_no_price_of_anarchy_at_zero_dispersion():
     """Even under simultaneous action, decentralisation costs nothing when the
     externality is uniformly priced -- there is no commons problem here."""
-    from evolving_bandits import price_of_anarchy
+    from attrition import price_of_anarchy
     rng = np.random.default_rng(5)
     for m in [2, 3]:
         R = []
@@ -904,7 +904,7 @@ def test_no_price_of_anarchy_at_zero_dispersion():
 def test_spreading_out_is_worse_than_colliding():
     """Collisions are not the problem: concentrating on the best arm beats
     spreading agents across inferior ones."""
-    from evolving_bandits import decentralised_value_simultaneous
+    from attrition import decentralised_value_simultaneous
     rng = np.random.default_rng(5)
     n = 5
     v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()

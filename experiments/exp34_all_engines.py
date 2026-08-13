@@ -13,7 +13,7 @@ independent dynamical models it is not.
 """
 from functools import lru_cache
 import numpy as np
-from evolving_bandits import (derive_arm_parameters, derive_trial_parameters,
+from attrition import (derive_arm_parameters, derive_trial_parameters,
                               derive_design_space_parameters)
 
 def analyse(v, p, e, delta, T):

@@ -112,7 +112,7 @@ if __name__ == "__main__":
     print("\n\nQ3 -- does an agent benefit from keeping its rival ignorant?\n")
     print("An agent that withholds leaves its rival mispricing the externality.")
     print("The rival then consumes aggressively, and the damage is shared.\n")
-    from evolving_bandits.commitment import TerminalCommitment  # noqa: F401
+    from attrition.commitment import TerminalCommitment  # noqa: F401
     from experiments.exp32_multiagent_poa import (planner_value,
                                                   decentralised_value,
                                                   rule_greedy, rule_eci)

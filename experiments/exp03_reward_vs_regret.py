@@ -5,8 +5,8 @@ Regret is measured against each instance's own optimum, so lower regret does
 not imply better absolute performance. Report both.
 """
 import numpy as np
-from evolving_bandits.env import EvolvingBanditEnv
-from evolving_bandits.agents import LinUCBAgent
+from attrition.env import EvolvingBanditEnv
+from attrition.agents import LinUCBAgent
 
 SEEDS = 10
 

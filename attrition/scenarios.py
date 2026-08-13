@@ -4,7 +4,7 @@ Each scenario is a fixed problem instance with a stated purpose, so results are
 comparable across papers and implementations. A scenario returns a builder that
 produces a fresh environment for a given seed.
 
-    from evolving_bandits.scenarios import SCENARIOS, load
+    from attrition.scenarios import SCENARIOS, load
     env = load("shared-quota", seed=0)
 
 Every scenario records which phenomenon it is meant to exhibit, and
