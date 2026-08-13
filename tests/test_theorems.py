@@ -915,3 +915,49 @@ def test_spreading_out_is_worse_than_colliding():
     spread = decentralised_value_simultaneous(v, p, e, 0.12, 4, 3,
                                               tie_break="random", seeds=300)
     assert same > spread, "colliding on the best arm must beat spreading out"
+
+
+# ------------------------------------------------- charge misspecification
+def test_free_riding_degrades_monotonically():
+    """Free-riding is ECI with charge scaled by 1/m: loss falls monotonically as
+    the discount weakens."""
+    from experiments.exp48_charge_misspecification import sweep_lambda
+    rows = sweep_lambda([0.0, 0.125, 0.25, 0.5, 1.0])
+    losses = [r[1] for r in rows]
+    assert all(losses[i] > losses[i+1] for i in range(len(losses)-1)), (
+        f"loss must fall monotonically with lambda, got {losses}")
+
+
+def test_partial_pricing_recovers_much_of_the_gain():
+    """Even an eight-fold discount captures a large share of the benefit."""
+    from experiments.exp48_charge_misspecification import sweep_lambda
+    g = sweep_lambda([0.0])[0][1]
+    partial = sweep_lambda([0.125])[0][1]
+    best = min(r[1] for r in sweep_lambda([0.6, 1.0, 1.5, 2.5]))
+    recovered = (g - partial) / max(g - best, 1e-9)
+    assert recovered > 0.35, f"lambda=1/8 must recover a real share, got {recovered:.2f}"
+
+
+def test_over_charging_is_safer_than_under_charging():
+    """The robust asymmetry: err high when the externality scale is uncertain."""
+    from experiments.exp48_charge_misspecification import sweep_lambda
+    safer = 0
+    settings = [{}, {"T": 14}, {"delta": 0.04}, {"spread": 0.4}, {"n": 8}]
+    for kw in settings:
+        under = sweep_lambda([1/3.0], **kw)[0][1]
+        over = sweep_lambda([3.0], **kw)[0][1]
+        safer += int(over < under)
+    assert safer >= 4, f"over-charging must be safer in most settings ({safer}/5)"
+
+
+def test_no_universal_optimal_scale():
+    """Honesty check: argmin lambda moves with the setting, so 'use 1.5' would be
+    overfitting. If this ever passes trivially the claim has crept back in."""
+    from experiments.exp48_charge_misspecification import sweep_lambda
+    lams = [0.6, 1.0, 1.5, 2.5, 3.0]
+    argmins = []
+    for kw in [{"T": 4}, {"T": 14}, {"delta": 0.04}]:
+        rows = sweep_lambda(lams, **kw)
+        argmins.append(rows[int(np.argmin([r[1] for r in rows]))][0])
+    assert max(argmins) / min(argmins) > 2.0, (
+        f"optimal scale must vary materially across settings, got {argmins}")

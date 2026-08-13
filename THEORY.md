@@ -1964,3 +1964,78 @@ A bound on the ECI gap in terms of `(δ, std(κ), T, n)`. The decomposition
 the true burden horizon `L` by the naive `(T−t)`, and dropping the option term —
 but bounding `O_a` is exactly the difficulty that made the original Theorem 1
 coupling argument fail, and no closed form for it exists (established in exp13).
+
+---
+
+## Free-riding is charge misspecification — and that generalises
+
+Theorem 6 collapsed the multi-agent setting into a single-learner one, which makes
+free-riding far easier to analyse. An agent discounting the externality by its own
+expected share charges `λ·δκ_a(T−t)` with `λ = 1/m`, so **free-riding is exactly
+ECI with a mis-scaled charge**. The same sweep answers a broader question: how
+robust is ECI to getting the scale wrong?
+
+### The free-riding curve
+
+Raw loss against the optimum (`n=6`, `T=8`, `δ=0.15`, spread 1.2, 10 instances):
+
+| λ | reading | raw loss |
+|---|---|---|
+| 0.000 | greedy | 1.3734 |
+| 0.125 | 8 agents | 0.7030 |
+| 0.250 | 4 agents | 0.4539 |
+| 0.333 | 3 agents | 0.3678 |
+| 0.500 | 2 agents | 0.2262 |
+| 1.000 | correct pricing | 0.0843 |
+
+Loss is monotone in the discount, so free-riding degrades gracefully rather than
+collapsing. **Even eight-agent free-riding (λ = 1/8) recovers 50–63% of the
+available gain over greedy** across settings — crude partial pricing is worth far
+more than none.
+
+### The optimum is not at λ = 1, but it is not stable either
+
+At the base setting, `λ = 1.5` beats correct pricing (0.0358 against 0.0843). The
+explanation is structural: ECI's charge omits the option term, so it *under*-prices
+the true marginal cost and scaling up compensates.
+
+But the location moves with the setting, and not slightly:
+
+| setting | argmin λ |
+|---|---|
+| short horizon T=4 | **0.60** |
+| strong coupling δ=0.4 | 1.00 |
+| high dispersion | 1.50 |
+| base | 1.75 |
+| long horizon T=14 | 2.50 |
+| weak coupling δ=0.04 | **3.00** |
+
+Ranging from 0.6 to 3.0. **No universal recommendation for λ is defensible**, and
+any "use λ = 1.5" claim would be overfitting the base setting.
+
+### What *is* robust: the asymmetry
+
+Comparing a threefold under-charge against a threefold over-charge:
+
+| setting | under (λ=1/3) | over (λ=3) | ratio |
+|---|---|---|---|
+| base | 0.3678 | 0.1114 | 3.30 |
+| T=14 | 0.5021 | 0.0251 | **19.99** |
+| δ=0.04 | 0.1763 | 0.0256 | 6.88 |
+| spread 0.4 | 0.2857 | 0.0343 | 8.34 |
+| n=5, T=12 | 0.2714 | 0.0133 | **20.34** |
+| T=4 | 0.0588 | 0.1277 | 0.46 |
+
+**Over-charging is safer in 8 of 9 settings**, often by an order of magnitude. The
+single exception is the short horizon `T=4`, where there is little future left for
+the burden to damage and caution simply forfeits present reward.
+
+> **Practical rule.** When the externality scale is uncertain — which by Theorem 3
+> it always is — err high. Under-pricing costs 3× to 20× more than over-pricing by
+> the same factor.
+
+This explains the earlier finding that the crude conservative policy beat every
+learned estimator: it was not merely robust, it was erring in the safe direction.
+It also completes the answer Theorem 3 leaves open. Theorem 3 says the scale cannot
+be estimated; this says the estimate does not need to be good, provided the error
+is on the high side.

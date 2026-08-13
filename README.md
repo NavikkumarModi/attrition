@@ -315,10 +315,28 @@ is subtracted from *every* agent's reward including my own. The externality is
 symmetric, so a greedy agent behaves the same whether m=1 or m=10. There is nothing
 to free-ride on when no one is paying.
 
-What *is* genuinely multi-agent: an agent that prices the externality but discounts
-it by its own share (δκ/m instead of δκ) destroys 12–14% of system value. That's an
-objective change, not an action-space one — and it's the real target for mechanism
-design.
+What *is* genuinely multi-agent: free-riding — pricing the externality but
+discounting by your own share (δκ/m). Theorem 6 makes this analysable as a
+single-learner question, since it's just ECI with a mis-scaled charge.
+
+| λ | reading | raw loss |
+|---|---|---|
+| 0 | greedy | 1.3734 |
+| 1/8 | 8 agents | 0.7030 |
+| 1/2 | 2 agents | 0.2262 |
+| 1 | correct pricing | 0.0843 |
+
+Even an eightfold discount recovers **50–63%** of the gain over greedy — crude
+partial pricing beats none by a lot.
+
+**Over-charging is safer than under-charging**, in 8 of 9 settings, by ratios from
+3× to 20×. Since Theorem 3 says the scale can't be estimated anyway:
+
+> **Err high.** The estimate doesn't need to be good, provided the error is on the
+> high side.
+
+(There's no universal best λ — the minimiser ranges 0.6 to 3.0 across settings, so
+any specific recommendation would be overfitting.)
 
 ### Scenario packs
 

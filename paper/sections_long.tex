@@ -76,6 +76,40 @@ three, the gap widening as the individual share shrinks. This identifies the tar
 for mechanism design precisely: not the failure to coordinate, which costs nothing
 here, but the incentive to under-price a cost that is partly borne by others.
 
+\paragraph{Free-riding is charge misspecification.} Theorem~\ref{thm:seqequiv}
+makes free-riding analysable as a single-learner question. An agent discounting the
+externality by its own expected share charges $\lambda\,\delta\kappa_a(T-t)$ with
+$\lambda = 1/m$, so free-riding is ECI with a mis-scaled charge, and the same sweep
+answers how robust ECI is to any misspecified scale.
+
+Loss is monotone in the discount, and degrades gracefully: even an eightfold
+discount ($\lambda = 1/8$) recovers $50$--$63\%$ of the available gain over greedy
+across settings. Crude partial pricing is worth much more than none.
+
+Two further findings, one negative and one useful.
+
+\emph{There is no universal optimal scale.} At the base setting $\lambda = 1.5$
+beats correct pricing, because ECI omits the option term and so under-prices the
+true marginal cost. But the minimiser moves from $0.60$ at a short horizon to
+$3.00$ at weak coupling, so any specific recommendation would be overfitting.
+
+\emph{Over-charging is safer than under-charging}, robustly. Comparing a threefold
+under-charge against a threefold over-charge, over-charging wins in eight of nine
+settings, by ratios from $3.0$ to $20.3$; the single exception is a horizon so
+short that there is little future left for the burden to damage.
+
+\begin{corollary}
+When the externality scale is uncertain---which by Theorem~\ref{thm:floor} it always
+is---err high. Under-pricing costs $3\times$ to $20\times$ more than over-pricing by
+the same factor.
+\end{corollary}
+
+This completes what Theorem~\ref{thm:floor} leaves open. That result says the scale
+cannot be estimated; this one says the estimate does not need to be good, provided
+the error is on the high side. It also explains why the conservative policy of
+Section~\ref{sec:eci} outperformed every learned estimator: it was not merely
+robust, it was erring in the safe direction.
+
 \section{Terminal commitment}
 \label{sec:commitment}
 
