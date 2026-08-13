@@ -49,8 +49,8 @@ V_opt - V_greedy = m · δE     unbounded in pool size m and externality δE
 ## Install
 
 ```bash
-git clone https://github.com/<user>/consumable-bandits
-cd consumable-bandits
+git clone https://github.com/<user>/attrition
+cd attrition
 pip install -e .
 ```
 
@@ -429,11 +429,11 @@ Recorded rather than deleted, because the negative results shaped the theory:
 ## Citation
 
 ```bibtex
-@misc{consumable-bandits,
+@misc{attrition,
   title  = {No-Regret is Not No-Harm: Bandits with Consumable Action Sets},
   author = {Modi, Navikkumar},
   year   = {2026},
-  note   = {https://github.com/<user>/consumable-bandits}
+  note   = {https://github.com/<user>/attrition}
 }
 ```
 

@@ -267,13 +267,38 @@ standard, well-documented, and would let us claim competitive release is
 - Regression suite that **fails if a theorem's numerical claim breaks** — already
   the practice, scaled up.
 
-### Stage 4 — Development–launch coupling (later)
+### Stage 4 — Development–launch coupling: substantively addressed by T-E
 
-Phase 2/3 decisions set the initial state for launch; anticipated launch
-externalities feed back into development policy. This is where the programme
-becomes interesting to industry rather than only to reviewers — but it depends on
-Stages 1–3 being solid, and it is the part most at risk of becoming unfalsifiable.
-Gate it on the mechanistic engines working.
+This was flagged as the item most at risk of becoming unfalsifiable — a full
+multi-stakeholder NPI model (pricing, payers, competitor response, formulary
+sequencing) has too many free parameters to constrain against anything real, and
+was deliberately deferred rather than built speculatively.
+
+**What turned out to already answer the scoped version of the question.** Terminal
+commitment (`commitment.py`, `exp36`) is structurally exactly this coupling: a
+finite irreversible experimentation phase (development) followed by a one-shot
+declaration (the design-space envelope) that fixes the feasible set for an extended
+operating phase (launch). The two failure modes found there —
+
+- **greedy buys yield it cannot claim**: optimising the development phase in
+  isolation wastes the budget on settings that cannot be assembled into a coherent
+  launch envelope;
+- **ambition narrows the envelope it targets**: optimising for launch breadth
+  during development can leave a *narrower* commercial envelope than a
+  conservative development policy would have produced, at every budget tested;
+
+are development-destroys-launch-value results, derived from a model with three
+free parameters (budget, yield curve, failure curve) rather than the dozen-plus a
+full NPI model would need. That is what "falsifiable" bought here: a real answer
+to the coupling question, at a scope small enough to trust.
+
+**What remains genuinely out of scope, and stays deferred deliberately rather than
+by oversight**: competitor response, payer/formulary dynamics, indication
+sequencing, and multi-product portfolio effects. These are not "not yet done" —
+they are excluded because no version of them was found that stays falsifiable at
+this project's evidentiary standard. A future extension should add them one
+mechanism at a time, exactly as Stage 2 added engines one domain at a time, each
+validated against exact DP before the next is layered on.
 
 ---
 
@@ -485,3 +510,32 @@ takes longer than expected. Nothing is wasted either way.
 **The one thing that decides the flagship's fate** is not how much goes in but
 whether every piece serves the one-sentence thesis. Any result that does not is
 better published separately, where it can be the thesis.
+
+---
+
+## Roadmap completion status (August 2026)
+
+Checking the programme in Section 1 against what stands today.
+
+| goal | status |
+|---|---|
+| Theory that reshapes how a standard metric is read | **done** — Theorem 4/5's two-sided separation: no-regret neither implies nor is implied by preserving value |
+| Characterisation of when greedy fails | **done** — proven both directions (Theorem 1), extended to five coupling forms and three mechanistic domains |
+| Estimation limits | **done** — proven floor (Theorem 3), sharpened to a transitions-based bound, closed form for the ordinal analogue |
+| A corrected policy, not just a diagnosis | **done** — ECI, proven exact under constant kappa, empirically dominant elsewhere, robust to charge misspecification |
+| Multi-agent extension | **done** — resolved by Theorem 6 (sequential equivalence) rather than by the equilibrium theory originally planned; a cleaner outcome than expected |
+| Open-source artifact, JMLR-appropriate | **done** — `attrition`, 64 tests (one per claim), Gym/PettingZoo APIs, 7 scenarios, 3 mechanistic engines |
+| Domain grounding beyond synthetic examples | **done** — 3 engines derived from real dynamics, not hand-set parameters, with an honest negative control (platform trials) |
+| Terminal/commitment decisions | **done** — a distinct object (T-E) with two failure modes absent from the sequential setting |
+| Development–launch coupling | **done, scoped** — answered by T-E rather than a separate speculative model; full NPI dynamics deliberately excluded |
+| Mechanism design under the estimation limit | **done** — ordinal pricing works, cardinal does not; both the sufficiency and the (separate) learnability question resolved |
+| JMLR-length manuscript | **done** — 21 pages, three synchronised builds (reading / arXiv / JMLR) from one shared source |
+
+**What remains open, honestly:** a bound on ECI's approximation ratio in closed
+form (the option term that has resisted proof since session 1); whether `k`'s
+additive constant has its own derivation; and the full multi-stakeholder NPI
+extension, excluded by design rather than left incomplete. None of these block
+submission — they are stated as open in the paper's limitations section, which is
+where genuine open problems belong.
+
+**The programme designed at the start of this phase is substantially complete.**

@@ -27,9 +27,15 @@ def run(p, lam, T=800, n_init=60, d=5, mu=0.0):
         reg.append((O - R) / k); rew.append(R / k); orc.append(O / k)
     return np.mean(reg), np.mean(rew), np.mean(orc)
 
-print(f"{'lam':>5} {'p':>5} {'regret/pull':>12} {'reward/pull':>12} {'oracle/pull':>12}")
-print("-" * 50)
-for lam in [0.0, 1.0]:
-    for p in [0.0, 0.1, 0.5, 1.0]:
-        g, w, o = run(p, lam)
-        print(f"{lam:5.1f} {p:5.2f} {g:12.4f} {w:12.4f} {o:12.4f}")
+def main():
+    print(f"{'lam':>5} {'p':>5} {'regret/pull':>12} {'reward/pull':>12} "
+          f"{'oracle/pull':>12}")
+    print("-" * 50)
+    for lam in [0.0, 1.0]:
+        for p in [0.0, 0.1, 0.5, 1.0]:
+            g, w, o = run(p, lam)
+            print(f"{lam:5.1f} {p:5.2f} {g:12.4f} {w:12.4f} {o:12.4f}")
+
+
+if __name__ == "__main__":
+    main()
