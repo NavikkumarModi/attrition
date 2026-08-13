@@ -972,6 +972,50 @@ $6.6\%$--$12.2\%$ gap greedy incurs when $\kappa$ genuinely varies.
 
 \LONGFORM
 
+\section{An untested assumption, tested}
+\label{sec:correlated}
+
+Every result above assumes destruction is independent across arms. This is false
+in exactly the domains motivating the paper: a shared API provider's outage kills
+several tools at once; a class-wide toxicity mechanism can invalidate several doses
+together; a common raw-material shortage blocks several process settings
+simultaneously. We add a cluster-shock layer to test what survives: alongside
+per-pull destruction, each cluster faces an exogenous shock each round that, if it
+fires, destroys every currently alive arm in that cluster simultaneously.
+
+\paragraph{Theorem~\ref{thm:vacuity}'s zero regret survives, trivially.} It is a
+definitional property of the benchmark, holding under any destruction mechanism.
+Confirmed at $0.0000000000$ across shock rates up to $q=0.5$.
+
+\paragraph{Theorem~\ref{thm:char} survives exactly, and this is a genuine
+surprise.} Constant $\kappa$ gives greedy exact optimality even under correlated
+cluster shocks, verified to full floating-point precision ($0.00\times10^{0}$ to
+ten decimal places) up to $q=0.7$, including an adversarial construction with $e$
+varying sixfold within a cluster while $\kappa$ is held exactly constant. We state
+this as a \emph{conjecture} rather than a theorem: a proof attempt was made and
+abandoned rather than forced through, since the original burden-invariance
+argument nests awkwardly once a shock's effect on other cluster members depends on
+which arm was just removed. The empirical result is precise; the general proof is
+open.
+
+\paragraph{ECI does not survive, and this is the substantive limitation.} At high
+correlated-shock rates ECI is worse than greedy in the majority of instances
+tested ($9/15$ at $q=0.5$, $13/15$ at $q=0.7$). ECI prices an arm by its own
+$\kappa_a$, betting that preservation protects future value; once destruction is
+dominated by an exogenous correlated shock that bet stops paying, because the
+shock destroys arms whether or not they were pulled. A natural fix --- charging an
+arm for its cluster-mates' shared shock exposure in addition to $\kappa_a$ --- was
+tested and made matters \emph{worse}, falling below greedy at $q=0.7$. A working
+correction for correlated destruction is an open problem, not a solved one.
+
+\begin{corollary}
+The paper's central practical recommendation --- specify $\kappa$, do not attempt
+to estimate it, and act on ECI --- holds where destruction is independent across
+arms and requires a not-yet-found correction where it is correlated. Practitioners
+in the domains motivating this paper should check which regime applies before
+deploying ECI as-is.
+\end{corollary}
+
 \section{Limitations}
 
 Exact optimality results rest on dynamic programming at $n \le 8$;

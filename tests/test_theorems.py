@@ -1006,3 +1006,60 @@ def test_eci_closed_form_bound_never_violated():
         bound = closed_form_bound(v, p, e, delta, T)
         assert bound >= exact - 1e-6, (
             f"delta={delta}: bound {bound:.4f} must be >= exact gap {exact:.4f}")
+
+
+# ------------------------------------------------ correlated destruction stress test
+def test_greedy_zero_regret_survives_correlated_shocks():
+    """Theorem 4's zero regret is definitional, so it must hold under ANY
+    destruction mechanism, including correlated cluster shocks."""
+    from experiments.exp50_correlated_destruction import exact_clustered
+    rng = np.random.default_rng(71)
+    n, T, delta = 6, 6, 0.15
+    v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
+    p = np.clip(rng.uniform(0.3, 0.9, n), 0.05, 1.0)
+    e = np.clip(1.0 + rng.normal(0, 1.2, n), 0.0, None)
+    clusters = np.array([0, 0, 1, 1, 2, 2])
+    for q in [0.0, 0.3, 0.5]:
+        _, _, _, reg = exact_clustered(v, p, e, delta, T, clusters, q)
+        assert reg < 1e-9, f"q={q}: greedy regret must stay exactly zero"
+
+
+def test_constant_kappa_survives_correlated_shocks():
+    """Verified conjecture: constant kappa gives greedy exact optimality even
+    under correlated cluster-level exogenous destruction. Stated as a
+    conjecture in THEORY.md, not a proven theorem -- this test checks the
+    empirical claim, not a proof."""
+    from experiments.exp50_correlated_destruction import exact_clustered
+    rng = np.random.default_rng(3)
+    n, T, delta = 6, 6, 0.15
+    v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
+    kappa = 0.4
+    p = np.clip(rng.uniform(0.15, 0.95, n), 0.05, 1.0)
+    e = kappa / p                          # kappa exactly constant, e varies a lot
+    clusters = np.array([0, 0, 0, 1, 1, 1])
+    for q in [0.0, 0.3, 0.5, 0.7]:
+        vs, vg, _, _ = exact_clustered(v, p, e, delta, T, clusters, q)
+        assert abs(vs - vg) < 1e-6, (
+            f"q={q}: greedy must remain exactly optimal under constant kappa")
+
+
+def test_eci_becomes_harmful_under_strong_correlated_risk():
+    """The genuine limitation: at high correlated-shock rates ECI is worse than
+    greedy in the majority of instances. This documents a real boundary on the
+    paper's central practical recommendation, not a bug to be fixed silently."""
+    from experiments.exp50_correlated_destruction import exact_clustered
+    rng = np.random.default_rng(5)
+    n, T, delta = 6, 6, 0.15
+    clusters = np.array([0, 0, 1, 1, 2, 2])
+    worse = 0
+    trials = 15
+    for _ in range(trials):
+        v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
+        p = np.clip(rng.uniform(0.3, 0.9, n), 0.05, 1.0)
+        e = np.clip(1.0 + rng.normal(0, 1.2, n), 0.0, None)
+        vs, vg, ve, _ = exact_clustered(v, p, e, delta, T, clusters, 0.7)
+        if (vs - ve) > (vs - vg):
+            worse += 1
+    assert worse >= trials // 2, (
+        f"ECI must underperform greedy in most instances at q=0.7, got "
+        f"{worse}/{trials}")

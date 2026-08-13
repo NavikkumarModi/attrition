@@ -2178,3 +2178,102 @@ recorded as open, not claimed.
 Two of these three are genuinely new theorems. The monotonicity disproof is worth
 weighing equally with the bound itself — it is the kind of finding that changes how
 one reasons about the model, not just a rejected lemma.
+
+---
+
+## Stress-testing the independence assumption — correlated destruction
+
+Every theorem so far assumes destruction is independent across arms. This is false
+in exactly the domains motivating the project: a shared API provider's outage
+kills several tools at once; a class-wide toxicity mechanism can invalidate
+several doses together; a common raw-material shortage blocks several process
+settings simultaneously. `exp50` adds a cluster-shock layer: alongside the
+existing per-pull destruction, each cluster faces an exogenous shock each round
+that, if it fires, destroys **every currently alive arm in that cluster
+simultaneously**, regardless of which arm was pulled.
+
+### Q1 — does Theorem 4 (zero-regret vacuity) survive? Yes, trivially
+
+Greedy's regret against the best-available benchmark is exactly `0.0000000000` at
+every shock rate tested (`q ∈ {0, 0.1, 0.3, 0.5}`). This isn't a new result so much
+as a clarification: greedy's zero regret is a **definitional** property of the
+benchmark (greedy always pulls the best available arm, whatever "available" turns
+out to mean), so it holds under *any* destruction mechanism — correlated,
+adversarial, anything. Theorem 4 was never resting on independence in the first
+place.
+
+### Q2 — does Theorem 1 survive? Yes, exactly, and this is a real surprise
+
+**Verified to full floating-point precision** (gap `0.00e+00` to 10 decimal
+places) across shock rates up to `q = 0.7`, including a deliberately adversarial
+setup with `e` varying 3–6× within a cluster while `κ = pe` is held exactly
+constant. Greedy remains exactly optimal.
+
+> **Conjecture (Theorem 1 under correlated exogenous destruction).** Constant `κ`
+> implies greedy optimality even when destruction includes correlated,
+> cluster-level exogenous shocks, provided the shock mechanism does not depend on
+> which arm was pulled.
+
+This is stated as a **conjecture, not a theorem**. A proof attempt was made and
+abandoned honestly rather than forced: the original burden-invariance argument
+relies on each round's expected burden contribution being `κ` regardless of the
+arm chosen, and that argument nests awkwardly once a shock's effect on *other*
+cluster members depends on which arm was just removed from the cluster. The
+empirical result is real and precise; the general proof is open. Given this
+project's history with a superficially plausible but false lemma (the
+monotonicity claim in the ECI-bound work), a conjecture stated honestly is
+preferred here over a proof pushed through on pattern-matching.
+
+### Q3 — does ECI survive? No, and this is the real finding
+
+Averaged over 15 instances per shock rate:
+
+| q | greedy gap | ECI gap | ECI worse than greedy |
+|---|---|---|---|
+| 0.00 | 0.5268 | 0.0643 | 0/15 |
+| 0.10 | 0.3222 | 0.0152 | 0/15 |
+| 0.30 | 0.0894 | 0.0333 | 1/15 |
+| **0.50** | 0.0221 | **0.0820** | **9/15** |
+| **0.70** | 0.0024 | **0.1448** | **13/15** |
+
+**At high correlated-shock rates, ECI is worse than doing nothing (greedy) in the
+majority of instances.** This is not noise — it reproduces robustly.
+
+**Why.** ECI prices an arm by its own `κ_a = p_a e_a`, betting that preserving
+low-`κ` arms protects future value. Once destruction is dominated by an
+exogenous, correlated shock, that bet stops paying: the shock destroys arms
+whether or not they were pulled, so declining a good pull to "preserve" an arm
+buys nothing when the arm's survival was never in the policy's control to begin
+with. ECI keeps paying the preservation cost without collecting the benefit.
+
+### A natural fix was tried and failed
+
+The obvious correction — charge an arm not only for `κ_a` but for the expected
+burden its cluster-mates' shock exposure creates — was tested and made things
+**worse**, not better:
+
+| q | greedy | ECI | cluster-aware ECI |
+|---|---|---|---|
+| 0.30 | 1.8654 | 1.9215 | **1.8442** |
+| 0.50 | 1.5088 | 1.4489 | **1.4255** |
+| 0.70 | 1.2729 | 1.1305 | **1.0456** |
+
+The cluster-aware charge over-penalises: at `q = 0.7` it falls even below plain
+greedy. The correction's scaling (raw `q × cluster e`) is evidently wrong, and a
+proper fix would need to account for how the charge should interact with the
+existing `κ` term rather than being added on top of it. **This is recorded as a
+falsified fix attempt, not a solved problem.**
+
+### Where this leaves the paper's practical recommendation
+
+The central practical claim — "specify the externality, don't try to estimate
+it, and use ECI" — needs a boundary condition added: **it holds where destruction
+is independent across arms, and needs a not-yet-found correction where
+destruction is correlated.** For the domains motivating this work, that boundary
+matters directly: agent tools sharing a provider, doses sharing a toxicity
+mechanism, and process settings sharing a supplier are all naturally clustered.
+Practitioners in exactly the settings this paper targets should check whether
+their destruction risk is independent before deploying ECI as-is.
+
+This is genuinely unresolved and belongs in the paper's limitations, not
+smoothed over.
