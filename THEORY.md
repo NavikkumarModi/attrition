@@ -1550,6 +1550,11 @@ ordering alongside cardinal RMSE:
 **Rank recovery saturates near τ ≈ 0.68 and does not approach 1**, even with the
 gap-to-noise ratio raised four thousand-fold.
 
+> **Superseded below.** This figure is specific to `n = 8`, which was held fixed
+> throughout this experiment. Sweeping pool size shows τ → 1, and the constant is
+> `k ≈ 2.5` positionally compromised arms rather than a ceiling on τ. See "The
+> ordinal saturation point: a closed form, and a correction".
+
 ### Why, and why it is the same mechanism
 
 The saturation has the same cause as the cardinal floor. Each arm supplies exactly
@@ -2039,3 +2044,52 @@ learned estimator: it was not merely robust, it was erring in the safe direction
 It also completes the answer Theorem 3 leaves open. Theorem 3 says the scale cannot
 be estimated; this says the estimate does not need to be good, provided the error
 is on the high side.
+
+---
+
+## Repository audit
+
+A full audit after 48 experiments of accumulated change. Three classes of defect
+were found and fixed; recorded because an artifact that silently rots is worse than
+one with known gaps.
+
+### Stale claims surviving the retractions
+
+The multi-agent retraction updated `THEORY.md` but left the claim standing in three
+other places:
+
+- `RESEARCH_PROGRAMME.md` status table still read "PoA reaches 1.297; κ-aware
+  agents reduce it to 1.004";
+- the same file's Stage 1 plan still listed price of anarchy as a headline
+  measurement;
+- `scenarios.py` still documented `shared-quota-competing` as exhibiting "price of
+  anarchy under consumption", with an expected behaviour that no longer holds.
+
+All three corrected. The scenario now documents free-riding under a shared burden,
+and states explicitly that this is *not* a classical commons because the burden
+falls on the agent creating it.
+
+Separately, the ordinal section's "saturates near τ ≈ 0.68" stood uncorrected above
+the later section that supersedes it. A forward reference now marks it.
+
+### Import side effects
+
+Six early experiments (`exp04`, `exp06`, `exp07`, `exp08`, `exp09`, `exp13`)
+executed their full driver on import, emitting up to 3,265 characters and running
+minutes of computation. This is a genuine defect for a package others import from,
+and it made the test suite's imports far more expensive than they appeared. All six
+are now behind `main()` guards; the full experiment directory imports silently.
+
+### Escape-sequence warnings
+
+Four modules had `\{` in docstrings, raising `SyntaxWarning` under Python 3.12.
+Docstrings made raw.
+
+### Verification
+
+- syntax: all 48 experiments parse
+- imports: all 48 import silently, none fail
+- reproduction: spot-checked `exp06`, `exp08`, `exp13` against their documented
+  numbers — `+27.2%` at strong coupling, `92.0%` capture at the highest dispersion,
+  and 0 violations in 24,946 states, all matching
+- tests: full suite passes

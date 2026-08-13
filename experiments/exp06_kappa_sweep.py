@@ -31,12 +31,17 @@ def run(kappa, delta, seeds=40):
         tot.append(t)
     return np.mean(tot), np.std(tot)/np.sqrt(seeds)
 
-print(f"{'delta':>6} {'kappa':>7} {'value':>9} {'±se':>6} {'vs k=0':>8}")
-print("-"*42)
-for delta in [0.05, 0.10, 0.20]:
-    base, _ = run(0.0, delta)
-    for k in [0.0, 1.0, 5.0, 20.0, 50.0, 200.0]:
-        m, se = run(k, delta)
-        print(f"{delta:6.2f} {k:7.1f} {m:9.3f} {se:6.3f} "
-              f"{100*(m-base)/abs(base):+7.1f}%")
-    print()
+def main():
+    print(f"{'delta':>6} {'kappa':>7} {'value':>9} {'±se':>6} {'vs k=0':>8}")
+    print("-"*42)
+    for delta in [0.05, 0.10, 0.20]:
+        base, _ = run(0.0, delta)
+        for k in [0.0, 1.0, 5.0, 20.0, 50.0, 200.0]:
+            m, se = run(k, delta)
+            print(f"{delta:6.2f} {k:7.1f} {m:9.3f} {se:6.3f} "
+                  f"{100*(m-base)/abs(base):+7.1f}%")
+        print()
+
+
+if __name__ == "__main__":
+    main()

@@ -38,21 +38,26 @@ def evaluate(v, p, e, delta, T):
     idx_H  = pol(lambda S,t: max(S, key=lambda i: R(i,S) - delta*p[i]*e[i]*h(S,t)))
     return V(full,0), greedy, idx_T, idx_H
 
-rng = np.random.default_rng(31)
-N, T, DELTA, INST = 5, 16, 0.12, 12
-print("binding regime: T=16, sum(1/p)~6 so H < T-t\n")
-print(f"{'std(k)':>7} {'greedy':>9} {'idx(T-t)':>10} {'idx(H)':>9}  "
-      f"{'capture T-t':>12} {'capture H':>10}")
-print("-"*64)
-for scale in [0.1, 0.2, 0.4, 0.8, 1.2]:
-    G,IT,IH,SD = [],[],[],[]
-    for _ in range(INST):
-        v = np.sort(rng.uniform(0.4,1.2,N))[::-1].copy()
-        p = np.clip(rng.uniform(0.7,1.0,N),0.05,1.0)
-        e = np.clip(1.0+rng.normal(0,scale,N),0,None)
-        vs,g,it,ih = evaluate(v,p,e,DELTA,T)
-        G.append((vs-g)/abs(vs)*100); IT.append((vs-it)/abs(vs)*100)
-        IH.append((vs-ih)/abs(vs)*100); SD.append(float(np.std(p*e)))
-    g,it,ih = np.mean(G),np.mean(IT),np.mean(IH)
-    print(f"{np.mean(SD):7.3f} {g:8.3f}% {it:9.3f}% {ih:8.3f}%  "
-          f"{100*(g-it)/g:11.1f}% {100*(g-ih)/g:9.1f}%")
+def main():
+    rng = np.random.default_rng(31)
+    N, T, DELTA, INST = 5, 16, 0.12, 12
+    print("binding regime: T=16, sum(1/p)~6 so H < T-t\n")
+    print(f"{'std(k)':>7} {'greedy':>9} {'idx(T-t)':>10} {'idx(H)':>9}  "
+          f"{'capture T-t':>12} {'capture H':>10}")
+    print("-"*64)
+    for scale in [0.1, 0.2, 0.4, 0.8, 1.2]:
+        G,IT,IH,SD = [],[],[],[]
+        for _ in range(INST):
+            v = np.sort(rng.uniform(0.4,1.2,N))[::-1].copy()
+            p = np.clip(rng.uniform(0.7,1.0,N),0.05,1.0)
+            e = np.clip(1.0+rng.normal(0,scale,N),0,None)
+            vs,g,it,ih = evaluate(v,p,e,DELTA,T)
+            G.append((vs-g)/abs(vs)*100); IT.append((vs-it)/abs(vs)*100)
+            IH.append((vs-ih)/abs(vs)*100); SD.append(float(np.std(p*e)))
+        g,it,ih = np.mean(G),np.mean(IT),np.mean(IH)
+        print(f"{np.mean(SD):7.3f} {g:8.3f}% {it:9.3f}% {ih:8.3f}%  "
+              f"{100*(g-it)/g:11.1f}% {100*(g-ih)/g:9.1f}%")
+
+
+if __name__ == "__main__":
+    main()

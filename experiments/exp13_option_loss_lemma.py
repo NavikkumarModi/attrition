@@ -1,4 +1,4 @@
-"""Experiment 13 -- isolate the option-loss term for the Theorem 1 proof.
+r"""Experiment 13 -- isolate the option-loss term for the Theorem 1 proof.
 
 Rewrite the Bellman comparison. With B(S) and V(S,t+1) independent of the
 chosen arm, maximising
@@ -35,42 +35,47 @@ def base_V(v, p, T):
         return max(v[a] + p[a]*V(S-{a}, t+1) + (1-p[a])*V(S, t+1) for a in S)
     return V
 
-rng = np.random.default_rng(41)
-viol = 0; tot = 0
-max_ratio_spread = 0.0
-rows = []
+def main():
+    rng = np.random.default_rng(41)
+    viol = 0; tot = 0
+    max_ratio_spread = 0.0
+    rows = []
 
-for inst in range(200):
-    n = int(rng.integers(3, 7)); T = int(rng.integers(2, 9))
-    v = np.sort(rng.uniform(0.1, 1.5, n))[::-1].copy()
-    p = np.clip(rng.uniform(0.05, 1.0, n), 0.02, 1.0)
-    V = base_V(v, p, T)
-    # check the lemma at every reachable (S,t)
-    for size in range(2, n+1):
-        for Ss in combinations(range(n), size):
-            S = frozenset(Ss)
-            for t in range(T):
-                if t+1 > T: continue
-                O = {a: V(S, t+1) - V(S - {a}, t+1) for a in S}
-                corrected = {a: v[a] - p[a]*O[a] for a in S}
-                best_plain = max(S, key=lambda a: v[a])
-                best_corr = max(S, key=lambda a: corrected[a])
-                tot += 1
-                if abs(corrected[best_corr] - corrected[best_plain]) > 1e-9:
-                    viol += 1
-                    if len(rows) < 5:
-                        rows.append((list(Ss), t, v[list(Ss)].round(3),
-                                     p[list(Ss)].round(3)))
-                po = np.array([p[a]*O[a] for a in sorted(S)])
-                if po.max() > 1e-12:
-                    max_ratio_spread = max(max_ratio_spread,
-                                           float(po.max()-po.min()))
+    for inst in range(200):
+        n = int(rng.integers(3, 7)); T = int(rng.integers(2, 9))
+        v = np.sort(rng.uniform(0.1, 1.5, n))[::-1].copy()
+        p = np.clip(rng.uniform(0.05, 1.0, n), 0.02, 1.0)
+        V = base_V(v, p, T)
+        # check the lemma at every reachable (S,t)
+        for size in range(2, n+1):
+            for Ss in combinations(range(n), size):
+                S = frozenset(Ss)
+                for t in range(T):
+                    if t+1 > T: continue
+                    O = {a: V(S, t+1) - V(S - {a}, t+1) for a in S}
+                    corrected = {a: v[a] - p[a]*O[a] for a in S}
+                    best_plain = max(S, key=lambda a: v[a])
+                    best_corr = max(S, key=lambda a: corrected[a])
+                    tot += 1
+                    if abs(corrected[best_corr] - corrected[best_plain]) > 1e-9:
+                        viol += 1
+                        if len(rows) < 5:
+                            rows.append((list(Ss), t, v[list(Ss)].round(3),
+                                         p[list(Ss)].round(3)))
+                    po = np.array([p[a]*O[a] for a in sorted(S)])
+                    if po.max() > 1e-12:
+                        max_ratio_spread = max(max_ratio_spread,
+                                               float(po.max()-po.min()))
 
-print(f"LEMMA 1a checked at {tot} reachable (S,t) states across 200 instances")
-print(f"  violations: {viol}")
-print(f"  max spread of p_a*O_a across arms in a state: {max_ratio_spread:.4f}")
-print(f"  -> p_a*O_a is NOT constant, yet never reorders: "
-      f"{'CONFIRMED' if viol==0 else 'FALSIFIED'}")
-if rows:
-    print("\n counterexamples:")
-    for r in rows: print("  ", r)
+    print(f"LEMMA 1a checked at {tot} reachable (S,t) states across 200 instances")
+    print(f"  violations: {viol}")
+    print(f"  max spread of p_a*O_a across arms in a state: {max_ratio_spread:.4f}")
+    print(f"  -> p_a*O_a is NOT constant, yet never reorders: "
+          f"{'CONFIRMED' if viol==0 else 'FALSIFIED'}")
+    if rows:
+        print("\n counterexamples:")
+        for r in rows: print("  ", r)
+
+
+if __name__ == "__main__":
+    main()

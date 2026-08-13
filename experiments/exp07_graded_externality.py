@@ -89,43 +89,48 @@ def case(name, make, inst=INST):
     return np.mean(spreads), np.mean(gaps)
 
 
-print("C1' test: greedy optimal <=> p_a * e_a constant across arms\n")
-print(f"{'case':46} {'std(p*e)':>9} {'mean gap':>9} {'broken':>8}")
-print("-" * 76)
+def main():
+    print("C1' test: greedy optimal <=> p_a * e_a constant across arms\n")
+    print(f"{'case':46} {'std(p*e)':>9} {'mean gap':>9} {'broken':>8}")
+    print("-" * 76)
 
-case("A  p varies, e=0",
-     lambda: (rng.uniform(0.2, 1.0, N), np.zeros(N)))
+    case("A  p varies, e=0",
+         lambda: (rng.uniform(0.2, 1.0, N), np.zeros(N)))
 
-case("B  p constant, e constant",
-     lambda: (np.full(N, 0.5), np.full(N, 1.0)))
+    case("B  p constant, e constant",
+         lambda: (np.full(N, 0.5), np.full(N, 1.0)))
 
-case("C  p constant, e varies",
-     lambda: (np.full(N, 0.5), rng.uniform(0.0, 2.0, N)))
+    case("C  p constant, e varies",
+         lambda: (np.full(N, 0.5), rng.uniform(0.0, 2.0, N)))
 
-case("D  p varies, e constant",
-     lambda: (rng.uniform(0.2, 1.0, N), np.full(N, 1.0)))
-
-
-def case_e():
-    """p varies, e varies, product pinned to a constant."""
-    p_vec = rng.uniform(0.25, 1.0, N)
-    k = 0.4
-    e_vec = k / p_vec           # so p_a * e_a == k for every arm
-    return p_vec, e_vec
+    case("D  p varies, e constant",
+         lambda: (rng.uniform(0.2, 1.0, N), np.full(N, 1.0)))
 
 
-case("E  p and e both vary, product HELD CONSTANT", case_e)
+    def case_e():
+        """p varies, e varies, product pinned to a constant."""
+        p_vec = rng.uniform(0.25, 1.0, N)
+        k = 0.4
+        e_vec = k / p_vec           # so p_a * e_a == k for every arm
+        return p_vec, e_vec
 
-print("\n\nGap vs spread of p*e (C prediction: monotone increasing)\n")
-print(f"{'target std(p*e)':>16} {'actual':>9} {'mean gap':>9}")
-print("-" * 38)
-for scale in [0.0, 0.05, 0.1, 0.2, 0.4, 0.8]:
-    gaps, sds = [], []
-    for _ in range(INST):
-        v = vals()
-        p_vec = np.full(N, 0.5)
-        e_vec = np.clip(1.0 + rng.normal(0, scale, N) / 0.5, 0, None)
-        vs, vg = solve(v, p_vec, e_vec, DELTA, T)
-        gaps.append((vs - vg) / abs(vs) * 100)
-        sds.append(float(np.std(p_vec * e_vec)))
-    print(f"{scale:16.2f} {np.mean(sds):9.4f} {np.mean(gaps):8.3f}%")
+
+    case("E  p and e both vary, product HELD CONSTANT", case_e)
+
+    print("\n\nGap vs spread of p*e (C prediction: monotone increasing)\n")
+    print(f"{'target std(p*e)':>16} {'actual':>9} {'mean gap':>9}")
+    print("-" * 38)
+    for scale in [0.0, 0.05, 0.1, 0.2, 0.4, 0.8]:
+        gaps, sds = [], []
+        for _ in range(INST):
+            v = vals()
+            p_vec = np.full(N, 0.5)
+            e_vec = np.clip(1.0 + rng.normal(0, scale, N) / 0.5, 0, None)
+            vs, vg = solve(v, p_vec, e_vec, DELTA, T)
+            gaps.append((vs - vg) / abs(vs) * 100)
+            sds.append(float(np.std(p_vec * e_vec)))
+        print(f"{scale:16.2f} {np.mean(sds):9.4f} {np.mean(gaps):8.3f}%")
+
+
+if __name__ == "__main__":
+    main()

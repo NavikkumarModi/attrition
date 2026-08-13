@@ -49,10 +49,14 @@ SCENARIOS = {
     },
     "shared-quota-competing": {
         "description": "Two orchestrators drawing on the same quota pool. "
-                       "Restraint by one benefits both.",
-        "phenomenon": "price of anarchy under consumption",
-        "expected_behaviour": "decentralised greedy agents destroy ~20-30% of "
-                              "system value; kappa-aware agents recover most of it",
+                       "Note the burden falls on both, including the agent "
+                       "that creates it, so this is not a classical commons.",
+        "phenomenon": "free-riding under a shared burden",
+        "expected_behaviour": "NO price of anarchy: by Theorem 6 sequential "
+                              "agents behave exactly like one learner over m*T "
+                              "pulls. The genuine effect is free-riding -- an "
+                              "agent charging delta*kappa/m instead of "
+                              "delta*kappa loses system value monotonically in m",
         "agents": 2,
         "build": lambda: (_agent_tools()[:3], dict(delta=0.06, horizon=40)),
     },

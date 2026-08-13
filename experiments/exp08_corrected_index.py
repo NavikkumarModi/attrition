@@ -38,22 +38,27 @@ def solve_all(v, p, e, delta, T):
         S, key=lambda i: R(i, S) - delta*p[i]*e[i]*(T-t)))
     return V(full, 0), greedy, index
 
-rng = np.random.default_rng(23)
-N, T, DELTA, INST = 6, 8, 0.12, 12
+def main():
+    rng = np.random.default_rng(23)
+    N, T, DELTA, INST = 6, 8, 0.12, 12
 
-print(f"{'spread':>8} {'V*':>8} {'greedy':>8} {'index':>8} "
-      f"{'greedy gap':>11} {'index gap':>10} {'captured':>9}")
-print("-" * 70)
-for scale in [0.1, 0.2, 0.4, 0.8, 1.2]:
-    gg, ig, sd = [], [], []
-    for _ in range(INST):
-        v = np.sort(rng.uniform(0.4, 1.2, N))[::-1].copy()
-        p = np.clip(rng.uniform(0.3, 1.0, N), 0.05, 1.0)
-        e = np.clip(1.0 + rng.normal(0, scale, N), 0, None)
-        vs, vg, vi = solve_all(v, p, e, DELTA, T)
-        gg.append((vs-vg)/abs(vs)*100); ig.append((vs-vi)/abs(vs)*100)
-        sd.append(float(np.std(p*e)))
-    g, i = np.mean(gg), np.mean(ig)
-    cap = 100*(g-i)/g if g > 1e-9 else 0.0
-    print(f"{np.mean(sd):8.3f} {'':>8} {'':>8} {'':>8} "
-          f"{g:10.3f}% {i:9.3f}% {cap:8.1f}%")
+    print(f"{'spread':>8} {'V*':>8} {'greedy':>8} {'index':>8} "
+          f"{'greedy gap':>11} {'index gap':>10} {'captured':>9}")
+    print("-" * 70)
+    for scale in [0.1, 0.2, 0.4, 0.8, 1.2]:
+        gg, ig, sd = [], [], []
+        for _ in range(INST):
+            v = np.sort(rng.uniform(0.4, 1.2, N))[::-1].copy()
+            p = np.clip(rng.uniform(0.3, 1.0, N), 0.05, 1.0)
+            e = np.clip(1.0 + rng.normal(0, scale, N), 0, None)
+            vs, vg, vi = solve_all(v, p, e, DELTA, T)
+            gg.append((vs-vg)/abs(vs)*100); ig.append((vs-vi)/abs(vs)*100)
+            sd.append(float(np.std(p*e)))
+        g, i = np.mean(gg), np.mean(ig)
+        cap = 100*(g-i)/g if g > 1e-9 else 0.0
+        print(f"{np.mean(sd):8.3f} {'':>8} {'':>8} {'':>8} "
+              f"{g:10.3f}% {i:9.3f}% {cap:8.1f}%")
+
+
+if __name__ == "__main__":
+    main()

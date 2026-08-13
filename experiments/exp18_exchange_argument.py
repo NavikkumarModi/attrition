@@ -1,4 +1,4 @@
-"""Experiment 18 -- verify the exchange argument for Lemma 1a.
+r"""Experiment 18 -- verify the exchange argument for Lemma 1a.
 
 The proposed proof: take an optimal policy that pulls b at (S,t) while a with
 v_a > v_b is available. Couple the death randomness, swap the two pulls, show

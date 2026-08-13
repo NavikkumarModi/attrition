@@ -74,78 +74,83 @@ def report(name, rows):
     return broken
 
 
-rng = np.random.default_rng(7)
-N_INST = 8
+def main():
+    rng = np.random.default_rng(7)
+    N_INST = 8
 
 
-def rand_vals(n):
-    return np.sort(rng.uniform(0.2, 1.0, size=n))[::-1].copy()
+    def rand_vals(n):
+        return np.sort(rng.uniform(0.2, 1.0, size=n))[::-1].copy()
 
 
-# ---------------------------------------------------------------- S1 hetero p
-rows = []
-for _ in range(N_INST):
-    n, T = 6, 7
-    v = rand_vals(n)
-    p_vec = rng.uniform(0.05, 1.0, size=n)
-    vs, a, vg = solve(lambda a, S: v[a], n, T, p_vec)
-    rows.append((vs, vg, a == 0))
-report("S1  heterogeneous irreversibility", rows)
+    # ---------------------------------------------------------------- S1 hetero p
+    rows = []
+    for _ in range(N_INST):
+        n, T = 6, 7
+        v = rand_vals(n)
+        p_vec = rng.uniform(0.05, 1.0, size=n)
+        vs, a, vg = solve(lambda a, S: v[a], n, T, p_vec)
+        rows.append((vs, vg, a == 0))
+    report("S1  heterogeneous irreversibility", rows)
 
-# ---------------------------------------------------------------- S2 discount
-rows = []
-for _ in range(N_INST):
-    n, T = 6, 8
-    v = rand_vals(n)
-    p_vec = np.full(n, rng.choice([0.3, 0.7, 1.0]))
-    vs, a, vg = solve(lambda a, S: v[a], n, T, p_vec, gamma=0.8)
-    rows.append((vs, vg, a == 0))
-report("S2  discounting (gamma=0.8)", rows)
+    # ---------------------------------------------------------------- S2 discount
+    rows = []
+    for _ in range(N_INST):
+        n, T = 6, 8
+        v = rand_vals(n)
+        p_vec = np.full(n, rng.choice([0.3, 0.7, 1.0]))
+        vs, a, vg = solve(lambda a, S: v[a], n, T, p_vec, gamma=0.8)
+        rows.append((vs, vg, a == 0))
+    report("S2  discounting (gamma=0.8)", rows)
 
-# ---------------------------------------------------------------- S3 rotting
-# value falls with the number of arms already consumed by that arm's own use;
-# approximated here as decay in the number of DEAD arms is S4, so here we make
-# each arm's value decay in how long it has been available (time-based rot).
-rows = []
-for _ in range(N_INST):
-    n, T = 6, 8
-    v = rand_vals(n)
-    p_vec = np.full(n, 0.5)
-    # rot: value shrinks with elapsed rounds -> encoded via |S| proxy is weak,
-    # so use explicit time by folding t into the state through T-stage recursion
-    # (handled by making values depend on |S| as a monotone proxy for time)
-    vs, a, vg = solve(lambda a, S: v[a] * (0.9 ** (n - len(S))), n, T, p_vec)
-    rows.append((vs, vg, a == 0))
-report("S3  rotting (decay in arms consumed)", rows)
+    # ---------------------------------------------------------------- S3 rotting
+    # value falls with the number of arms already consumed by that arm's own use;
+    # approximated here as decay in the number of DEAD arms is S4, so here we make
+    # each arm's value decay in how long it has been available (time-based rot).
+    rows = []
+    for _ in range(N_INST):
+        n, T = 6, 8
+        v = rand_vals(n)
+        p_vec = np.full(n, 0.5)
+        # rot: value shrinks with elapsed rounds -> encoded via |S| proxy is weak,
+        # so use explicit time by folding t into the state through T-stage recursion
+        # (handled by making values depend on |S| as a monotone proxy for time)
+        vs, a, vg = solve(lambda a, S: v[a] * (0.9 ** (n - len(S))), n, T, p_vec)
+        rows.append((vs, vg, a == 0))
+    report("S3  rotting (decay in arms consumed)", rows)
 
-# ---------------------------------------------------------------- S4 commons
-rows = []
-for _ in range(N_INST):
-    n, T = 6, 8
-    v = rand_vals(n)
-    p_vec = np.full(n, rng.choice([0.4, 0.8, 1.0]))
-    c = 0.9  # severity: reward scaled by fraction of arms still alive
-    vs, a, vg = solve(lambda a, S: v[a] * (1 - c * (n - len(S)) / n),
-                      n, T, p_vec)
-    rows.append((vs, vg, a == 0))
-report("S4  commons degradation (consuming arms degrades all)", rows)
+    # ---------------------------------------------------------------- S4 commons
+    rows = []
+    for _ in range(N_INST):
+        n, T = 6, 8
+        v = rand_vals(n)
+        p_vec = np.full(n, rng.choice([0.4, 0.8, 1.0]))
+        c = 0.9  # severity: reward scaled by fraction of arms still alive
+        vs, a, vg = solve(lambda a, S: v[a] * (1 - c * (n - len(S)) / n),
+                          n, T, p_vec)
+        rows.append((vs, vg, a == 0))
+    report("S4  commons degradation (consuming arms degrades all)", rows)
 
-# ---------------------------------------------------------------- S5 release
-# Arm n-1 is 'resistant': its value RISES as other arms are consumed, but it is
-# a poor arm to pull. Consuming sensitive arms releases it. Reward of every arm
-# is penalised by the released mass.
-rows = []
-for _ in range(N_INST):
-    n, T = 6, 8
-    v = rand_vals(n)
-    p_vec = np.full(n, rng.choice([0.5, 1.0]))
-    delta = 0.35
+    # ---------------------------------------------------------------- S5 release
+    # Arm n-1 is 'resistant': its value RISES as other arms are consumed, but it is
+    # a poor arm to pull. Consuming sensitive arms releases it. Reward of every arm
+    # is penalised by the released mass.
+    rows = []
+    for _ in range(N_INST):
+        n, T = 6, 8
+        v = rand_vals(n)
+        p_vec = np.full(n, rng.choice([0.5, 1.0]))
+        delta = 0.35
 
-    def vals(a, S, v=v, n=n, delta=delta):
-        dead_sensitive = len([i for i in range(n - 1) if i not in S])
-        burden = delta * dead_sensitive
-        return max(v[a] - burden, 0.0)
+        def vals(a, S, v=v, n=n, delta=delta):
+            dead_sensitive = len([i for i in range(n - 1) if i not in S])
+            burden = delta * dead_sensitive
+            return max(v[a] - burden, 0.0)
 
-    vs, a, vg = solve(vals, n, T, p_vec)
-    rows.append((vs, vg, a == 0))
-report("S5  competitive release (consumption raises a rival's burden)", rows)
+        vs, a, vg = solve(vals, n, T, p_vec)
+        rows.append((vs, vg, a == 0))
+    report("S5  competitive release (consumption raises a rival's burden)", rows)
+
+
+if __name__ == "__main__":
+    main()

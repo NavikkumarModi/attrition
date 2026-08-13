@@ -1,4 +1,4 @@
-"""Experiment 14 -- a policy that beats the index.
+r"""Experiment 14 -- a policy that beats the index.
 
 The index I(a,t) = v_a - delta*kappa_a*(T-t) captures 52-99% of the optimality
 gap. The remainder comes from the option-loss term the index ignores, for which

@@ -106,8 +106,8 @@ patients; two brand teams consuming shared payer goodwill.
 
 **New objects:**
 - equilibrium system value under irreversible externalities;
-- **price of anarchy under consumption** — how much system value decentralised
-  `κ`-blind agents destroy relative to a central planner;
+- ~~price of anarchy under consumption~~ — **investigated and found not to exist**;
+  the burden is symmetric, so a `κ`-blind agent behaves identically at any `m`;
 - existence/non-existence of pure equilibria when the action set shrinks
   endogenously;
 - free-riding: an agent benefits from *others'* restraint, so restraint is
@@ -232,7 +232,7 @@ hypotheses instead of shipping them.
 - Per-agent private rewards; system value as the sum.
 - Exact DP for `n ≤ 6`, `m = 2`; rollout above.
 - Baselines: independent greedy, independent TS, independent ECI, central planner.
-- **First headline measurement: price of anarchy under consumption.**
+- **Outcome: no price of anarchy exists** (Theorem 6). The genuine multi-agent effect is free-riding, i.e. charge misspecification.
 
 Directly reachable from the current solver. This alone is a paper.
 
@@ -397,7 +397,7 @@ produced corrections to their own premises, which is recorded rather than hidden
 | item | status | outcome |
 |---|---|---|
 | **T-A** system/private separation | **done** | both directions proven; converse is the stronger half |
-| **T-B** multi-agent, price of anarchy | **done** | PoA reaches 1.297; κ-aware agents reduce it to 1.004 |
+| **T-B** multi-agent | **done, claim retracted** | no price of anarchy exists: sequential play reduces to a single learner (Thm 6); simultaneity does not change it. Free-riding survives as the genuine effect |
 | **T-C** multi-agent estimation | **done, hypothesis falsified** | floor is set by *transitions*, not observations; communication is worthless |
 | **T-D** non-separable coupling | **done** | T4 robust to all five forms; T1 requires additive separability |
 | **T-E** terminal commitment | **done** | two new failure modes; ambition narrows the envelope it targets |

@@ -1,4 +1,4 @@
-"""Experiment 44 -- toward a bound on the ECI gap.
+r"""Experiment 44 -- toward a bound on the ECI gap.
 
 ECI is the main algorithmic contribution and the inventory lists it as empirical.
 To prove a bound we first need to know what the gap actually scales with.
