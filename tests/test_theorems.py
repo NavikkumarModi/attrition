@@ -772,3 +772,93 @@ def test_refined_k_formula_is_accurate():
         predicted = predict_k(refined=True, **kw)
         assert abs(measured - predicted) < 0.45, (
             f"{kw}: measured {measured:.2f} vs predicted {predicted:.2f}")
+
+
+def test_eci_is_exactly_optimal_under_constant_kappa():
+    """Proposition: constant kappa makes the ECI charge arm-independent, so ECI
+    reduces to greedy, which Theorem 1 says is optimal."""
+    from experiments.exp44_eci_bound import gap
+    rng = np.random.default_rng(3)
+    for kappa in [0.1, 0.4, 1.0]:
+        for _ in range(6):
+            n = 6
+            v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
+            p = np.clip(rng.uniform(0.3, 1.0, n), 0.05, 1.0)
+            e = kappa / p                      # kappa exactly constant
+            assert np.std(p * e) < 1e-12
+            g, i = gap(v, p, e, 0.12, 8)
+            assert abs(g) < 1e-9, "greedy must be optimal (Theorem 1)"
+            assert abs(i) < 1e-9, "ECI must be optimal too"
+
+
+def test_eci_absolute_loss_is_flat_while_greedy_explodes():
+    """ECI's RAW loss is near-constant across coupling strengths that vary
+    greedy's by two orders of magnitude.
+
+    Raw losses, not percentages: at strong coupling V* passes through zero, so
+    percentage gaps are meaningless (this is what produced the spurious '26.91%'
+    figure in an earlier analysis).
+    """
+    from functools import lru_cache
+
+    def raw(v, p, e, delta, T):
+        n = len(v); full = frozenset(range(n)); etot = float(np.sum(e))
+        B = lambda S: delta * (etot - sum(e[i] for i in S))
+        R = lambda a, S: float(v[a] - B(S))
+
+        @lru_cache(maxsize=None)
+        def V(S, t):
+            if t >= T or not S:
+                return 0.0
+            return max(R(a, S) + p[a]*V(S-{a}, t+1) + (1-p[a])*V(S, t+1)
+                       for a in S)
+
+        def pol(pick):
+            @lru_cache(maxsize=None)
+            def W(S, t):
+                if t >= T or not S:
+                    return 0.0
+                a = pick(S, t)
+                return R(a, S) + p[a]*W(S-{a}, t+1) + (1-p[a])*W(S, t+1)
+            return W(full, 0)
+
+        vs = V(full, 0)
+        g = pol(lambda S, t: max(S, key=lambda i: R(i, S)))
+        i_ = pol(lambda S, t: max(S, key=lambda i: R(i, S)
+                                  - delta*p[i]*e[i]*(T-t)))
+        return vs - g, vs - i_
+
+    rng = np.random.default_rng(17)
+    losses = {}
+    for delta in [0.02, 0.12, 0.45, 0.80, 1.50]:
+        G, I = [], []
+        for _ in range(10):
+            n = 6
+            v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
+            p = np.clip(rng.uniform(0.3, 1.0, n), 0.05, 1.0)
+            e = np.clip(1.0 + rng.normal(0, 1.0, n), 0.0, None)
+            g, i = raw(v, p, e, delta, 8)
+            G.append(g); I.append(i)
+        losses[delta] = (float(np.mean(G)), float(np.mean(I)))
+    g_lo, i_lo = losses[0.02]
+    g_hi, i_hi = losses[1.50]
+    assert g_hi > g_lo * 50, "greedy loss must explode with coupling"
+    assert i_hi < i_lo * 5, "ECI loss must stay bounded"
+
+
+def test_eci_relative_error_falls_with_coupling():
+    """The defensible claim: ECI's error shrinks as a FRACTION of greedy's."""
+    from experiments.exp44_eci_bound import gap
+    ratios = []
+    for delta in [0.02, 0.45]:
+        rng = np.random.default_rng(17)
+        G, I = [], []
+        for _ in range(8):
+            n = 6
+            v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
+            p = np.clip(rng.uniform(0.3, 1.0, n), 0.05, 1.0)
+            e = np.clip(1.0 + rng.normal(0, 1.0, n), 0.0, None)
+            g, i = gap(v, p, e, delta, 8)
+            G.append(g); I.append(i)
+        ratios.append(float(np.mean(I)) / max(float(np.mean(G)), 1e-9))
+    assert ratios[1] < ratios[0] * 0.5, "relative error must fall with coupling"

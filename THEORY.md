@@ -1847,3 +1847,73 @@ explanation for allocation-rule dependence · τ ≈ 0.68 as a universal ceiling
 
 **Thirteen falsified hypotheses, all mine.** The ratio of falsified to surviving
 claims is the reason the surviving ones are worth stating.
+
+---
+
+## ECI: one property proven, the general bound still open
+
+### Proposition (ECI exactness under constant κ) — PROVEN
+
+> If `κ_a = κ` for all arms, ECI is exactly optimal.
+
+**Proof.** The ECI score is `v_a − B(S) − δκ_a(T−t)`. Under constant `κ` the charge
+`δκ(T−t)` is identical across arms, as is `B(S)`, so both drop out of the argmax
+and ECI selects `argmax_a v_a` — that is, ECI *reduces to greedy*. Theorem 1
+sufficiency says greedy is optimal at every state and horizon under constant `κ`.
+∎
+
+**Verification.** Constructing instances with `e_a = κ/p_a` so dispersion is exactly
+zero:
+
+| κ | std(κ) | greedy gap | ECI gap |
+|---|---|---|---|
+| 0.10 | 1.4e-17 | **0.0000%** | **0.0000%** |
+| 0.40 | 6.0e-17 | **0.0000%** | **0.0000%** |
+| 1.00 | 2.4e-17 | **0.0000%** | **0.0000%** |
+
+This is the first proven statement about ECI, and it fixes one end of any bound
+exactly: the gap must vanish with dispersion, and it does, at precisely the point
+Theorem 1 identifies.
+
+### A methodological correction
+
+An earlier sweep varied the *spread of `e`* and reported "dispersion 0.000" at
+spread zero. That was wrong: with `e` constant but `p` varying, `κ = p·e` still has
+dispersion 0.170, so the sweep never tested the zero-dispersion case at all. The
+true test requires constructing `e = κ/p`.
+
+### How the gap actually behaves — in RAW terms, not percentages
+
+Percentage gaps are unusable at strong coupling because `V*` itself falls toward
+and through zero, so the denominator vanishes. Reporting raw losses instead:
+
+| δ | V* | raw greedy loss | raw ECI loss | ECI/greedy |
+|---|---|---|---|---|
+| 0.02 | 5.979 | 0.125 | 0.059 | 0.47 |
+| 0.12 | 5.617 | 0.867 | 0.106 | 0.12 |
+| 0.45 | 3.122 | 5.237 | 0.106 | 0.020 |
+| 0.80 | 1.031 | 5.295 | **0.056** | 0.011 |
+| 1.50 | **−4.339** | 17.270 | **0.116** | 0.0067 |
+
+**The ECI loss is remarkably flat in absolute terms — 0.056 to 0.116 across the
+entire range — while greedy's grows from 0.125 to 17.27, a factor of 138.**
+
+### A correction to the previous version of this section
+
+An earlier draft of this analysis reported "the ECI gap reaches 26.91% at δ = 1.5"
+and concluded that no uniform smallness claim was defensible. **That figure was a
+normalisation artifact.** At δ = 1.5 the optimum is `V* = −4.34`; dividing a raw
+loss of 0.116 by a near-zero or negative optimum produces arbitrary percentages,
+which is also the source of the accompanying "greedy gap 4944.8%".
+
+The corrected reading is the opposite of the earlier one: ECI's absolute loss is
+close to constant across coupling strengths that vary greedy's loss by two orders
+of magnitude. Percentage reporting should be dropped wherever `V*` is small.
+
+### What remains open
+
+A bound on the ECI gap in terms of `(δ, std(κ), T, n)`. The decomposition
+`error_a = δκ_a(L − (T−t)) + p_a O_a` identifies the two error sources — replacing
+the true burden horizon `L` by the naive `(T−t)`, and dropping the option term —
+but bounding `O_a` is exactly the difficulty that made the original Theorem 1
+coupling argument fail, and no closed form for it exists (established in exp13).
