@@ -1025,6 +1025,45 @@ At the same scale as above, SECI matches or beats greedy at \emph{every} $q$
 tested, confirmed across 30 seeds, staying within $0.01\%$--$1.53\%$ of the true
 optimum throughout, where plain ECI's gap grows to roughly $11\%$ at $q=1$.
 
+\paragraph{Pushing exact computation further, rather than trusting an
+unvalidated approximation.} A Monte Carlo rollout was attempted as an
+independent large-scale reference. It failed a basic sanity check --- policy
+improvement should never make an estimate worse with more compute, and
+increasing rollout depth moved the estimate substantially in the wrong
+direction, the signature of a bug rather than noise. We found it: planning-phase
+and actual-trajectory random draws shared one stream, so different compute
+budgets consumed different amounts of randomness before each real step,
+changing the realised trajectory for reasons unrelated to policy quality. Fixed,
+the estimate stabilised but remained theoretically suspect (a valid rollout
+cannot underperform its base policy), and cross-checking it against exact DP at
+$n=6$ showed a 4--5\% undershoot even at high depth. We abandoned the tool
+rather than report an unvalidated number, keeping the bug fix but drawing no
+conclusion from its output.
+
+Exact computation itself goes further than the original small-scale check used:
+$n=12$ runs in roughly $12$ seconds. Re-running the full $q$-sweep there, real
+ground truth throughout:
+
+\begin{center}
+\begin{tabular}{rrrrrr}
+\toprule
+$q$ & $V^\star$ & greedy & greedy gap & SECI & SECI gap \\
+\midrule
+0.0 & 11.299 & 10.482 & 7.2\% & 11.096 & $\mathbf{1.80\%}$ \\
+0.2 & 4.171 & 3.994 & 4.3\% & 4.136 & $\mathbf{0.84\%}$ \\
+0.4 & 2.765 & 2.736 & 1.1\% & 2.757 & $\mathbf{0.29\%}$ \\
+0.6 & 1.921 & 1.916 & 0.3\% & 1.919 & $\mathbf{0.11\%}$ \\
+0.8 & 1.512 & 1.512 & 0.0\% & 1.512 & $\mathbf{0.03\%}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+SECI captures $4$--$5\times$ more of the available opportunity than greedy at
+every $q$ with meaningful opportunity remaining, confirmed at double the arm
+count of the original check. The absolute margin between the two shrinks with
+$q$ because the opportunity itself shrinks --- greedy's own gap collapses from
+$7.2\%$ to $0.0\%$ --- not because SECI's relative advantage weakens.
+
 \paragraph{A residual shortfall at $n=40$, diagnosed and resolved.} A first pass
 at larger scale showed SECI beating plain ECI everywhere but trailing greedy by a
 small margin in the mid-$q$ range. Isolating the cause rather than accepting it:

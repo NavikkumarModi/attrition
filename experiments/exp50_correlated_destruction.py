@@ -288,3 +288,82 @@ def rule_eci_c(idx, v, p, e, delta, T, t, b, clusters, q):
 def rule_seci_c(idx, v, p, e, delta, T, t, b, clusters, q):
     damp = (1.0 - q) ** 2
     return int(idx[np.argmax(v[idx] - delta*p[idx]*e[idx]*(T-t)*damp)])
+
+
+# ------------------------------------------------------- rollout reference
+def rollout_clustered(v, p, e, delta, T, clusters, q, base_rule,
+                      width=4, depth=10, seeds=200, plan_seed=77777):
+    """One step of policy improvement over the SECI base policy, at scale, as a
+    stronger reference than comparing greedy/ECI/SECI only to each other.
+
+    BUG FIXED (was present in the first version): planning-phase Monte Carlo
+    draws (used only to score candidates) and the actual-trajectory draws (used
+    to determine what really happens) shared one RNG stream. Different
+    width/depth settings then consumed different amounts of randomness before
+    reaching each real step, so the REALISED trajectory changed with the
+    compute budget for reasons unrelated to policy quality -- the signature
+    symptom was the estimate getting worse with more depth, which policy
+    improvement should never do. Fixed by using a separate, independent
+    generator for planning so the real trajectory's randomness is identical
+    regardless of width/depth.
+    """
+    n = len(v)
+    cluster_ids = sorted(set(clusters))
+
+    def base_score(idx, t):
+        rem = T - t
+        damp = (1 - q) ** 2
+        return v[idx] - delta*p[idx]*e[idx]*rem*damp
+
+    def simulate_from(alive0, t0, plan_rng):
+        alive = alive0.copy()
+        tot = 0.0
+        for t in range(t0, T):
+            idx = np.flatnonzero(alive)
+            if idx.size == 0:
+                break
+            burden = delta * float(e[~alive].sum())
+            a = int(idx[np.argmax(base_score(idx, t))])
+            tot += v[a] - burden
+            if plan_rng.random() < p[a]:
+                alive[a] = False
+            for c in cluster_ids:
+                if plan_rng.random() < q:
+                    alive[np.flatnonzero(alive & (clusters == c))] = False
+        return tot
+
+    totals = []
+    for s in range(seeds):
+        env_rng = np.random.default_rng(30000 + s)     # governs REAL trajectory only
+        plan_rng = np.random.default_rng(plan_seed)     # governs planning only, fixed
+        alive = np.ones(n, dtype=bool)
+        tot = 0.0
+        for t in range(T):
+            idx = np.flatnonzero(alive)
+            if idx.size == 0:
+                break
+            burden = delta * float(e[~alive].sum())
+            base_sc = base_score(idx, t)
+            cand = idx[np.argsort(base_sc)[::-1][:width]]
+            best, best_a = -np.inf, int(cand[0])
+            for a_c in cand:
+                qtot = 0.0
+                for _ in range(depth):
+                    nxt = alive.copy()
+                    if plan_rng.random() < p[a_c]:
+                        nxt[a_c] = False
+                    for c in cluster_ids:
+                        if plan_rng.random() < q:
+                            nxt[np.flatnonzero(nxt & (clusters == c))] = False
+                    qtot += simulate_from(nxt, t + 1, plan_rng)
+                qv = v[a_c] - burden + qtot / depth
+                if qv > best:
+                    best, best_a = qv, int(a_c)
+            tot += v[best_a] - burden
+            if env_rng.random() < p[best_a]:            # REAL outcome
+                alive[best_a] = False
+            for c in cluster_ids:
+                if env_rng.random() < q:                # REAL outcome
+                    alive[np.flatnonzero(alive & (clusters == c))] = False
+        totals.append(tot)
+    return float(np.mean(totals))

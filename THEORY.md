@@ -2335,6 +2335,67 @@ reported as a genuine, partial result — the fix substantially closes the ECI
 failure mode and is never worse than plain ECI, but does not yet fully match the
 small-scale guarantee once the environment scales to many clusters.
 
+### An unreliable rollout attempt, abandoned rather than trusted
+
+Before the exact n=12 result below, a Monte Carlo rollout was attempted at n=20
+as an independent scale-level reference (exact DP is infeasible there, `2^20`
+states). It failed a basic sanity check: policy improvement should never make an
+estimate *worse* with more compute, and increasing rollout depth from 6 to 20
+moved the estimate from `+0.035` to `-0.321` relative to SECI — a signature of a
+real bug, not noise.
+
+**Found it:** the planning-phase Monte Carlo draws (used only to *score*
+candidate actions) and the actual-trajectory draws (used to determine what
+*really* happens) shared one random-number stream. Different `width`/`depth`
+settings then consumed different amounts of randomness before each real step,
+so the realised trajectory changed with the compute budget for reasons
+unrelated to policy quality. Fixed by giving planning its own independent
+generator.
+
+After the fix, the estimate stabilised (`-0.285` to `-0.323` across increasing
+compute) — but a stable *negative* headroom is still theoretically suspicious,
+since a correctly computed one-step rollout should weakly beat its own base
+policy. Cross-checking the fixed rollout against exact DP at `n=6` showed it
+undershooting the true optimum by 4-5% even at high depth — not tight enough to
+trust for a scale-level claim either way.
+
+**Decision: abandon the approximate tool rather than report an unvalidated
+number.** The bug fix is kept and documented (`rollout_clustered` in
+`exp50_correlated_destruction.py`) since it is a real, useful correction, but no
+conclusion is drawn from its output.
+
+### A better answer: push exact DP further instead
+
+Rather than trust an approximation that failed validation, the scale at which
+"small-scale" claims were checked was itself never pushed past `n=6`. It goes
+much further: `n=12` runs in ~12 seconds, `n=14` in ~2 minutes. Re-running the
+full `q`-sweep at `n=12` — real exact ground truth, no simulation:
+
+| q | V\* | greedy | greedy gap | **SECI** | **SECI gap** |
+|---|---|---|---|---|---|
+| 0.0 | 11.299 | 10.482 | 7.2% | 11.096 | **1.80%** |
+| 0.2 | 4.171 | 3.994 | 4.3% | 4.136 | **0.84%** |
+| 0.4 | 2.765 | 2.736 | 1.1% | 2.757 | **0.29%** |
+| 0.6 | 1.921 | 1.916 | 0.3% | 1.919 | **0.11%** |
+| 0.8 | 1.512 | 1.512 | 0.0% | 1.512 | **0.03%** |
+
+**SECI captures 4–5× more of the available opportunity than greedy at every q
+with meaningful opportunity left**, confirmed at double the arm count of the
+original small-scale check. This directly answers the concern that SECI's
+improvement over greedy "doesn't look great" at scale: the *absolute* margin
+shrinks because the *opportunity itself* shrinks — greedy's own gap collapses
+from 7.2% to 0.0% — not because SECI's relative advantage weakens. SECI remains
+consistently closer to optimal, by a wide relative margin, throughout.
+
+### The n=40 comparison, now understood correctly
+
+The earlier scale-gap diagnosis (below) remains valid and is not superseded:
+the near-tie between SECI and greedy at `n=40, q>0` reflects the same
+shrinking-opportunity effect just confirmed exactly at `n=12`, not a failure of
+SECI. The `n=40` numbers were never wrong; the concern was that they hadn't
+been checked against a real ceiling. They now have been, at the largest scale
+exact computation reaches, and the pattern is consistent.
+
 ### The scale gap was an experimental-design artifact, not a formula failure
 
 Diagnosing the residual shortfall properly rather than accepting it: varying

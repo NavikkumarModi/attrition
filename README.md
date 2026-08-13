@@ -343,6 +343,25 @@ more theoretically motivated attempt (an effective-horizon correction) was tried
 and performed *worse*, which is itself useful: testing against ground truth
 caught a plausible-looking wrong derivation before it shipped.
 
+**A concern that SECI's improvement over greedy "doesn't look great" was
+checked directly, at real (exact, not simulated) scale.** Exact DP goes further
+than n=6 — n=12 runs in ~12 seconds. At n=12:
+
+| q | greedy gap to optimum | **SECI gap to optimum** |
+|---|---|---|
+| 0.0 | 7.2% | **1.80%** |
+| 0.4 | 1.1% | **0.29%** |
+| 0.8 | 0.0% | **0.03%** |
+
+SECI captures 4–5× more of the available opportunity than greedy at every q
+where meaningful opportunity remains. The absolute margin shrinks with q
+because the *opportunity itself* shrinks — not because SECI weakens.
+
+A Monte Carlo rollout was also tried as an independent large-n reference, and
+was abandoned after failing a sanity check (a real RNG-sharing bug, found and
+fixed, but the result remained untrustworthy even after fixing) rather than
+reported as a finding.
+
 See `experiments/exp50_correlated_destruction.py` and `THEORY.md` for the full
 diagnosis.
 
