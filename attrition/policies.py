@@ -122,10 +122,12 @@ class SECI(Policy):
 
     Verified (exact DP, n=6, 30 seeds/cell): matches or beats greedy at every
     q in [0,1], within 0.01-1.53% of true optimum throughout, where plain ECI's
-    gap grows to ~11% at q=1. At scale (n=40, Monte Carlo) it reliably beats
-    ECI everywhere tested but shows a small residual shortfall against greedy
-    in the mid-q range -- see THEORY.md for the honest, not-fully-closed
-    account of the scale gap.
+    gap grows to ~11% at q=1. At scale (n=40, Monte Carlo, delta rescaled to
+    keep problem difficulty comparable across n) it matches or beats greedy at
+    every q too, within noise. An apparent shortfall in an earlier, unscaled
+    comparison was diagnosed as an experimental-design artifact (delta held
+    fixed while n grew, making larger-n instances unfairly harder), not a
+    formula failure -- see THEORY.md for the full diagnosis.
 
     Requires a per-arm shock rate `q`; pass a scalar for a uniform cluster risk
     or an array matching `state.available` for heterogeneous risk.

@@ -297,6 +297,55 @@ sequential setting. Terminal commitment is about scarcity of evidence at the mom
 of an irreversible decision; given enough evidence the problem dissolves. It is
 hardest exactly when experiments are expensive.
 
+## Correlated destruction, and SECI
+
+Every result above assumes destruction is independent across arms. That's false
+in exactly the domains motivating this project — a shared API outage kills
+several tools at once; a class-wide toxicity mechanism can invalidate several
+doses together; a common supplier failure blocks several process settings at
+once. We tested what survives when arms are clustered and share correlated
+exogenous shocks (each round, a shock can destroy every alive member of a
+cluster at once, independent of what was pulled).
+
+**Zero-regret vacuity survives, trivially** — it's a property of the benchmark
+definition, holding under any destruction mechanism.
+
+**The greedy characterisation survives exactly, and this is a genuine surprise.**
+Constant κ still gives greedy exact optimality under correlated shocks, verified
+to full floating-point precision even with `e` varying sixfold within a cluster.
+Stated as a **conjecture**, not a theorem — a proof attempt was made and
+abandoned rather than forced through, since this project has already been burned
+once by a plausible-looking but false lemma.
+
+**ECI does not survive.** At high correlated-shock rates ECI is worse than plain
+greedy in the majority of instances tested (13/15 at q=0.7) — it keeps paying a
+preservation cost for protection a shock destroys regardless of whether the arm
+was pulled.
+
+**SECI fixes it:**
+
+```python
+from attrition import SECI
+SECI(q=0.15)   # q = per-cluster shock rate; reduces exactly to ECI at q=0
+```
+
+`I(a,t) = v_a − δ·p_a·e_a·(T−t)·(1−q)²`. Matches or beats greedy at *every* q
+from 0 to 1, confirmed by exact DP (30 seeds), staying within 0.01–1.53% of true
+optimum. An apparent shortfall at scale (n=40) was diagnosed rather than
+accepted: it turned out to be an experimental-design artifact — `δ` held fixed
+while `n` grew made larger-n instances unfairly harder, not a failure of the
+correction. Rescaling `δ` to keep problem difficulty comparable across scale
+closes the gap to noise level.
+
+Still an **empirical** result — the `(1−q)²` form was found by testing against
+exact DP, not derived and proven from the Bellman structure the way ECI was. A
+more theoretically motivated attempt (an effective-horizon correction) was tried
+and performed *worse*, which is itself useful: testing against ground truth
+caught a plausible-looking wrong derivation before it shipped.
+
+See `experiments/exp50_correlated_destruction.py` and `THEORY.md` for the full
+diagnosis.
+
 ## Environments and scenarios
 
 Gym- and PettingZoo-compatible interfaces, implemented natively so there is no

@@ -1023,20 +1023,34 @@ certain regardless of action.
 
 At the same scale as above, SECI matches or beats greedy at \emph{every} $q$
 tested, confirmed across 30 seeds, staying within $0.01\%$--$1.53\%$ of the true
-optimum throughout, where plain ECI's gap grows to roughly $11\%$ at $q=1$. At
-larger scale ($n=40$, eight clusters, Monte Carlo evaluation since exact DP is
-infeasible) SECI reliably beats plain ECI at every $q$ tested, but shows a small
-residual shortfall against greedy in the mid-$q$ range that a cluster-size-scaled
-variant of the exponent did not close. We report this as a genuine partial
-result: the correlated-destruction failure mode is substantially fixed, and the
-fix is never worse than the problem it replaces, but it does not yet carry the
-small-scale guarantee to arbitrary scale.
+optimum throughout, where plain ECI's gap grows to roughly $11\%$ at $q=1$.
+
+\paragraph{A residual shortfall at $n=40$, diagnosed and resolved.} A first pass
+at larger scale showed SECI beating plain ECI everywhere but trailing greedy by a
+small margin in the mid-$q$ range. Isolating the cause rather than accepting it:
+varying cluster size and count independently left the gap unchanged, ruling out
+cluster structure; sweeping $n$ directly showed both policies' values turning
+\emph{negative} once $n$ exceeded roughly $20$ under a $\delta$ held fixed across
+the sweep. The cause was an unfair comparison, not a failure of the correction:
+total burden capacity $\delta\sum_i e_i$ scales with $n$ while $\delta$ was held
+constant, so the $n=40$ instances were a strictly harder problem than the $n=6$
+ones. Rescaling $\delta$ to hold problem difficulty comparable across scale closes
+the gap to noise level ($-0.029$ to $+0.417$ against values of $1.17$--$37.46$,
+i.e. under $0.2\%$ except where SECI wins outright), while SECI continues to beat
+plain ECI at every $q$ without exception.
 
 \begin{corollary}
 The paper's central practical recommendation --- specify $\kappa$, do not attempt
 to estimate it --- extends to correlated destruction via SECI, which requires
-only the additional cluster shock rate $q$. The small-scale guarantee is exact;
-the large-scale guarantee is empirical and not yet complete.
+only the additional cluster shock rate $q$, and matches or beats greedy at every
+scale and coupling strength tested once compared fairly. SECI remains an
+empirical result rather than a proven theorem: its dampening term was found by
+testing candidates against exact ground truth, not derived and proven from the
+Bellman structure the way ECI itself was. A first-principles alternative --- an
+effective-horizon correction based on an arm's expected survival time under
+shock risk --- was attempted and performed \emph{worse}, which is itself
+informative: the more theoretically motivated derivation was wrong, and testing
+against exact DP caught it before it became a claimed result.
 \end{corollary}
 
 \section{Limitations}

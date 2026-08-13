@@ -1137,3 +1137,34 @@ def test_seci_policy_class_reduces_to_eci_at_q_zero():
     r1 = run(env1, SECI(q=0.0), seed=0)
     r2 = run(env2, ECI(), seed=0)
     assert abs(r1["value"] - r2["value"]) < 1e-9
+
+
+def test_seci_scale_gap_is_an_artifact_of_unfair_delta_scaling():
+    """The apparent shortfall at n=40 was caused by holding delta fixed while n
+    grew, making burden capacity delta*sum(e) scale with n. Rescaling delta to
+    hold problem difficulty comparable across n closes the gap to noise level."""
+    from experiments.exp50_correlated_destruction import (
+        simulate_clustered, rule_greedy_c, rule_eci_c, rule_seci_c)
+    rng = np.random.default_rng(21)
+    n, T = 40, 40
+    delta = 0.03 * 6.0 / n            # the fairness correction
+    clusters = np.repeat(np.arange(n // 2), 2)
+    for q in [0.0, 0.3, 0.7, 1.0]:
+        G, E, S = [], [], []
+        for _ in range(6):
+            v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
+            p = np.clip(rng.uniform(0.3, 0.9, n), 0.05, 1.0)
+            e = np.clip(1.0 + rng.normal(0, 1.2, n), 0.0, None)
+            G.append(simulate_clustered(v, p, e, delta, T, clusters, q,
+                                        rule_greedy_c, seeds=200))
+            E.append(simulate_clustered(v, p, e, delta, T, clusters, q,
+                                        rule_eci_c, seeds=200))
+            S.append(simulate_clustered(v, p, e, delta, T, clusters, q,
+                                        rule_seci_c, seeds=200))
+        g, ec, se = np.mean(G), np.mean(E), np.mean(S)
+        # SECI must be within noise of greedy (not the large shortfall seen
+        # under the unfair, unscaled comparison) and must beat ECI
+        assert se >= g - 0.5, (
+            f"q={q}: SECI must be within noise of greedy once fairly scaled, "
+            f"got {se:.3f} vs {g:.3f}")
+        assert se >= ec - 1e-6, f"q={q}: SECI must not lose to plain ECI"
