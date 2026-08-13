@@ -581,6 +581,87 @@ Theorem~\ref{thm:char} there is nothing to capture. The obstacle is dispersion, 
 sample size: the externality must vary for the correction to matter, and variation
 is what makes it hard to estimate.
 
+\section{A closed-form bound for ECI}
+\label{sec:bound}
+
+Section~\ref{sec:eci} left ECI's approximation gap without a closed-form bound: the
+omitted option term $O_a$ has resisted a direct bound since the project's earliest
+experiments. A different route succeeds, avoiding $O_a$ entirely.
+
+\paragraph{A natural lemma is false.} The first attempt conjectured
+$V(S',t) \ge V(S,t)$ whenever $S' \supseteq S$ --- having more available arms is
+never worse, since a policy can simply ignore the extra ones. Exhaustive checking
+falsifies this: $904$ violations in $11{,}904$ triples tested, worst case
+$V(S')-V(S) = -0.744$. The mechanism is that the model has \emph{no null action}.
+If the sole survivor dies, the episode ends at value zero by exhaustion; if an
+additional low-value arm happens to survive, the episode does not end, and the
+policy is forced to keep pulling it even when every remaining round is strictly
+negative under the accumulated burden. Ignoring an available arm is not a valid
+strategy when standing still is not an option.
+
+\begin{lemma}[Magnitude bound]
+\label{lem:magnitude}
+$|V(S,t)| \le (T-t)R$ for any $S$, where $R := v_{\max} + \delta\sum_i e_i$ bounds
+one round's reward magnitude regardless of sign.
+\end{lemma}
+
+\begin{proof}
+Each round's reward is $v_a - B(S)$ with $v_a \in [0, v_{\max}]$ and
+$B(S) \in [0,\delta\sum_i e_i]$, so $|v_a - B(S)| \le R$. $V(S,t)$ sums at most
+$T-t$ such terms, fewer if the pool empties early, which only pulls the sum toward
+zero. Induction on the DP recursion.
+\end{proof}
+
+\begin{theorem}[Performance difference]
+\label{thm:pd}
+For any policy $\pi$, $V^\star(S_0,0) - W(\pi) = \mathbb{E}_\pi\big[\sum_t
+\mathrm{reg}(S_t,t)\big]$, where $\mathrm{reg}(S,t) = \max_a Q^\star(a,S,t) -
+Q^\star(\pi(S,t),S,t)$ and the expectation is over $\pi$'s own trajectory
+distribution.
+\end{theorem}
+
+\begin{proof}
+Telescoping. Write $\mathrm{Gap}_t(S) := V^\star_t(S) - V^\pi_t(S)$ and split it as
+$[V^\star_t(S) - Q^\star(\pi(S,t),S,t)] + [Q^\star(\pi(S,t),S,t) - V^\pi_t(S)]$. The
+first bracket is $\mathrm{reg}(S,t)$. The second, using $a=\pi(S,t)$, is
+$p_a[\mathrm{Gap}_{t+1}(S{-}\{a\})] + (1-p_a)[\mathrm{Gap}_{t+1}(S)]$, exactly the
+expectation of $\mathrm{Gap}_{t+1}$ over the transition $\pi$ induces from $(S,t)$.
+Unrolling from $t=0$ to $T$ gives the claim.
+\end{proof}
+
+Verified to machine precision: the telescoped sum matches the directly computed gap
+to within $1.19\times 10^{-15}$ across six random instances.
+
+\begin{theorem}[ECI bound]
+\label{thm:ecibound}
+\[
+\mathrm{Gap}(\mathrm{ECI}) \;\le\; T(T+1)\cdot \max_a\big[\, p_a(\delta e_a + 2R)
+\,\big], \qquad R = v_{\max} + \delta\textstyle\sum_i e_i .
+\]
+\end{theorem}
+
+\begin{proof}
+Write $\mathrm{error}(a) := [R(a,S) - p_aD_a(S,t)] - [R(a,S) - \delta\kappa_a(T-t)]
+= \delta\kappa_a(T-t) - p_aD_a(S,t)$, the difference between the true score and
+ECI's score. By Lemma~\ref{lem:magnitude}, $|D_a(S,t)| = |V(S,t{+}1) -
+V(S{-}\{a\},t{+}1)| \le 2(T-t)R$, so $|\mathrm{error}(a)| \le
+(T-t)\,p_a(\delta e_a + 2R)$. A standard argmax-perturbation argument gives
+$\mathrm{reg}(S,t) \le 2\max_a|\mathrm{error}(a)|$, and Theorem~\ref{thm:pd}
+telescopes this into $\sum_{t=0}^{T-1} 2(T-t)\max_a[p_a(\delta e_a+2R)] =
+T(T+1)\max_a[p_a(\delta e_a+2R)]$.
+\end{proof}
+
+This is the first closed-form guarantee for ECI, using only the problem's own
+primitives. It is never violated across ten random instances and across the
+extreme-coupling sweep of Section~\ref{sec:eci} that produced the largest raw
+losses ($\delta \in [0.02, 3.0]$), but it is loose --- $1{,}335\times$ to
+$72{,}569\times$ the exact gap, averaging roughly $14{,}000\times$. It proves
+$\mathrm{Gap}(\mathrm{ECI})$ is finite and scales as $O(T^2\delta)$, which matches
+the qualitative behaviour observed empirically, without matching its magnitude.
+Tightening it --- most plausibly by bounding $D_a$ through the burden actually
+accrued along $\pi$'s trajectory rather than the full episode's reward range ---
+is the natural next step and is left open.
+
 \section{Corrections}
 
 \subsection{The externality-corrected index}

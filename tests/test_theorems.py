@@ -961,3 +961,48 @@ def test_no_universal_optimal_scale():
         argmins.append(rows[int(np.argmin([r[1] for r in rows]))][0])
     assert max(argmins) / min(argmins) > 2.0, (
         f"optimal scale must vary materially across settings, got {argmins}")
+
+
+# ------------------------------------------------------- ECI closed-form bound
+def test_monotonicity_is_false_with_identified_mechanism():
+    """Extra available arms can be a LIABILITY: there is no null action, so an
+    extra low-value arm can force continued play under high burden instead of
+    letting the episode end at V=0 via exhaustion."""
+    from experiments.exp49_eci_closed_form_bound import monotonicity_check
+    viol, checked, worst = monotonicity_check(inst=3)
+    assert viol > 0, "monotonicity must fail (this documents a real phenomenon)"
+    assert worst < -0.01, "the violation must be substantive, not numerical noise"
+
+
+def test_performance_difference_identity_exact():
+    """Gap(pi) telescopes exactly into the sum of one-step regrets under pi's
+    own trajectory distribution -- an exact identity, not an approximation."""
+    from experiments.exp49_eci_closed_form_bound import performance_difference_check
+    max_err = performance_difference_check(inst=3)
+    assert max_err < 1e-6, f"identity must hold to numerical precision, got {max_err}"
+
+
+def test_eci_closed_form_bound_never_violated():
+    """The first closed-form guarantee for ECI: Gap(ECI) <=
+    T(T+1) * max_a[p_a(delta*e_a + 2R)]. Loose, but never violated, including
+    across the extreme-coupling regime that produces the largest raw losses."""
+    from experiments.exp49_eci_closed_form_bound import build, closed_form_bound
+    rng = np.random.default_rng(17)
+    for delta in [0.02, 0.45, 1.5, 3.0]:
+        n, T = 6, 8
+        v = np.sort(rng.uniform(0.4, 1.2, n))[::-1].copy()
+        p = np.clip(rng.uniform(0.3, 1.0, n), 0.05, 1.0)
+        e = np.clip(1.0 + rng.normal(0, 1.0, n), 0.0, None)
+        V, R, eci = build(v, p, e, delta, T)
+        full = frozenset(range(n))
+
+        def W(S, t):
+            if t >= T or not S:
+                return 0.0
+            a = eci(S, t)
+            return R(a, S) + p[a]*W(S-{a}, t+1) + (1-p[a])*W(S, t+1)
+
+        exact = V(full, 0) - W(full, 0)
+        bound = closed_form_bound(v, p, e, delta, T)
+        assert bound >= exact - 1e-6, (
+            f"delta={delta}: bound {bound:.4f} must be >= exact gap {exact:.4f}")

@@ -2093,3 +2093,88 @@ Docstrings made raw.
   numbers — `+27.2%` at strong coupling, `92.0%` capture at the highest dispersion,
   and 0 violations in 24,946 states, all matching
 - tests: full suite passes
+
+---
+
+## The ECI bound — first closed-form guarantee, and a disproven lemma along the way
+
+The proof route attempted since session 1 — bounding the option term `O_a`
+directly — has no known closed form (`exp13`). A different route succeeds: avoid
+`O_a` entirely by bounding the whole term `D_a` through a magnitude argument
+instead of a sign argument.
+
+### The first attempt failed, and the failure is itself a real result
+
+**Conjectured lemma:** `V(S',t) ≥ V(S,t)` whenever `S' ⊇ S` — having more available
+arms is never worse, since a policy can just "ignore" the extra ones.
+
+**Falsified**, decisively: 904 violations in 11,904 checked triples, worst case
+`V(S') − V(S) = −0.744`.
+
+**The mechanism, confirmed exactly:** the model has **no null action**. If arm `1`
+is the only survivor and it dies, the episode ends (`V = 0`, exhaustion). If arm `5`
+also happens to be available, the episode does *not* end when arm 1 dies — the
+policy is forced to keep pulling arm 5, and if the accumulated burden by then makes
+every remaining round strictly negative (`v_5 − B = 0.501 − 1.225 = −0.724` in the
+witnessed case), forced continuation is worse than the game simply stopping.
+
+> **"Ignore the extra arm" is not a valid strategy when standing still is not an
+> option.** Extra options can be a liability precisely because the model always
+> forces play until the horizon or the pool is exhausted.
+
+This is a genuine structural fact about consumable-action-set MDPs, not previously
+noted, and it rules out the most natural route to a clean bound.
+
+### The successful route
+
+Replace the sign-based monotonicity argument with a magnitude bound that needs no
+monotonicity at all:
+
+**Lemma (magnitude bound).** `|V(S,t)| ≤ (T−t)·R` for any `S`, where
+`R := v_max + δ·Σe_i` bounds one round's reward magnitude regardless of sign.
+*Proof.* Each round's reward is `v_a − B(S)` with `v_a ∈ [0, v_max]` and
+`B(S) ∈ [0, δΣe_i]`, so `|v_a − B(S)| ≤ R`. `V(S,t)` sums at most `T−t` such terms
+(fewer if the pool empties early, which only pulls the sum toward 0). Induction on
+the DP recursion.
+
+**Theorem (performance difference, exact).**
+`Gap(π) = 𝔼_π[Σ_t reg(S_t, t)]`, telescoped over π's own trajectory distribution,
+where `reg(S,t)` is the one-step regret of π's action in true `Q*`-value. Verified
+to machine precision (max error `1.19 × 10⁻¹⁵`) — an exact identity, not an
+approximation, confirmed by comparing the telescoped sum against the directly
+computed gap on 6 random instances.
+
+**Combining:** `|D_a(S,t)| ≤ 2(T−t)R` (magnitude bound applied to both terms of
+`D_a = V(S,t+1) − V(S∖{a},t+1)`), giving `|error(a)| ≤ (T−t)·p_a·(δe_a + 2R)` and,
+via a standard argmax-perturbation step and the telescoping identity:
+
+```
+Gap(ECI)  ≤  T(T+1) · max_a[ p_a·(δe_a + 2R) ],     R = v_max + δ·Σe_i
+```
+
+**This is the first closed-form bound on ECI's approximation gap.** It uses only
+the problem's own primitives — no `O_a`, no undetermined `L(S,t)`.
+
+### Verification
+
+Never violated across 10 random instances and across the full extreme-coupling
+sweep that previously produced the largest raw ECI losses (`δ ∈ [0.02, 3.0]`).
+
+But it is **very loose** — 1,335× to 72,569×, averaging ~14,000×. The bound proves
+`Gap(ECI)` is finite and scales as `O(T²δ)`, correctly capturing the qualitative
+behaviour, but is far from the empirically tiny actual gaps (0.003–0.20 in the same
+instances). Tightening it — likely by bounding `D_a` through the actual burden
+horizon rather than the full episode magnitude — is the natural next step and is
+recorded as open, not claimed.
+
+### Status update
+
+| result | before | now |
+|---|---|---|
+| ECI general bound | open, no route known | **closed-form bound proven, loose** |
+| Monotonicity of V in available set | untested assumption | **disproven, with mechanism identified** |
+| Performance difference for this MDP class | not stated | **proven exactly** |
+
+Two of these three are genuinely new theorems. The monotonicity disproof is worth
+weighing equally with the bound itself — it is the kind of finding that changes how
+one reasons about the model, not just a rejected lemma.

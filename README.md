@@ -3,6 +3,11 @@
 
 Bandits with Consumable Action Sets
 
+[![tests](https://img.shields.io/badge/tests-67%20passing-brightgreen)](tests/)
+[![theorems](https://img.shields.io/badge/theorems-9%20proven-blue)](THEORY.md)
+[![python](https://img.shields.io/badge/python-3.9%E2%80%933.12-blue)](pyproject.toml)
+[![license](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
+
 **No-regret is not no-harm.**
 
 A policy can achieve *exactly zero regret* while destroying unbounded value — and
@@ -54,7 +59,20 @@ cd attrition
 pip install -e .
 ```
 
-Requires Python 3.9+ and NumPy.
+Requires Python 3.9+ and NumPy. Verify the install and reproduce the headline
+result in one step:
+
+```bash
+python examples/01_quickstart.py
+```
+
+Run the full check used in CI (regression tests + all 48 experiments importing
+cleanly):
+
+```bash
+pip install -e ".[dev]"
+pytest tests/ -v
+```
 
 ## Quick start
 

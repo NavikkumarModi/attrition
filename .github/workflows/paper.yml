@@ -1,0 +1,29 @@
+name: build paper
+
+on:
+  push:
+    paths:
+      - 'paper/**'
+      - 'attrition/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install
+        run: pip install -e .
+      - uses: xu-cheng/latex-action@v3
+        with:
+          root_file: |
+            paper/no-regret-is-not-no-harm.tex
+            paper/arxiv-no-regret-is-not-no-harm.tex
+            paper/jmlr-consumable-action-sets.tex
+      - uses: actions/upload-artifact@v4
+        with:
+          name: papers
+          path: paper/*.pdf
