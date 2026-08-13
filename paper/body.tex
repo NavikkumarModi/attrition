@@ -19,8 +19,16 @@ with the horizon}, because each arm supplies exactly one before/after transition
 the sample budget is capped by consumption rather than time. The quantity that
 matters most cannot be estimated arbitrarily accurately, and its attainable
 precision degrades exactly as it becomes more important. We give a closed-form
-correction, characterise an exactly-solvable special case, and release an
-open-source testbed.
+correction (ECI, exact under constant $\kappa$, with a proven though loose bound
+on its general approximation gap), characterise an exactly-solvable special case,
+and show that sequential multi-agent consumption on a shared pool reduces exactly
+to the single-agent case, so no price-of-anarchy separately arises there. We
+further stress-test the independence assumption underlying every result: under
+correlated, cluster-level destruction the core characterisation appears to survive
+exactly (verified, not proven) while the correction requires an explicit
+adjustment, which we derive and validate against exact and scaled ground truth. We
+release an open-source testbed, \textsc{Attrition}, with a regression test for
+every claim.
 \end{abstract}
 
 \section{Introduction}
@@ -109,8 +117,22 @@ arbitrary precision: the error floor does not decrease with the horizon, because
 the data-generating process is the consumption itself.
 \item \textbf{Theorem~\ref{thm:seq}}. In the pure-sequencing regime the optimal
 order is ascending in $e$; arm values are irrelevant.
-\item A closed-form correction (ECI), a rollout policy reaching 99.5--99.9\% of
-optimum, and an open-source testbed with one regression test per theorem.
+\item A closed-form correction (ECI), exact under constant $\kappa$
+(Proposition~\ref{prop:eciexact}) with a proven general bound
+(Theorem~\ref{thm:ecibound}), and a rollout policy reaching 99.5--99.9\% of
+optimum.
+\item \textbf{A sequential-equivalence theorem} (long-form edition,
+Section~11): multi-agent consumption on a shared pool reduces exactly to a
+single-agent problem over a longer horizon---so no price of anarchy arises from
+consumption externalities alone, and the target for mechanism design is
+free-riding specifically, not coordination.
+\item A stress test of the independence assumption (Section~\ref{sec:correlated}):
+under correlated cluster-level destruction, the characterisation appears to survive
+exactly (a verified conjecture) while the correction fails and is repaired (SECI),
+validated against exact ground truth at up to twice the originally checked scale.
+\item An open-source testbed, \textsc{Attrition}, with 50 experiments and 76
+regression tests---at least one per theorem, several per result with multiple
+independently checkable parts.
 \end{itemize}
 
 \section{Related work}
@@ -588,10 +610,10 @@ Section~\ref{sec:eci} left ECI's approximation gap without a closed-form bound: 
 omitted option term $O_a$ has resisted a direct bound since the project's earliest
 experiments. A different route succeeds, avoiding $O_a$ entirely.
 
-\paragraph{A natural lemma is false.} The first attempt conjectured
-$V(S',t) \ge V(S,t)$ whenever $S' \supseteq S$ --- having more available arms is
-never worse, since a policy can simply ignore the extra ones. Exhaustive checking
-falsifies this: $904$ violations in $11{,}904$ triples tested, worst case
+\paragraph{A natural monotonicity property is false.} A plausible conjecture is
+that $V(S',t) \ge V(S,t)$ whenever $S' \supseteq S$ --- having more available arms
+is never worse, since a policy can simply ignore the extra ones. This is false:
+exhaustive checking finds $904$ violations in $11{,}904$ triples tested, worst case
 $V(S')-V(S) = -0.744$. The mechanism is that the model has \emph{no null action}.
 If the sole survivor dies, the episode ends at value zero by exhaustion; if an
 additional low-value arm happens to survive, the episode does not end, and the
@@ -675,10 +697,26 @@ I(a,t) \;=\; v_a \;-\; \delta\,\kappa_a\,(T-t).
 Because $B(S)$ is common to all arms it drops out of the ranking, ECI has the
 decomposition property of an index rule: each arm's score depends only on its own
 parameters and global time, so the ranking is invariant to accumulated damage.
-It is an \emph{approximate} index, not an exact one---it omits the option-loss term
-$O_a$, it is not derived from a Lagrangian relaxation, and unlike a Gittins index it
-carries no optimality guarantee. Theorem~\ref{thm:seq} shows it is not exactly
-optimal even in the pure-sequencing regime.
+
+\begin{proposition}[ECI exactness under constant $\kappa$]
+\label{prop:eciexact}
+If $\kappa_a = \kappa$ for all arms, ECI is exactly optimal.
+\end{proposition}
+
+\begin{proof}
+Under constant $\kappa$ the charge $\delta\kappa(T-t)$ is identical across arms, so
+it drops out of the argmax alongside $B(S)$: ECI selects $\arg\max_a v_a$, which is
+greedy. Theorem~\ref{thm:char} sufficiency gives that greedy is optimal at every
+state and horizon under constant $\kappa$.
+\end{proof}
+
+Verified numerically at $\mathrm{std}(\kappa) \approx 10^{-17}$: both ECI's and
+greedy's gap to the optimum are exactly zero. This is the one regime in which ECI
+carries a formal optimality guarantee; elsewhere it is an \emph{approximate}
+index---it omits the option-loss term $O_a$, it is not derived from a Lagrangian
+relaxation, and unlike a Gittins index it carries no general optimality guarantee.
+Theorem~\ref{thm:seq} shows it is not exactly optimal even in the pure-sequencing
+regime.
 
 Against exact DP, ECI captures $52\%$--$99\%$ of the optimality gap, with capture
 improving as coupling strengthens. Its own gap is flat at $1.9$--$3.1\%$ across the
@@ -1064,13 +1102,13 @@ count of the original check. The absolute margin between the two shrinks with
 $q$ because the opportunity itself shrinks --- greedy's own gap collapses from
 $7.2\%$ to $0.0\%$ --- not because SECI's relative advantage weakens.
 
-\paragraph{A residual shortfall at $n=40$, diagnosed and resolved.} A first pass
-at larger scale showed SECI beating plain ECI everywhere but trailing greedy by a
-small margin in the mid-$q$ range. Isolating the cause rather than accepting it:
-varying cluster size and count independently left the gap unchanged, ruling out
-cluster structure; sweeping $n$ directly showed both policies' values turning
-\emph{negative} once $n$ exceeded roughly $20$ under a $\delta$ held fixed across
-the sweep. The cause was an unfair comparison, not a failure of the correction:
+\paragraph{A scale-dependent shortfall, and its cause.} At larger scale SECI
+beats plain ECI everywhere but trails greedy by a small margin in the mid-$q$
+range. Varying cluster size and count independently leaves this gap unchanged,
+ruling out cluster structure as the cause; sweeping $n$ directly shows both
+policies' values turning \emph{negative} once $n$ exceeds roughly $20$ under a
+$\delta$ held fixed across the sweep. The cause is an unfair comparison, not a
+failure of the correction:
 total burden capacity $\delta\sum_i e_i$ scales with $n$ while $\delta$ was held
 constant, so the $n=40$ instances were a strictly harder problem than the $n=6$
 ones. Rescaling $\delta$ to hold problem difficulty comparable across scale closes
@@ -1119,11 +1157,13 @@ direct: for irreversible actions, externality costs must be \emph{specified}, no
 discovered. A crude uniform upper bound outperforms every learned estimator we
 tested.
 
-\paragraph{Code and reproducibility.} The library, released as \textsc{Attrition} (Agent Testbed for Task, Resource and Irreversible-Tradeoff Investigation), all 48 experiments including
-negative results, and one regression test per theorem are released openly.
-Every figure regenerates from the library and the exact-DP reference via a single
-command, all random seeds are fixed and stated in code, and the test suite fails if
-any theorem's numerical claim breaks.
+\paragraph{Code and reproducibility.} The library, released as \textsc{Attrition} (Agent Testbed for Task, Resource and Irreversible-Tradeoff Investigation), all 50 experiments including
+negative and falsified results, and a regression suite of 76 tests --- at least
+one per theorem, several per result where a claim has multiple independently
+checkable parts --- are released openly. Every figure regenerates from the
+library and the exact-DP reference via a single command, all random seeds are
+fixed and stated in code, and the test suite fails if any theorem's numerical
+claim breaks.
 \textbf{[Repository URL to be inserted before posting.]}
 
 \begin{thebibliography}{9}

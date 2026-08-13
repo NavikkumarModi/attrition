@@ -2450,3 +2450,31 @@ arm's expected survival time under shock risk) was tried and performed
 the natural-seeming derivation was wrong, and the project's practice of
 testing against exact ground truth caught it before it became a claimed
 result.
+
+---
+
+## A second, honest attempt at the correlated-destruction conjecture
+
+Tried conditioning on the exogenous shock realization: fix, for each cluster, the
+round `s_c` at which its shock first fires (or never, within the horizon). Given
+this fixed "deadline," the problem should reduce to a per-pull-destruction bandit
+with each arm forced out at its cluster's deadline if it survives that long.
+
+**This does not straightforwardly extend the original proof, and the reason is
+concrete.** For a single arm in isolation, with a fixed deadline `s_c = 3`,
+`N = 5`, `p = 0.5`: pulling at rounds `(0,1)` gives `E[T_i] = 4.0000`; pulling at
+`(1,2)` gives `E[T_i] = 3.2500`. **Burden contribution depends on pull timing**
+once a deadline is present — pulling earlier risks more burden-rounds if the kill
+succeeds early, pulling later banks on the deadline doing the work for free.
+
+This directly contradicts the exact 10-decimal-place invariance the full n-arm
+system exhibits. The resolution must be a compensating effect across arms that
+this single-arm isolation misses — plausibly something in how the deadline
+interacts with *which other arms* are being pulled in the meantime — but
+identifying it precisely is a genuinely harder problem than the original
+(deadline-free) proof.
+
+**Status: still a conjecture, now with a specific identified obstruction rather
+than a vague "it's subtle."** This is recorded as the concrete open question for
+anyone taking this further: find the multi-arm compensating mechanism that
+restores invariance despite the single-arm timing-dependence just demonstrated.

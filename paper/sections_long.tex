@@ -230,6 +230,8 @@ $\mathrm{corr}(v,\kappa)$ rather than $\mathrm{std}(\kappa)$.
 
 \paragraph{Reproducibility.} Every figure regenerates from the library and the
 exact dynamic-programming reference through a single command. All random seeds are
-fixed in code. The test suite contains one regression test per theorem, so breaking
-a theorem's numerical claim breaks a test. Experiments that produced negative
-results are retained in the repository rather than removed.
+fixed in code. The test suite (76 tests across 50 experiments) contains at least
+one regression test per theorem and several per result with multiple
+independently checkable parts, so breaking a theorem's numerical claim breaks a
+test. Experiments that produced negative or falsified results are retained in the
+repository rather than removed.
