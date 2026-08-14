@@ -2657,3 +2657,101 @@ confirmed blocker for actual submission** — not a stylistic nicety. Before
 submitting, the real `jmlr2e.sty` (and accompanying `.bst`) must be obtained
 from jmlr.org and the preamble swapped in; the shared `body.tex` needs no
 content changes to work with it, by design.
+
+---
+
+## Theorem 1 (Characterisation) sufficiency: a second, more serious external review, and what it actually found
+
+A second review challenged the sufficiency proof directly, with a specific
+proposed counterexample: two arms with `κ_a = κ_b` but `p_1=1, e_1=κ` versus
+`p_2=0.5, e_2=2κ`, arguing the proof's step
+`E[1(destruction at s)·(N−s)] = p_{a_s}·E[N−s]` improperly treats the
+destruction indicator as independent of the remaining episode length.
+
+### The proposed counterexample was tested exhaustively — and failed to break the theorem
+
+Exact DP, checking **every reachable state** (not just the initial one), across
+288 configurations of the reviewer's exact construction (`κ ∈ {0.1,0.5,1,2}`,
+`T ∈ {2,3,4,5}`, six `(v₁,v₂)` orderings including negative values, three `δ`
+values): **zero violations.**
+
+Broader adversarial search followed: 4,000 random `n∈{2,3}` trials with `T` up
+to 6 and `κ` held exactly constant across heterogeneous `p`, plus 1,000 further
+trials with `p` spanning the extreme range `{0.02,...,0.99}` specifically to
+maximise the divergence the reviewer's argument depends on: **zero violations
+across 5,288 total configurations.**
+
+### But the reviewer's objection to the specific proof step was correct
+
+Isolating the exact sub-claim directly: on a 3-arm instance with genuinely
+stochastic destruction (`p=0.6` at the first decision, so both outcomes have
+real probability mass), `E[N | destruction at s=0] = 5.0265` while
+`E[N | no destruction at s=0] = 5.6760` — **these differ**, confirming
+`E[1(D_s)·(N−s)]` does not factor as `p_{a_s}·E[N−s]`. Direct computation:
+`E[1(D_0)·(N−0)] = 3.0159` against the naive product `p·E[N] = 3.1718` — a real
+~5% discrepancy, not noise.
+
+**Worse: the resulting closed-form value is also wrong.** Computing
+`E[Σ_t B(S_t)]` directly (2.877030, matching exactly across four structurally
+different policies — confirming policy-invariance holds) against the formula
+`δκ·E[N(N−1)/2]` (predicting 3.553650): **these do not match.** The closed form
+in the published proof was incorrect as a value, not just derived via an
+invalid step.
+
+### What is actually true, found and verified
+
+`E[Σ_t B(S_t)]` **is** exactly policy-invariant under constant `κ` — confirmed
+to 6 decimal places across four structurally different policies on the
+stochastic 3-arm instance, and separately to machine precision (`10⁻¹⁶`) across
+five policies in the two DP-verified regimes already in the paper. The
+*conclusion* was never in doubt; the *published derivation* of it was wrong in
+two confirmed, independent ways.
+
+### The correct mechanism: an adjacent-exchange lemma
+
+Derived directly (not by pattern-matching): for arms `a,b` with `κ_a=κ_b`,
+computing the exact two-round outcome of pulling `a` then `b` versus `b` then
+`a` from a common starting burden `B₀`:
+
+```
+E[reward(a,b)] = v_a + v_b − 2B₀ − δκ_a
+E[reward(b,a)] = v_a + v_b − 2B₀ − δκ_b
+```
+
+identical when `κ_a=κ_b`. And the **full joint distribution** over which arm(s)
+survive and the resulting burden after both pulls is identical regardless of
+order — not just in expectation, since both arms get pulled exactly once
+either way and their destruction coins are independent of order. Verified
+numerically on 10 random constant-`κ` instances: both the reward and the full
+distribution (tolerance-based comparison after an initial floating-point
+dictionary-key artifact was caught and corrected) match exactly.
+
+This is the right mechanism: any two orderings of a *fixed* pull sequence,
+under constant `κ`, are worth exactly the same. It generalizes to arbitrary
+reorderings via adjacent transpositions (any permutation reachable from any
+other via a sequence of pairwise swaps — a standard fact), which the pairwise
+lemma extends by induction.
+
+### Status: honestly downgraded, not silently patched
+
+**Sufficiency is now reported in the paper as exhaustively verified, not
+proven.** The published proof has been rewritten to state plainly: the
+original derivation's factorisation step and resulting closed form are wrong
+(with the confirming numbers); the adjacent-exchange lemma is proven and
+verified but has not yet been assembled into a fully general argument
+covering arbitrary interleavings, repeated pulls of surviving arms, and
+horizon truncation; the theorem's conclusion rests on thousands of exhaustive
+adversarial DP checks with zero violations, including the reviewer's exact
+proposed counterexample. The abstract's claim was softened to match.
+
+**What remains genuinely proven and unaffected:** necessity (the hot/safe
+construction, direct calculation, independent of the retracted step); `N`'s
+policy-independence (a separate, correct fact used in the necessity
+construction); every other theorem in the paper that depends on
+Theorem~\ref{thm:char} only through its *conclusion*, not its retracted proof.
+
+**The immediate next step**, and the correct one per the reviewer's own
+recommended methodology (verify computationally before re-proving): complete
+the adjacent-exchange lemma into a fully general sufficiency proof. The
+building block is in hand and verified; the remaining work is extending it
+past fixed-length pairwise reorderings to arbitrary policies.

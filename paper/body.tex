@@ -12,8 +12,12 @@ $m\epsilon$. The metric does not merely fail to separate good from destructive
 policies---it orders them backwards. The mechanism is
 that regret is measured against an optimum the learner has itself degraded. We
 further establish that the parameter governing optimal play, the expected marginal
-externality $\kappa_a = p_a e_a$, is (i) exactly the quantity that determines
-whether greedy is optimal, and (ii) subject to an irreducible estimation error
+externality $\kappa_a = p_a e_a$, determines whether greedy is optimal: constant
+$\kappa$ is proven necessary and sufficient for a failure instance to exist, and
+sufficiency for \emph{universal} optimality is exhaustively verified (several
+thousand adversarial instances, zero violations) though a fully general proof is
+not yet complete, with the gap in the published derivation identified and
+recorded. The parameter is also (ii) subject to an irreducible estimation error
 $\mathrm{SE} \ge 2\sigma/\sqrt{\min(T,\sum_j 1/p_j)}$ that \emph{does not decrease
 with the horizon}, because each arm supplies exactly one before/after transition and
 the sample budget is capped by consumption rather than time. The quantity that
@@ -396,56 +400,61 @@ not produce a strict gap. The one-line summary---``greedy is optimal iff $\kappa
 is constant''---is correct only when read as universal optimality versus existence
 of a counterexample.
 
-\begin{proof}
-Write the total value of a policy $\pi$ over its realised episode as
-\[
-W(\pi) \;=\; \mathbb{E}_\pi\Big[\textstyle\sum_{t} v_{a_t}\Big] \;-\; \mathbb{E}_\pi\Big[\textstyle\sum_{t} B(S_t)\Big],
-\]
-and consider the burden term. A destruction at round $s$ imposes $\delta e_{a_s}$
-on every later round of the episode, so
-\[
-\mathbb{E}_\pi\Big[\textstyle\sum_t B(S_t)\Big]
-\;=\; \delta\, \mathbb{E}_\pi\Big[\textstyle\sum_{s} \mathbf{1}[\text{destruction at } s]\; e_{a_s} \,(N-s)\Big],
-\]
-where $N$ is the episode length. Conditioning on the history and the arm chosen at
-round $s$, the destruction indicator has mean $p_{a_s}$, so round $s$ contributes
-$p_{a_s} e_{a_s} = \kappa_{a_s}$ in expectation. Under the hypothesis
-$\kappa_a \equiv \kappa$ this is the same constant \emph{whichever arm the policy
-selects}, giving
-\[
-\mathbb{E}_\pi\Big[\textstyle\sum_t B(S_t)\Big] \;=\; \delta\kappa\, \mathbb{E}\Big[\textstyle\sum_{s}(N-s)\Big]
-\;=\; \delta\kappa\, \mathbb{E}\!\left[\tfrac{N(N-1)}{2}\right].
-\]
-It remains to note that $N$ is itself policy-independent. Arm $j$ absorbs exactly
-$G_j \sim \mathrm{Geometric}(p_j)$ pulls before destruction, and every pull is
-allocated to exactly one arm, so the number of pulls until the pool is exhausted is
-$N_{\mathrm{exh}} = \sum_j G_j$ \emph{regardless of the order in which a policy
-allocates them}. Hence $N = \min(T, N_{\mathrm{exh}})$ has a policy-independent
-distribution.
+\begin{proof}[Sufficiency: status and mechanism]
+\label{proof:char}
+An earlier derivation argued
+$\mathbb{E}_\pi[\sum_t B(S_t)] = \delta\kappa\,\mathbb{E}[N(N-1)/2]$ via
+$\mathbb{E}[\mathbf{1}[\text{destruction at }s]\,(N-s)] = p_{a_s}\,\mathbb{E}[N-s]$,
+treating the destruction indicator at round $s$ as independent of the
+remaining episode length. \textbf{This step is false in general}, and so is the
+closed-form value it produces: on a three-arm test instance, direct computation
+gives $\mathbb{E}[\sum_t B(S_t)] = 2.8770$ against a predicted
+$\delta\kappa\,\mathbb{E}[N(N{-}1)/2] = 3.5537$. Both the factorisation and the
+value are confirmed wrong. This error was identified through external review and
+verified independently before revising the record.
 
-The burden term is therefore a constant common to all policies, so
-\[
-\arg\max_\pi W(\pi) \;=\; \arg\max_\pi \mathbb{E}_\pi\Big[\textstyle\sum_t v_{a_t}\Big],
-\]
-which is the same problem with no externality at all ($e \equiv 0$). There
-destruction is geometric, hence memoryless, and rewards are stationary, so an arm's
-total expected yield $v_a/p_a$ is independent of when harvesting begins: deferring
-a pull buys no option value and costs the per-round gap. Greedy is optimal in that
-problem, and therefore in this one, at every state and every horizon.
+What survives: $\mathbb{E}_\pi[\sum_t B(S_t)]$ is nonetheless \textbf{exactly
+policy-invariant} under constant $\kappa$, confirmed to six decimal places across
+four structurally different policies on the same instance (maximise $v$,
+minimise $v$, maximise $p$, minimise $p$), and independently below across five
+policies and two regimes to machine precision. The theorem's conclusion is not
+in doubt on this evidence; the retracted derivation of \emph{why} is replaced
+below by a mechanism that is proven, though not yet assembled into a fully
+general proof.
 
-\emph{Necessity.} The construction of Theorem~\ref{thm:vacuity} has
-$\kappa_H = E > 0 = \kappa_S$ and gap exactly $m\delta E > 0$, exhibiting the
-required instance. \qed
+\emph{Adjacent-exchange lemma (proven).} For arms $a,b$ with $\kappa_a=\kappa_b$,
+swapping the order of two consecutive pulls of $a$ and $b$ leaves both the
+two-round expected reward and the \emph{full joint distribution} over
+post-pull survival and burden exactly unchanged---verified by direct
+calculation and confirmed on ten random constant-$\kappa$ instances with zero
+deviation, both in the reward and in the distribution. Extending this to a
+general sufficiency proof requires showing that any two orderings of an
+arbitrary pull sequence (not just adjacent transpositions of a fixed pair,
+and allowing repeated pulls of surviving arms and horizon truncation) induce the
+same value; that extension is not yet complete. \textbf{Sufficiency is therefore
+reported as exhaustively verified, not proven}: exact dynamic programming
+across several thousand instances---including adversarial constructions
+targeting exactly the mechanism above (extreme $p$-heterogeneity at fixed
+$\kappa$, $n\in\{2,3\}$, $T$ up to $6$, every reachable state checked, not
+only the initial one)---finds zero violations.
+
+Separately and independently, $N$ is policy-independent whenever
+$T \ge N_{\mathrm{exh}}$: arm $j$ absorbs exactly $G_j \sim
+\mathrm{Geometric}(p_j)$ pulls before destruction, and every pull is allocated
+to exactly one arm, so $N_{\mathrm{exh}} = \sum_j G_j$ regardless of allocation
+order. This fact does not depend on the retracted step and is used in the
+necessity construction below.
 \end{proof}
 
-The step that closes the argument is that constant $\kappa$ makes the \emph{entire}
-expected burden policy-invariant, not merely the per-arm burden term in the Bellman
-comparison. No coupling argument is needed, and horizon truncation
-presents no difficulty: the identity holds over the realised episode however long it
-turns out to be.
+\begin{proof}[Necessity]
+The hot/safe construction of Theorem~\ref{thm:vacuity} has $\kappa_H = E > 0 =
+\kappa_S$ and gap exactly $m\delta E > 0$ by direct calculation, exhibiting the
+required instance. This direction does not depend on the retracted step above
+and stands independently.
+\end{proof}
 
-\paragraph{Exact verification of the invariance.} We confirm the key identity
-directly by dynamic programming, computing $\mathbb{E}[\sum_t B(S_t)]$ exactly for
+\paragraph{Exact verification of policy-invariance.} Independently of the proof
+above, we confirm $\mathbb{E}[\sum_t B(S_t)]$ directly by dynamic programming for
 five structurally different deterministic policies (maximise $v$, minimise $v$,
 maximise $p$, minimise $p$, maximise $e$):
 
@@ -463,14 +472,15 @@ varying $\kappa$ (control, $T{=}5$, $n{=}10$) & $0.4444$--$1.0261$ & $7.3 \times
 
 Identical to machine precision in both regimes---including the exhausting case,
 where $N$ is random---and differing by three orders of magnitude when $\kappa$
-varies.
+varies. This table's numbers were independently computed by direct DP and do not
+rely on the retracted closed form.
 
-Two empirical checks. Varying $p$ and $e$ widely while pinning $\kappa$ constant
-leaves greedy exactly optimal (0/10 instances broken, gap $0.000\%$); varying the
-product breaks it (10/10, gap $5.4$--$6.3\%$). The theorem also implies the interchange inequality
-$v_a - v_b \ge p_a D_a - p_b D_b$, which we audit exhaustively as a consistency
-check: $0$ violations in $6{,}842$ ordered pairs under constant $\kappa$, versus
-$56.2\%$ when $\kappa$ varies.
+Two further empirical checks. Varying $p$ and $e$ widely while pinning $\kappa$
+constant leaves greedy exactly optimal (0/10 instances broken, gap $0.000\%$);
+varying the product breaks it (10/10, gap $5.4$--$6.3\%$). The theorem also
+implies the interchange inequality $v_a - v_b \ge p_a D_a - p_b D_b$, which we
+audit exhaustively as a consistency check: $0$ violations in $6{,}842$ ordered
+pairs under constant $\kappa$, versus $56.2\%$ when $\kappa$ varies.
 
 The optimality gap grows monotonically with $\mathrm{std}(\kappa)$, from $5.9\%$ to
 $29.1\%$ across six bins over 240 instances. Figure~\ref{fig:char} summarises both

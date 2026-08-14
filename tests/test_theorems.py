@@ -1295,3 +1295,66 @@ def test_theorem5_repaired_bound_holds_including_adversarial():
         if rss > N/4 + 1e-9 or var < 4.0/N - 1e-9:
             violations += 1
     assert violations == 0, f"AM-GM bound RSS<=N/4 must never be violated"
+
+
+# ------------------------------------------ Theorem 1 sufficiency, investigated
+def test_reviewer_counterexample_does_not_break_sufficiency():
+    """The second review's exact proposed construction (p1=1,e1=kappa vs
+    p2=0.5,e2=2kappa), checked exhaustively at EVERY reachable state, not just
+    the initial one."""
+    from experiments.exp53_t1_sufficiency_investigation import check_state_by_state
+    total, ok_count = 0, 0
+    for kappa in [0.1, 0.5, 1.0, 2.0]:
+        for T in [2, 3, 4]:
+            for v1, v2 in [(1.0, 0.5), (0.5, 1.0), (1.0, -0.5)]:
+                p = np.array([1.0, 0.5])
+                e = np.array([kappa, 2*kappa])
+                v = np.array([v1, v2])
+                ok, info = check_state_by_state(v, p, e, 0.3, T)
+                total += 1
+                ok_count += ok
+    assert ok_count == total, f"greedy must be optimal at every state, every config"
+
+
+def test_burden_is_policy_invariant_even_though_old_closed_form_was_wrong():
+    """The retracted closed form (delta*kappa*E[N(N-1)/2]) does not match the
+    true aggregate burden, but the burden IS exactly policy-invariant via a
+    different mechanism -- this is the corrected, honest claim."""
+    from experiments.exp53_t1_sufficiency_investigation import aggregate_burden_by_policy
+    v = np.array([1.0, 0.9, 0.8])
+    p = np.array([0.6, 0.5, 0.3])
+    kappa = 1.0
+    e = kappa / p
+    delta, T = 0.3, 6
+    policies = {
+        "greedy": lambda S, t: max(S, key=lambda a: v[a]),
+        "min_v": lambda S, t: min(S, key=lambda a: v[a]),
+        "max_p": lambda S, t: max(S, key=lambda a: p[a]),
+        "min_p": lambda S, t: min(S, key=lambda a: p[a]),
+    }
+    vals = [aggregate_burden_by_policy(v, p, e, delta, T, pick)
+           for pick in policies.values()]
+    assert max(vals) - min(vals) < 1e-6, "burden must be policy-invariant"
+    # and confirm the OLD closed form does NOT match (documents the retraction)
+    N_expected_naive = sum(1.0/pi for pi in p)  # rough scale check only
+    old_closed_form = delta * kappa * (N_expected_naive * (N_expected_naive-1) / 2)
+    assert abs(old_closed_form - vals[0]) > 0.1, (
+        "the retracted closed form should NOT match the true value")
+
+
+def test_adjacent_exchange_lemma():
+    """The correct mechanism behind sufficiency: swapping two consecutive
+    same-kappa pulls leaves both reward and the full outcome distribution
+    exactly unchanged."""
+    from experiments.exp53_t1_sufficiency_investigation import adjacent_exchange_check
+    rng = np.random.default_rng(3)
+    for _ in range(10):
+        kappa = rng.uniform(0.1, 2.0)
+        p = rng.uniform(0.05, 0.95, 2)
+        e = kappa / p
+        v = rng.uniform(-1, 1, 2)
+        delta = rng.uniform(0.1, 1.5)
+        B0 = rng.uniform(0, 2)
+        r_ok, d_ok = adjacent_exchange_check(v, p, e, delta, B0)
+        assert r_ok, "two-round reward must be order-invariant under equal kappa"
+        assert d_ok, "the full outcome distribution must be order-invariant too"
