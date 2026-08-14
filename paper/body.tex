@@ -164,6 +164,19 @@ regret and develop balanced exploration. Our externalities are negative, act on
 worth drawing: in both settings a standard algorithm fails badly, indicating that
 externality structure of either sign breaks classical guarantees.
 
+\textbf{Estimation under adaptive data collection.} A separate literature studies
+bias and variance in estimates built from bandit-collected data: Nie et
+al.~\cite{nie2018} show common bandit algorithms produce systematically biased
+sample means because the data-generating process is entangled with the
+decisions being evaluated. Theorem~\ref{thm:floor} is in this family but is not
+a bias result: we hold the estimator unbiased (ordinary least squares) and
+instead bound its \emph{variance}, and the mechanism is specific to this
+setting---each arm supplies exactly one before/after transition because
+destruction is permanent, capping the information at the pool size regardless
+of how long data collection continues. Adaptive-collection bias and
+consumption-capped variance are complementary difficulties that would compound
+in a system exhibiting both.
+
 \textbf{Cascading and interacting bandits} couple arms within a round---the reward
 of one depends on which others were displayed or examined---but the coupling is
 simultaneous and leaves the action set intact across rounds. \textbf{Combinatorial
@@ -524,7 +537,7 @@ Condition on the realised pull sequence $(a_1,\dots,a_N)$ and the realised
 destruction times, so the design matrix is fixed. Consider first the oracle
 problem in which every $e_j$, $j \ne i$, is \emph{known} and subtracted from
 $y_t$ exactly, leaving $v_1,\dots,v_n$ and $\delta e_i$ as the unknowns. By the
-Frisch--Waugh--Lovell theorem, the variance of $\delta\hat e_i$ in this
+Frisch--Waugh--Lovell theorem~\cite{frischwaugh1933,lovell1963}, the variance of $\delta\hat e_i$ in this
 regression equals $\sigma^2/\mathrm{RSS}_i$, where $\mathrm{RSS}_i$ is the
 residual sum of squares from regressing the treatment indicator
 $\mathbf{1}[t>\tau_i]$ on the arm-pull indicators. Writing $n_a^{(b)}, n_a^{(c)}$
@@ -658,7 +671,11 @@ zero. Induction on the DP recursion.
 For any policy $\pi$, $V^\star(S_0,0) - W(\pi) = \mathbb{E}_\pi\big[\sum_t
 \mathrm{reg}(S_t,t)\big]$, where $\mathrm{reg}(S,t) = \max_a Q^\star(a,S,t) -
 Q^\star(\pi(S,t),S,t)$ and the expectation is over $\pi$'s own trajectory
-distribution.
+distribution. This is the finite-horizon, undiscounted, deterministic-policy
+specialisation of the performance difference lemma of
+Kakade and Langford~\cite{kakadelangford2002}, proved directly below for this
+MDP class rather than invoked from the discounted, stochastic-policy general
+form.
 \end{theorem}
 
 \begin{proof}
@@ -755,7 +772,13 @@ ECI at strong coupling.
 \label{thm:polimp}
 For any deterministic Markov policy $\pi_0$, define $\pi_1(S,t) :=
 \arg\max_a Q^{\pi_0}(a,S,t)$, where $Q^{\pi_0}$ is computed from $\pi_0$'s own
-value function. Then $V^{\pi_1}(S,t) \ge V^{\pi_0}(S,t)$ for all $(S,t)$.
+value function. Then $V^{\pi_1}(S,t) \ge V^{\pi_0}(S,t)$ for all $(S,t)$. This
+is the classical conservative-policy-improvement guarantee of
+Kakade and Langford~\cite{kakadelangford2002}, specialised to a setting where it
+holds \emph{exactly} rather than approximately: our finite-horizon,
+undiscounted MDP with a single deterministic transition structure admits a
+short direct proof with no total-variation penalty term, unlike the general
+discounted, stochastic-policy case their bound addresses.
 \end{theorem}
 
 \begin{proof}
@@ -1222,10 +1245,25 @@ claim breaks.
   Bandits with knapsacks. \emph{FOCS}, 2013.
 \bibitem{chakrabarti2008} D.~Chakrabarti, R.~Kumar, F.~Radlinski, E.~Upfal.
   Mortal multi-armed bandits. \emph{NeurIPS}, 2008.
+\bibitem{dixitpindyck1994} A.~K.~Dixit, R.~S.~Pindyck.
+  \emph{Investment Under Uncertainty}. Princeton University Press, 1994.
+\bibitem{frischwaugh1933} R.~Frisch, F.~V.~Waugh.
+  Partial time regressions as compared with individual trends.
+  \emph{Econometrica}, 1933.
+\bibitem{kakadelangford2002} S.~Kakade, J.~Langford.
+  Approximately optimal approximate reinforcement learning. \emph{ICML}, 2002.
 \bibitem{kleinberg2010} R.~Kleinberg, A.~Niculescu-Mizil, Y.~Sharma.
   Regret bounds for sleeping experts and bandits. \emph{Machine Learning}, 2010.
+\bibitem{koutsoupias1999} E.~Koutsoupias, C.~Papadimitriou.
+  Worst-case equilibria. \emph{STACS}, 1999.
 \bibitem{levine2017} N.~Levine, K.~Crammer, S.~Mannor.
   Rotting bandits. \emph{NeurIPS}, 2017.
+\bibitem{lovell1963} M.~C.~Lovell.
+  Seasonal adjustment of economic time series and multiple regression analysis.
+  \emph{Journal of the American Statistical Association}, 1963.
+\bibitem{nie2018} X.~Nie, X.~Tian, J.~Taylor, J.~Zou.
+  Why adaptively collected data have negative bias and how to correct for it.
+  \emph{AISTATS}, 2018.
 \bibitem{seznec2019} J.~Seznec, A.~Locatelli, A.~Carpentier, A.~Lazaric,
   M.~Valko. Rotting bandits are no harder than stochastic ones.
   \emph{AISTATS}, 2019.

@@ -9,8 +9,16 @@
 Consumption is rarely the act of a single learner. Two orchestrators draw on the
 same API quota; two sponsors compete for the same trial-eligible patients. Each
 collects its own reward, but a destruction by any of them raises the burden for
-all. It is natural to expect a commons problem and a corresponding price of
-anarchy. There is none, and the reason is instructive.
+all. It is natural to expect a commons problem and a corresponding
+\emph{price of anarchy}---the ratio between the worst equilibrium's cost and the
+social optimum's, introduced by Koutsoupias and Papadimitriou~\cite{koutsoupias1999}
+and studied extensively since in congestion and routing games, where
+decentralised, self-interested play provably degrades a shared resource. There
+is none here, and the reason is instructive precisely because it contrasts with
+that literature: those settings have a genuine externality asymmetry (one
+driver's congestion cost is borne by others, not fully by themselves), whereas
+here the burden is symmetric by construction---it lands on the agent who
+creates it as much as on anyone else.
 
 \begin{theorem}[Sequential equivalence]
 \label{thm:seqequiv}
@@ -191,7 +199,16 @@ and not yet derived.
 Everywhere above the action set contracts as a side effect of pulling arms. A
 distinct and practically important variant adds an explicit \emph{terminal action}:
 after a finite budget of irreversible experiments the learner must declare an
-operating envelope, and that declaration bounds every subsequent action.
+operating envelope, and that declaration bounds every subsequent action. This
+connects to \emph{real options theory}~\cite{dixitpindyck1994}, which values the
+option to delay an irreversible investment under uncertainty and shows that
+irreversibility alone creates value in waiting. Our setting differs in the
+direction of the commitment: the classical real-options question is
+\emph{when} to make a single irreversible investment; ours is how to allocate a
+\emph{budget of experiments} whose results jointly determine a permanent,
+multi-dimensional commitment (the declared envelope), so the relevant decision
+is an allocation problem nested inside an eventual stopping decision, not a
+pure timing problem.
 
 The motivating case is design-space filing under ICH~Q8. A finite quantity of
 active ingredient supports a finite number of process runs; each either
