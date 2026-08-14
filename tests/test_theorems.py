@@ -1203,3 +1203,46 @@ def test_seci_captures_far_more_opportunity_than_greedy_at_n12_exact():
                 f"q={q}: SECI must capture substantially more of the "
                 f"opportunity than greedy, got seci_gap={seci_gap:.3f} vs "
                 f"greedy_gap={greedy_gap:.3f}")
+
+
+# ---------------------------------------------------- policy improvement theorem
+def test_policy_improvement_never_decreases_value():
+    """Proven: one step of exact policy improvement over ANY base policy's own
+    value function cannot decrease value. Verified across three deliberately
+    bad base policies."""
+    from experiments.exp51_policy_improvement import (BASE_POLICIES,
+                                                       policy_improvement_check)
+    for name, fn in BASE_POLICIES.items():
+        viol, checked, worst = policy_improvement_check(name, fn, seeds=10)
+        assert viol == 0, f"{name}: policy improvement must never decrease value"
+        assert worst > -1e-9
+
+
+# ---------------------------------------------------- exact homogeneous-p k
+def test_exact_k_homogeneous_matches_simulation():
+    """Proven: under homogeneous destruction rate, k has an exact closed form
+    via exchangeability + memorylessness. Matches simulation to within noise
+    across multiple (c, p) pairs."""
+    from experiments.exp43_derive_k import (exact_k_homogeneous,
+                                            measure_k_homogeneous)
+    for c, p in [(2, 0.3), (3, 0.5), (5, 0.7)]:
+        measured = measure_k_homogeneous(20, p, threshold=c, seeds=3000)
+        predicted = exact_k_homogeneous(p, c)
+        assert abs(measured - predicted) < 0.15, (
+            f"c={c}, p={p}: measured {measured:.3f} vs exact {predicted:.3f}")
+
+
+def test_exact_k_c3_simplifies_to_one_plus_five_p():
+    """The c=3 special case has a clean closed form: k = 1 + 5p exactly."""
+    from experiments.exp43_derive_k import exact_k_homogeneous
+    for p in [0.1, 0.3, 0.5, 0.7, 0.9]:
+        assert abs(exact_k_homogeneous(p, 3) - (1 + 5 * p)) < 1e-9
+
+
+def test_last_arm_always_contributes_exactly_one():
+    """The j=0 term in the closed form is P(tau_0 <= c-1) = 1 identically:
+    the last arm to die always has zero after-data, resolving the earlier
+    residual-constant mystery."""
+    from experiments.exp43_derive_k import exact_k_homogeneous
+    # as p -> 0, k should approach exactly 1 (only the last-arm term survives)
+    assert abs(exact_k_homogeneous(1e-6, 3) - 1.0) < 1e-3

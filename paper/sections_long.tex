@@ -110,6 +110,81 @@ the error is on the high side. It also explains why the conservative policy of
 Section~\ref{sec:eci} outperformed every learned estimator: it was not merely
 robust, it was erring in the safe direction.
 
+\section{Ordinal recovery of the externality}
+\label{sec:ordinal}
+
+Theorem~\ref{thm:floor} bounds how precisely $e_i$ can be \emph{estimated}. A
+separate question is how well the \emph{ordering} of arms by $e_i$ can be
+recovered, since T-F-style mechanism design needs only ranks, not magnitudes.
+Estimating $e_i$ requires comparing reward levels before and after arm $i$'s
+death; an arm whose death falls very early or very late in the episode has
+almost no data on one side of that comparison and is effectively unusable for
+recovering $e_i$ at all. Write $k$ for the expected number of such positionally
+unusable arms, with usability threshold $c$ (a minimum count of rounds required
+on the thinner side).
+
+\begin{lemma}[Exchangeability]
+\label{lem:exch}
+If every round an arm is selected uniformly at random among those alive, and all
+arms share a common destruction rate $p$, the order in which arms die is a
+uniform random permutation, independent of $p$.
+\end{lemma}
+
+\begin{lemma}[Memorylessness]
+\label{lem:memless}
+Under the same homogeneous-$p$ hypothesis, whether a given round produces a
+death does not depend on which arm was selected---every round is an independent
+$\mathrm{Bernoulli}(p)$ trial---so the round-gap between the $(k{-}1)$-th and
+$k$-th death is exactly $\mathrm{Geometric}(p)$.
+\end{lemma}
+
+Both are elementary consequences of homogeneity and were confirmed directly:
+the empirical death-rank distribution of a fixed arm matches uniform on
+$\{1,\dots,n\}$ across all ranks, and the empirical gap distribution matches the
+geometric PMF (mean $3.316$ against $1/p=3.333$; $P(\text{gap}{=}1)=0.303$
+against $p=0.3$).
+
+\begin{theorem}[Exact positional saturation, homogeneous rate]
+\label{thm:exactk}
+Let $\tau_j$ be the sum of $j$ i.i.d.\ $\mathrm{Geometric}(p)$ variables
+(support $\{1,2,3,\dots\}$), $\tau_0 := 0$. Under homogeneous $p$,
+\[
+k(p,c) \;=\; \sum_{k=1}^{c} P(\tau_k \le c) \;+\; \sum_{j=0}^{c-1} P(\tau_j \le c-1),
+\qquad
+P(\tau_k{=}m) = \binom{m-1}{k-1} p^k (1-p)^{m-k}.
+\]
+\end{theorem}
+
+\begin{proof}
+By Lemma~\ref{lem:exch} the $k$-th death (in rank order) occurs at round
+$\tau_k - 1$ and the episode length is $N=\tau_n$. An arm is positionally
+unusable iff $\tau_k - 1 < c$ (near the start) or $\tau_n - \tau_k < c$ (near the
+end); summing the corresponding probabilities over ranks and applying
+Lemma~\ref{lem:memless}'s negative-binomial form for $\tau_k$ gives the stated
+sum.
+\end{proof}
+
+This is exact, not approximate, and matches simulation across fifteen $(c,p)$
+pairs to within $0.03$, inside Monte Carlo noise at several thousand seeds. At
+$c=3$ the sum simplifies to exactly $k = 1 + 5p$, confirmed to within $0.017$
+across $p \in \{0.1,\dots,0.9\}$.
+
+\paragraph{This resolves an earlier open question.} A cruder mean-field
+approximation had suggested $k \approx a + 2cp$ with the constant $a \approx
+0.6$ only measured, not derived. The $j{=}0$ term in the exact sum above is
+$P(\tau_0 \le c{-}1) = 1$ identically: the last arm to die always has zero
+after-data, contributing exactly $1$ to $k$ rather than an empirically fitted
+fraction.
+
+\paragraph{What remains open, precisely.} Heterogeneous $p$ breaks
+Lemma~\ref{lem:memless}: whether a round produces a death then depends on which
+arm was selected, so round-gaps are no longer i.i.d.\ geometric, and
+Lemma~\ref{lem:exch} fails too, since higher-$p$ arms require fewer selections
+to die and are biased toward earlier death ranks. A general closed form would
+need the order statistics of death times under this rate-dependent sorting---a
+genuinely different and harder problem than the homogeneous case just solved,
+and not yet derived.
+
 \section{Terminal commitment}
 \label{sec:commitment}
 

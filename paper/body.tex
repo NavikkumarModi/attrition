@@ -732,6 +732,38 @@ holding $a$. This reaches $99.5$--$99.9\%$ of exact optimum, and with Monte Carl
 policy evaluation runs at $n=40$ where exact DP is infeasible, adding $3.3\%$ over
 ECI at strong coupling.
 
+\begin{theorem}[Policy improvement]
+\label{thm:polimp}
+For any deterministic Markov policy $\pi_0$, define $\pi_1(S,t) :=
+\arg\max_a Q^{\pi_0}(a,S,t)$, where $Q^{\pi_0}$ is computed from $\pi_0$'s own
+value function. Then $V^{\pi_1}(S,t) \ge V^{\pi_0}(S,t)$ for all $(S,t)$.
+\end{theorem}
+
+\begin{proof}
+Backward induction on $t$. Base case $t=T$ or $S=\emptyset$: both values are
+$0$. Inductive step, assuming the claim at $t+1$:
+\begin{align*}
+V^{\pi_1}(S,t)
+&= R(\pi_1(S,t),S) + p_{\pi_1(S,t)} V^{\pi_1}(S{-}\{\pi_1(S,t)\},t{+}1) + (1-p_{\pi_1(S,t)}) V^{\pi_1}(S,t{+}1) \\
+&\ge R(\pi_1(S,t),S) + p_{\pi_1(S,t)} V^{\pi_0}(S{-}\{\pi_1(S,t)\},t{+}1) + (1-p_{\pi_1(S,t)}) V^{\pi_0}(S,t{+}1) \\
+&= Q^{\pi_0}(\pi_1(S,t), S, t) = \max_a Q^{\pi_0}(a,S,t) \ge Q^{\pi_0}(\pi_0(S,t),S,t) = V^{\pi_0}(S,t),
+\end{align*}
+using the inductive hypothesis on the second line, the definition of $\pi_1$ on
+the third, and that $\pi_0(S,t)$ is one particular choice of $a$ on the fourth.
+\end{proof}
+
+Verified with zero violations across three deliberately poor base policies
+(minimising value, an arbitrary fixed rule, maximising destruction probability).
+This theorem is what justifies discarding, rather than trusting, an approximate
+rollout implementation whose Monte Carlo estimate appeared to fall below its own
+base policy: with exact computation that outcome is provably impossible, so its
+appearance is proof of estimator error, not evidence of a real possibility. The
+theorem is one-sided: it establishes $\mathrm{Gap}(\pi_1) \le \mathrm{Gap}(\pi_0)$
+but not a rate, and a matching quantitative bound---closing the empirical
+log-log slopes of $1.11$--$1.25$ observed between base gap and rollout gap---
+remains open. Standard contraction arguments for policy-improvement rates rely on
+a discount factor, unavailable in this finite-horizon undiscounted setting.
+
 \subsection{An exactly solvable case}
 
 \begin{theorem}[Pure sequencing]

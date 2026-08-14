@@ -1867,6 +1867,8 @@ that "we proved X" is never ambiguous.
 | **T5** | near-optimal policies are *forced* to report private regret `m·ε` | Explicit construction; the optimum declines a strictly best-available arm at each of `m` deferrals. Exact at 8/8. |
 | **T6** | sequential `m`-agent play ≡ one learner over `mT` pulls | Identical MDP: same state, same reward function of state, same transition. Verified at five `(m,T)` pairs to within 0.015. |
 | **ECI exactness** | constant `κ` ⟹ ECI optimal | The charge is arm-independent, so ECI reduces to greedy; Theorem 1 applies. Verified at std(κ) ≈ 1e-17. |
+| **Policy improvement** | one step of exact improvement over any base policy never decreases value | Backward induction, general MDP argument. Verified across 3 deliberately bad base policies, 0 violations. |
+| **Exact `k` (homogeneous `p`)** | `k(p,c) = Σ_{k=1}^{c}P(τ_k≤c) + Σ_{j=0}^{c-1}P(τ_j≤c-1)` | Exchangeability (death order uniform) + memorylessness (gaps iid Geometric(p) when `p` homogeneous). Verified across 15 (c,p) pairs to within Monte Carlo noise; c=3 case simplifies to exactly `1+5p`. |
 
 ## Derived, with a measured constant
 
@@ -1884,7 +1886,9 @@ that "we proved X" is never ambiguous.
 | ordinal `E[τ] ≈ C(n−k,2)/C(n,2)` | tracks pool-size scaling (0.831 vs 0.851 at n=30) | fails to reproduce allocation-rule dependence (predicts 0.700–0.736 against observed 0.593–0.761) |
 | identification cannot be improved by design | 4 allocation rules, random best at both pool sizes | mechanism not isolated; three candidate explanations falsified |
 | terminal commitment failure modes | 300 seeds/cell, exact operating-value evaluation | no closed form for the optimal experiment allocation |
-| SECI matches/beats greedy under correlated destruction | exact DP (n=6) and Monte Carlo (n=40, scale-corrected) | found by testing against ground truth, not derived and proven; a first-principles derivation attempt performed worse |
+| SECI matches/beats greedy under correlated destruction | exact DP (n=6, n=12) and Monte Carlo (n=40, scale-corrected) | found by testing against ground truth, not derived and proven; two first-principles derivation attempts performed worse |
+| rollout closes a constant fraction of the base gap | log-log slopes 1.11, 1.25 across base gaps 1.9%-31.9% | the ONE-SIDED direction (never worse) is now proven (Policy Improvement Theorem); the rate/constant-fraction claim remains empirical |
+| k's residual constant under HETEROGENEOUS p | measured `a ≈ 0.6`, sd 0.149 | proven exactly for homogeneous p (closed form above); heterogeneous case needs order statistics of rate-dependent death times, not yet derived |
 
 ## Falsified and retained in the record
 
@@ -1898,7 +1902,7 @@ explanation for allocation-rule dependence · τ ≈ 0.68 as a universal ceiling
 Added to the falsified list: price of anarchy under sequential consumption ·
 collisions as a coordination cost · spreading agents across arms as a remedy.
 
-**Sixteen falsified hypotheses, all mine.** The ratio of falsified to surviving
+**Sixteen falsified hypotheses, all mine, plus two genuinely closed open items this session (policy improvement's one-sided direction; k's exact form for homogeneous p).** The ratio of falsified to surviving
 claims is the reason the surviving ones are worth stating.
 
 ---
@@ -2478,3 +2482,101 @@ identifying it precisely is a genuinely harder problem than the original
 than a vague "it's subtle."** This is recorded as the concrete open question for
 anyone taking this further: find the multi-arm compensating mechanism that
 restores invariance despite the single-arm timing-dependence just demonstrated.
+
+---
+
+## Two new proven theorems
+
+### Theorem (Policy improvement, general) — PROVEN
+
+> For any deterministic Markov policy `π₀`, define `π₁(S,t) := argmax_a Q^π₀(a,S,t)`
+> using `π₀`'s own value function in the Q-computation. Then
+> `V^π₁(S,t) ≥ V^π₀(S,t)` for all `(S,t)`.
+
+**Proof.** Backward induction on `t`. Base case `t=T` or `S=∅`: both values are 0.
+Inductive step, assuming the claim at `t+1`:
+
+```
+V^π₁(S,t) = R(π₁(S,t),S) + p_{π₁(S,t)} V^π₁(S∖{π₁(S,t)},t+1) + (1-p_{π₁(S,t)}) V^π₁(S,t+1)
+          ≥ R(π₁(S,t),S) + p_{π₁(S,t)} V^π₀(S∖{π₁(S,t)},t+1) + (1-p_{π₁(S,t)}) V^π₀(S,t+1)   [IH]
+          = Q^π₀(π₁(S,t), S, t)
+          = max_a Q^π₀(a,S,t)                                                              [def. of π₁]
+          ≥ Q^π₀(π₀(S,t), S, t) = V^π₀(S,t)                                                [π₀ is one choice of a]
+```
+∎
+
+**Verified**: zero violations across three deliberately bad base policies
+(worst-value, an arbitrary fixed rule, max-`p`), 15 instances each.
+
+**Consequence for the correlated-destruction rollout episode (earlier turn).**
+This theorem makes precise why the abandoned Monte Carlo rollout's apparent
+regression below its own base policy was diagnostic of a bug rather than a real
+possibility: with *exact* computation, that regression is provably impossible.
+The decision to distrust and abandon that tool, rather than report its output, is
+now justified by a proof, not just caution.
+
+**What remains open.** The theorem is one-sided and qualitative: `Gap(π₁) ≤
+Gap(π₀)`, not a rate. A matching upper bound (`Gap(π₁) ≤ c · Gap(π₀)` for some
+constant `c<1`, matching the empirical log-log slopes of 1.1–1.25 found earlier)
+is not established. Standard contraction-based rate arguments for policy
+improvement rely on a discount factor; this project's setting is finite-horizon
+and undiscounted, so that route is not available, and no alternative has been
+found. This mirrors the ECI bound's situation: qualitative behaviour proven,
+quantitative rate open.
+
+### Theorem (exact positional saturation, homogeneous destruction rate) — PROVEN
+
+Recall `k`, the count of positionally "unusable" arms limiting ordinal recovery,
+was previously only approximated: `k ≈ a + 2cp̄` with `a ≈ 0.6` measured, not
+derived. Restricting to **homogeneous** `p` (all arms share the same destruction
+rate) makes the process exactly solvable.
+
+**Two structural facts, independently verified before use:**
+
+1. **Exchangeability.** Selection is uniform at random among alive arms each
+   round, and all arms share the same `p`. By symmetry, the *order* in which
+   arms die is a uniform random permutation, independent of `p`. Verified: arm 0's
+   death rank matches uniform on `{1,...,n}` to within simulation noise across
+   all 8 ranks.
+2. **Memorylessness.** Because `p` is homogeneous, whether a round produces a
+   death does not depend on *which* arm was selected — each round is an
+   independent Bernoulli(`p`) trial. So the round-gap between the `(k-1)`-th and
+   `k`-th death is exactly `Geometric(p)`. Verified: empirical gap distribution
+   matches the geometric PMF closely (mean `3.316` vs `1/p = 3.333`; `P(gap=1)
+   = 0.303` vs `p = 0.3`).
+
+**Consequence.** Let `τ_k` be the sum of `k` i.i.d. `Geometric(p)` variables
+(support `{1,2,3,...}`), `τ_0 := 0`. The `k`-th death occurs at round `τ_k − 1`
+(0-indexed), and the episode length is `N = τ_n`. An arm is positionally unusable
+(`min_side < c`) iff `τ_k ≤ c` (near the start) or `τ_n − τ_k ≤ c−1` (near the
+end). Summing over ranks:
+
+```
+k(p,c) = Σ_{k=1}^{c} P(τ_k ≤ c)  +  Σ_{j=0}^{c-1} P(τ_j ≤ c-1)
+```
+
+using the negative binomial PMF `P(τ_k = m) = C(m-1,k-1) p^k (1-p)^(m-k)`. This is
+a **finite, exact, closed-form expression** — not an approximation.
+
+**Verification.** Matches simulation across 15 `(c,p)` combinations (`c ∈
+{1,2,3,5,8}`, `p ∈ {0.2,0.5,0.8}`) to within `0.0000`–`0.0300`, well inside Monte
+Carlo noise at 4,000–8,000 seeds. At `c=3` the sum simplifies exactly to
+`k = 1 + 5p`, confirmed to within `0.017` across `p ∈ {0.1,...,0.9}` at 8,000 seeds.
+
+**This resolves the earlier mystery of the residual constant.** The `j=0` term
+in the second sum is `P(τ_0 ≤ c-1) = 1` identically — the last arm to die
+*always* has zero after-data, contributing exactly `1` to `k`, matching the
+original qualitative claim precisely rather than approximately. The earlier
+"`a ≈ 0.6`" fit was measured under *heterogeneous* `p`, where this clean structure
+does not hold; it was approximating a harder problem, not measuring noise around
+this exact result.
+
+**What remains open, and why it's hard is now precise.** The heterogeneous-`p`
+case breaks fact (2): when arms have different destruction rates, whether a
+round produces a death *does* depend on which arm was selected, so the
+round-gaps are no longer i.i.d. Geometric. The order in which arms die is also
+no longer a uniform permutation independent of `p`, since higher-`p` arms
+require fewer selections to die and are therefore biased toward earlier death
+ranks. A general closed form would need the order statistics of death times
+under this rate-dependent sorting, which is a genuinely different (and harder)
+problem than the homogeneous case just solved.
