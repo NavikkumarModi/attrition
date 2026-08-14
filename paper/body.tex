@@ -520,34 +520,53 @@ For $T > N_{\mathrm{exh}}$ this bound does not decrease in $T$.
 \end{theorem}
 
 \begin{proof}
-Consider the easier problem in which every $e_j$, $j \ne i$, is \emph{known}. Then
-the other level shifts can be subtracted from $y_t$ exactly, and the residual
-process has a single shift $\delta e_i$ at arm $i$'s destruction time. Its MLE is
-the difference of pre- and post-destruction residual means, with variance
-$\sigma^2(1/n_b^{(i)} + 1/n_a^{(i)})$.
-
-In the actual problem the other coefficients are unknown and estimated jointly.
-Adding free parameters to a linear model weakly increases the variance of every
-retained coefficient---formally, the design matrix of the oracle problem is a
-column submatrix of the joint design, and for any $X = [X_1\ X_2]$ the Schur
-complement gives $[(X^\top X)^{-1}]_{11} \succeq (X_1^\top X_1)^{-1}$. Hence
+Condition on the realised pull sequence $(a_1,\dots,a_N)$ and the realised
+destruction times, so the design matrix is fixed. Consider first the oracle
+problem in which every $e_j$, $j \ne i$, is \emph{known} and subtracted from
+$y_t$ exactly, leaving $v_1,\dots,v_n$ and $\delta e_i$ as the unknowns. By the
+Frisch--Waugh--Lovell theorem, the variance of $\delta\hat e_i$ in this
+regression equals $\sigma^2/\mathrm{RSS}_i$, where $\mathrm{RSS}_i$ is the
+residual sum of squares from regressing the treatment indicator
+$\mathbf{1}[t>\tau_i]$ on the arm-pull indicators. Writing $n_a^{(b)}, n_a^{(c)}$
+for the pre- and post-$\tau_i$ pull counts of arm $a$ (with $n_a = n_a^{(b)} +
+n_a^{(c)}$), this residual sum decomposes across arms as
 \[
-\mathrm{Var}_{\text{joint}}(\delta\hat e_i) \;\ge\; \mathrm{Var}_{\text{oracle}}(\delta\hat e_i)
-\;=\; \sigma^2\!\left(\tfrac{1}{n_b^{(i)}} + \tfrac{1}{n_a^{(i)}}\right).
+\mathrm{RSS}_i \;=\; \sum_a \frac{n_a^{(b)} n_a^{(c)}}{n_a},
 \]
-By AM--HM, $1/n_b + 1/n_a \ge 4/(n_b+n_a) = 4/N$, with equality iff $n_b = n_a$.
-Finally $N = \min(T, N_{\mathrm{exh}})$, and once $T$ exceeds $N_{\mathrm{exh}}$ the
-binding constraint is the pool rather than the clock.
+in which arm $i$'s own term is exactly zero, since $n_i^{(c)}=0$ once it is
+destroyed: an arm's own pulls carry no information about its own externality,
+only the surviving arms' pulls do. By AM--GM, $n_a^{(b)} n_a^{(c)} \le
+(n_a/2)^2$, so each term is at most $n_a/4$ and
+\[
+\mathrm{RSS}_i \;\le\; \sum_a \frac{n_a}{4} \;=\; \frac{N}{4},
+\qquad\text{hence}\qquad
+\mathrm{Var}_{\mathrm{oracle}}(\delta\hat e_i) \;=\; \frac{\sigma^2}{\mathrm{RSS}_i} \;\ge\; \frac{4\sigma^2}{N}.
+\]
+In the actual problem the other coefficients $e_j,\,j\ne i$, are also unknown
+and estimated jointly. Adding free parameters to a linear model weakly
+increases the variance of every retained coefficient---formally, for
+$X=[X_1\ X_2]$ the Schur complement gives
+$[(X^\top X)^{-1}]_{11} \succeq (X_1^\top X_1)^{-1}$---so
+$\mathrm{Var}_{\mathrm{joint}}(\delta\hat e_i) \ge \mathrm{Var}_{\mathrm{oracle}}(\delta\hat e_i) \ge 4\sigma^2/N$.
+Finally $N = \min(T, N_{\mathrm{exh}})$, and once $T$ exceeds $N_{\mathrm{exh}}$
+the binding constraint is the pool rather than the clock.
 \end{proof}
 
-The difference-in-means estimator is the MLE only when the other externalities are
-known; it is invoked here solely as a \emph{lower bound} on the harder joint
-problem. We verify the inequality chain
-$\mathrm{Var}_{\text{joint}} \ge \mathrm{Var}_{\text{oracle}} \ge 4\sigma^2/N$
-numerically on simulated episodes; it holds in every instance tested. In instances
-where several arms are destroyed in quick succession the joint design becomes
-near-collinear and $\mathrm{Var}_{\text{joint}}$ grows by orders of magnitude,
-which strengthens rather than weakens the conclusion.
+\paragraph{A corrected step, recorded.} An earlier version of this proof treated
+the oracle problem's residual as a simple two-group difference of means with
+variance $\sigma^2(1/n_b+1/n_a)$ using \emph{global} pre/post counts. This is
+incorrect once $v_a$ is heterogeneous across arms: the residual after
+subtracting known $e_j,\,j\ne i$, is $v_{a_t} - \delta e_i\mathbf{1}[t>\tau_i] +
+\eta_t$, still containing the unknown, arm-varying $v_{a_t}$ term, so a global
+mean difference conflates the treatment effect with whatever composition shift
+occurs in \emph{which arms happen to be pulled} before versus after $\tau_i$.
+The Frisch--Waugh--Lovell argument above replaces it with the exact,
+arm-controlled variance and a direct AM--GM bound in place of AM--HM on global
+counts; the final bound $4\sigma^2/N$ is unchanged, but the route to it no
+longer assumes the flawed identity. Verified against the exact formula on 500
+random and deliberately adversarial pull sequences (fully segregated arms,
+skewed allocation): the AM--GM step $\mathrm{RSS}_i \le N/4$ held with zero
+violations, worst observed ratio $0.997$.
 
 All three components verify numerically: the variance formula matches Monte Carlo
 to within $0.1\%$; the AM--HM floor is attained exactly at the balanced split

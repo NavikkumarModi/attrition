@@ -1246,3 +1246,52 @@ def test_last_arm_always_contributes_exactly_one():
     from experiments.exp43_derive_k import exact_k_homogeneous
     # as p -> 0, k should approach exactly 1 (only the last-arm term survives)
     assert abs(exact_k_homogeneous(1e-6, 3) - 1.0) < 1e-3
+
+
+# ------------------------------------------------------- Theorem 5 (repaired)
+def test_theorem5_naive_formula_was_flawed():
+    """Documents the bug an external review caught: the original proof's
+    global pre/post mean-difference formula understates the true (arm-
+    controlled) variance whenever arms are heterogeneous in v."""
+    from experiments.exp52_theorem5_fwl_repair import (exact_oracle_variance,
+                                                        naive_claimed_variance)
+    rng = np.random.default_rng(11)
+    understated = 0
+    for _ in range(20):
+        N = 40
+        a_seq = rng.integers(0, 6, N).tolist()
+        tau_i = int(rng.integers(5, N - 5))
+        naive = naive_claimed_variance(N, tau_i)
+        _, exact = exact_oracle_variance(a_seq, tau_i)
+        if exact > naive + 1e-9:
+            understated += 1
+    assert understated >= 15, "the naive formula must understate variance in most cases"
+
+
+def test_theorem5_repaired_bound_holds_including_adversarial():
+    """The corrected proof: RSS_i <= N/4 (AM-GM), hence Var_oracle >=
+    4*sigma^2/N, verified across random AND deliberately adversarial
+    (segregated, skewed) allocations -- not just typical ones."""
+    from experiments.exp52_theorem5_fwl_repair import exact_oracle_variance
+    rng = np.random.default_rng(42)
+    violations = 0
+    # random allocations
+    for _ in range(100):
+        N = int(rng.integers(10, 80))
+        n_arms = int(rng.integers(2, 10))
+        a_seq = rng.integers(0, n_arms, N).tolist()
+        tau_i = int(rng.integers(0, N - 1))
+        rss, var = exact_oracle_variance(a_seq, tau_i)
+        if rss > N/4 + 1e-9 or var < 4.0/N - 1e-9:
+            violations += 1
+    # adversarial: arms segregated into pure-before / pure-after blocks
+    for n_arms in [2, 4, 6, 8]:
+        N = n_arms * 5
+        a_seq = []
+        for a in range(n_arms):
+            a_seq += [a] * 5
+        tau_i = N // 2
+        rss, var = exact_oracle_variance(a_seq, tau_i)
+        if rss > N/4 + 1e-9 or var < 4.0/N - 1e-9:
+            violations += 1
+    assert violations == 0, f"AM-GM bound RSS<=N/4 must never be violated"

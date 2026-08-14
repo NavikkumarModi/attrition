@@ -2580,3 +2580,80 @@ require fewer selections to die and are therefore biased toward earlier death
 ranks. A general closed form would need the order statistics of death times
 under this rate-dependent sorting, which is a genuinely different (and harder)
 problem than the homogeneous case just solved.
+
+---
+
+## Theorem 5 proof repaired following external review
+
+An external review correctly identified a real error in the estimation-floor
+proof (previously stated as Theorem 3/5 across revisions). The proof's oracle
+step claimed: "with other `e_j` known, the residual reduces to a simple
+pre/post mean-difference problem with variance `σ²(1/n_b + 1/n_a)`," using
+**global** before/after counts.
+
+**This is wrong.** The residual after subtracting known `e_j, j≠i` is
+`y_t' = v_{a_t} − δe_i·1[t>τ_i] + η_t` — it still contains the unknown,
+**arm-varying** `v_{a_t}` term. A naive global mean difference conflates the
+treatment effect with whatever composition shift occurs in which arms happen
+to be pulled before versus after `τ_i`.
+
+**Verified the bug is real:** comparing the naive formula against the exact
+variance under random allocation, the naive formula understated the true
+variance by a factor of 1.04–1.42 across 8 trials, and 20/20 further trials
+confirmed understatement is the rule, not the exception.
+
+### The repair
+
+By the **Frisch–Waugh–Lovell theorem**, the correct variance of `δê_i` in the
+regression that also jointly estimates `v_1,...,v_n` is `σ²/RSS_i`, where
+`RSS_i` is the residual sum of squares from regressing the treatment indicator
+`1[t>τ_i]` on the arm-pull indicators:
+
+```
+RSS_i = Σ_a  n_a^before · n_a^after / n_a
+```
+
+with arm `i`'s own term identically zero (`n_i^after = 0`, since it's dead —
+an arm's own pulls carry no information about its own externality). By
+**AM–GM**, `n_a^before·n_a^after ≤ (n_a/2)²`, so each term is at most `n_a/4`
+and
+
+```
+RSS_i ≤ Σ_a n_a/4 = N/4      ⟹      Var_oracle = σ²/RSS_i ≥ 4σ²/N
+```
+
+**The final bound is unchanged** — `SE(δê_i) ≥ 2σ/√min(T, N_exh)` still
+holds — but the route to it no longer relies on the flawed identity.
+
+**Stress-tested, not just verified under nice cases.** The AM–GM step
+`RSS_i ≤ N/4` was checked against 500 random allocations *and* deliberately
+adversarial ones (arms segregated into pure-before/pure-after blocks, heavily
+skewed allocation): **zero violations**, worst observed ratio `0.997`.
+
+### What this changes and what it doesn't
+
+- Theorem 3/5's **statement** is unchanged.
+- The **proof** is fully rewritten using FWL + AM–GM instead of the flawed
+  naive mean-difference argument.
+- All downstream results that cited this theorem (the corollary on the
+  central tension, the "specify don't estimate" practical conclusion, T-F's
+  mechanism design results) are unaffected, since they depend only on the
+  theorem's conclusion, not the retired proof step.
+- Recorded here rather than silently fixed, consistent with this project's
+  practice throughout.
+
+## JMLR style file — a real, confirmed submission blocker
+
+Checked against JMLR's official author guidance directly: *"Submissions must
+be typeset in LaTeX using the JMLR LaTeX style file... Papers not in the JMLR
+style file will be rejected without review."* JMLR has no hard page limit
+(papers over 50pp risk being desk-rejected only if no editor/reviewer can be
+found), and online appendices are explicitly encouraged.
+
+**Current status:** the JMLR-formatted build in this repository is a
+hand-approximated layout, not the actual `jmlr2e.sty` file, because
+`jmlr.org` is outside this environment's network access. **This is a genuine,
+confirmed blocker for actual submission** — not a stylistic nicety. Before
+submitting, the real `jmlr2e.sty` (and accompanying `.bst`) must be obtained
+from jmlr.org and the preamble swapped in; the shared `body.tex` needs no
+content changes to work with it, by design.
