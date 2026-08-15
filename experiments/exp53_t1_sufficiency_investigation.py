@@ -162,3 +162,82 @@ if __name__ == "__main__":
         r_ok, d_ok = adjacent_exchange_check(v, p, e, delta, B0)
         all_ok &= r_ok and d_ok
     print(f"  reward AND full distribution match in all 10 trials: {all_ok}")
+
+
+# ---------------------------------------------------------------- block exchange
+def block_exchange_check(v, p, e, delta, B0, order, Ka, Kb):
+    """Exhaust `order[0]` for Ka attempts then `order[1]` for Kb, vs reverse.
+    Returns (E[reward, order], E[reward, reversed])."""
+    first, second = order
+
+    def run(first_arm, second_arm, Kfirst, Ksecond):
+        stage1 = []
+
+        def gen1(prob, reward, burden, attempts):
+            if attempts == Kfirst:
+                stage1.append((prob, reward, burden))
+                return
+            r = v[first_arm] - burden
+            stage1.append((prob*p[first_arm], reward+r, burden+delta*e[first_arm]))
+            gen1(prob*(1-p[first_arm]), reward+r, burden, attempts+1)
+        gen1(1.0, 0.0, B0, 0)
+
+        total = 0.0
+        for prob1, reward1, burden1 in stage1:
+            # exhaust second_arm: stop EARLY on death, not after Ksecond
+            # attempts regardless -- matches "exhaust until death or budget"
+            def gen2(prob, reward, burden, attempts, acc):
+                if attempts == Ksecond:
+                    acc[0] += prob*reward
+                    return
+                r = v[second_arm] - burden
+                # dies this attempt: stop here, no further attempts possible
+                acc[0] += prob*p[second_arm]*(reward+r)
+                # survives: continue
+                gen2(prob*(1-p[second_arm]), reward+r, burden, attempts+1, acc)
+            acc = [0.0]
+            gen2(prob1, reward1, burden1, 0, acc)
+            total += acc[0]
+        return total
+
+    r_fwd = run(first, second, Ka, Kb)
+    r_rev = run(second, first, Kb, Ka)
+    return r_fwd, r_rev
+
+
+def pathwise_rearrangement_counterexample():
+    """Deterministic burden for a fixed (g1,g2) under two arrangements."""
+    def burden_for_sequence(seq, e):
+        N = len(seq)
+        last_pos = {}
+        for i, a in enumerate(seq):
+            last_pos[a] = i
+        return sum(e[a] * (N - 1 - last_pos[a]) for a in e)
+
+    e = {1: 10.0, 2: 1.0}
+    seqA = [1, 2, 2, 2]
+    seqB = [2, 2, 2, 1]
+    return burden_for_sequence(seqA, e), burden_for_sequence(seqB, e)
+
+
+def pathwise_coupling_check(v, p, e, delta, T, coins, policies):
+    """Run several policies under the SAME coupled per-arm coin sequences;
+    return their burdens."""
+    def run_coupled(pick):
+        n = len(v)
+        alive = np.ones(n, dtype=bool)
+        attempt_count = np.zeros(n, dtype=int)
+        burden_total = 0.0
+        etot = float(np.sum(e))
+        for t in range(T):
+            alive_idx = np.flatnonzero(alive)
+            if len(alive_idx) == 0:
+                break
+            a = pick(alive_idx, v, p, t)
+            burden_total += delta * (etot - sum(e[i] for i in range(n) if alive[i]))
+            died = coins[a][attempt_count[a]]
+            attempt_count[a] += 1
+            if died:
+                alive[a] = False
+        return burden_total
+    return [run_coupled(pick) for pick in policies]

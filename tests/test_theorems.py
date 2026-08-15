@@ -1358,3 +1358,57 @@ def test_adjacent_exchange_lemma():
         r_ok, d_ok = adjacent_exchange_check(v, p, e, delta, B0)
         assert r_ok, "two-round reward must be order-invariant under equal kappa"
         assert d_ok, "the full outcome distribution must be order-invariant too"
+
+
+def test_block_exchange_lemma():
+    """Extends the single-pull exchange lemma: exhausting arm a for Ka
+    attempts then b for Kb, vs the reverse order, gives identical expected
+    reward when kappa_a = kappa_b. A real implementation bug (block did not
+    stop early on death) was caught by this test during development."""
+    from experiments.exp53_t1_sufficiency_investigation import block_exchange_check
+    rng = np.random.default_rng(7)
+    for _ in range(10):
+        p = rng.uniform(0.1, 0.9, 2)
+        kappa = rng.uniform(0.2, 2.0)
+        e = kappa / p
+        v = rng.uniform(-1, 1, 2)
+        delta = rng.uniform(0.1, 1.0)
+        B0 = rng.uniform(0, 1.5)
+        Ka, Kb = int(rng.integers(1, 4)), int(rng.integers(1, 4))
+        r1, r2 = block_exchange_check(v, p, e, delta, B0, (0, 1), Ka, Kb)
+        assert abs(r1 - r2) < 1e-9, "block exchange must be exact under equal kappa"
+
+
+def test_pathwise_rearrangement_is_not_invariant():
+    """Documents a falsified proof strategy: for a FIXED realisation of
+    attempt-counts, burden is NOT invariant to scheduling order (30 vs 1) --
+    ruling out an entire class of deterministic proof arguments."""
+    from experiments.exp53_t1_sufficiency_investigation import (
+        pathwise_rearrangement_counterexample)
+    bA, bB = pathwise_rearrangement_counterexample()
+    assert bA != bB, "the counterexample must show genuine pathwise divergence"
+    assert abs(bA - bB) > 10, "the divergence must be large, not noise-level"
+
+
+def test_pathwise_coupling_is_not_invariant():
+    """Documents a second falsified proof strategy: coupling every policy to
+    the same underlying per-arm coin sequences does NOT give pathwise-equal
+    burden across different deterministic policies."""
+    from experiments.exp53_t1_sufficiency_investigation import pathwise_coupling_check
+    rng = np.random.default_rng(17)
+    n, T = 3, 8
+    kappa = rng.uniform(0.2, 2.0)
+    p = rng.uniform(0.1, 0.9, n)
+    e = kappa / p
+    v = rng.uniform(-1, 1, n)
+    delta = rng.uniform(0.1, 1.0)
+    coins = [rng.random(T) < p[i] for i in range(n)]
+
+    def greedy(idx, v, p, t):
+        return idx[np.argmax(v[idx])]
+
+    def roundrobin(idx, v, p, t):
+        return idx[t % len(idx)]
+    vals = pathwise_coupling_check(v, p, e, delta, T, coins, [greedy, roundrobin])
+    assert abs(vals[0] - vals[1]) > 1e-6, (
+        "pathwise coupling must NOT give equal burden (documents the falsification)")

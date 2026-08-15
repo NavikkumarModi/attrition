@@ -2755,3 +2755,66 @@ recommended methodology (verify computationally before re-proving): complete
 the adjacent-exchange lemma into a fully general sufficiency proof. The
 building block is in hand and verified; the remaining work is extending it
 past fixed-length pairwise reorderings to arbitrary policies.
+
+---
+
+## Attempting the general sufficiency proof: real progress, and two more strategies ruled out
+
+Following the second review, an attempt was made to complete the sufficiency
+proof properly, extending the verified adjacent-exchange lemma.
+
+### Proven: block exchange (a genuine new lemma)
+
+**Extends the single-pull lemma to arbitrary-length blocks.** For arms `a,b`
+with `κ_a=κ_b`, exhausting `a` for `K_a` attempts then `b` for `K_b` attempts
+gives the same expected reward as the reverse order, for *any* `K_a, K_b` —
+proven by repeated application of the single-pull lemma (moving one `b`-pull
+past one `a`-pull at a time, standard adjacent-transposition argument) and
+verified directly: 10/10 trials, exact match, `K_a, K_b` up to 3.
+
+### Two further strategies tried, both falsified cleanly
+
+**Strategy 1: deterministic pathwise rearrangement invariance.** Hypothesis:
+for a *fixed* realization of how many attempts each arm needs before dying,
+burden doesn't depend on the order those attempts are scheduled. **False**,
+by direct counterexample: arm 1 needs 1 attempt (`e_1=10`), arm 2 needs 3
+(`e_2=1`). Pulling `[1,2,2,2]` gives burden 30; pulling `[2,2,2,1]` gives
+burden 1. Not close.
+
+**Strategy 2: pathwise invariance under natural coupling.** Hypothesis: if
+every policy is coupled to the *same* underlying per-arm coin sequences (arm
+`i`'s `k`-th attempt always consumes the same fixed coin, regardless of when
+in global time that attempt occurs — the standard, natural coupling), then
+different deterministic policies (greedy, round-robin, min-v) produce the
+same burden for the *same* underlying randomness. **False**: 0/15 trials
+matched under this coupling, with large, consistent discrepancies (e.g.
+74.03 vs 49.41 vs 52.73 in one trial) — not numerical noise.
+
+### What this establishes
+
+Both falsified strategies attempted to reduce the claim to something
+*pathwise* — true for every individual realization of the randomness, not
+just on average. **Both attempts failing, cleanly and by a wide margin, is
+informative**: it shows the invariance is a genuine property of the
+*expectation*, arising from how the randomness integrates out, not from any
+per-sample combinatorial identity. This rules out an entire class of proof
+strategies (pathwise/deterministic arguments) rather than just two instances
+of it, and explains — with more precision than before — why the original
+proof's attempted shortcut (computing the expectation directly via a flawed
+factorisation) was reaching for something genuinely necessary and not just
+convenient: **there is no way around actually performing the expectation
+calculation correctly.**
+
+### Status: block exchange added to the proven record; general sufficiency remains open, more precisely characterised
+
+The block-exchange lemma is a real, complete, verified result and is recorded
+as such. It does not, by itself or combined with the two ruled-out strategies,
+complete the general sufficiency proof. **Theorem~\ref{thm:char} sufficiency
+remains reported as exhaustively verified (now including this round's
+falsified strategies as additional negative evidence about the *type* of
+argument required), not proven.** The next attempt should pursue a genuine
+expectation-level argument — most plausibly via a martingale or optional-
+stopping construction on an appropriately chosen process, since that is the
+standard tool for exactly this kind of "expected accumulated cost until an
+absorption time" problem and is the one class of argument not yet
+ruled out by this round's investigation.

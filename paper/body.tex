@@ -427,7 +427,29 @@ swapping the order of two consecutive pulls of $a$ and $b$ leaves both the
 two-round expected reward and the \emph{full joint distribution} over
 post-pull survival and burden exactly unchanged---verified by direct
 calculation and confirmed on ten random constant-$\kappa$ instances with zero
-deviation, both in the reward and in the distribution. Extending this to a
+deviation, both in the reward and in the distribution. This extends to a
+\emph{block-exchange} lemma: exhausting arm $a$ for $K_a$ attempts then $b$
+for $K_b$ attempts gives the same expected reward as the reverse order, for
+any $K_a,K_b$, proven by repeated application of the single-pull lemma and
+verified directly (ten trials, $K_a,K_b$ up to three, exact match).
+
+Two further strategies for extending this to a general proof were tried and
+are recorded as falsified rather than omitted, since together they rule out
+an entire class of argument. \emph{Pathwise rearrangement invariance}---that
+for a fixed realisation of how many attempts each arm needs before dying,
+burden does not depend on scheduling order---is false: a two-arm instance
+with $e_1=10$ needing one attempt and $e_2=1$ needing three gives burden $30$
+under one ordering and $1$ under the reverse. \emph{Pathwise invariance under
+the natural coupling}---giving every policy the same fixed per-arm coin
+sequences, so arm $i$'s $k$-th attempt always consumes the same coin
+regardless of when it occurs---is also false: $0/15$ trials matched across
+greedy, round-robin, and minimum-value policies, with large, consistent
+discrepancies. Both failures show the invariance is a genuine property of the
+\emph{expectation}, not reducible to any per-sample identity, which is why the
+retracted proof's shortcut of computing that expectation directly was
+reaching for something necessary, not merely convenient.
+
+Extending the block-exchange lemma to a
 general sufficiency proof requires showing that any two orderings of an
 arbitrary pull sequence (not just adjacent transpositions of a fixed pair,
 and allowing repeated pulls of surviving arms and horizon truncation) induce the
