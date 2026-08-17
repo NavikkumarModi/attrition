@@ -315,3 +315,52 @@ def missing_term_by_policy(v, p, e, delta, T, pick):
     EY = sum(pr*ba for pr, ba, _ in outs)
     ER = sum(pr*Ra for pr, _, Ra in outs)
     return EY, ER
+
+
+# ------------------------------------------------------------- Q-term (inconclusive)
+def q_term_and_boundary(v, p, e, delta, T, pick):
+    """The predictable-reweighting construction attempted for the martingale
+    proof: Q_t := sum_s (T-1-s)*DeltaR_s. Its one-step martingale property is
+    genuine (verified separately), but E[Q at the natural stopping index] does
+    NOT equal zero, unlike what a naive Optional Stopping application would
+    suggest. Returns (E[Q at stopping time], E[boundary term]) -- these sum
+    exactly to the known missing term, but neither is individually zero,
+    documenting an open gap rather than a completed argument.
+    """
+    n = len(v)
+    full = frozenset(range(n))
+    kappa = float(p[0] * e[0])
+    etot = float(np.sum(e))
+    B = lambda S: delta * (etot - sum(e[i] for i in S))
+
+    def enum(S, t, prob, hist):
+        if t >= T or not S:
+            yield (prob, t, hist)
+            return
+        a = pick(S)
+        yield from enum(S, t + 1, prob*(1 - p[a]), hist + [(a, 0)])
+        yield from enum(S - {a}, t + 1, prob*p[a], hist + [(a, 1)])
+
+    outs = list(enum(full, 0, 1.0, []))
+
+    def burden_seq(hist):
+        alive = set(range(n))
+        Bs = []
+        for (a, died) in hist:
+            Bs.append(B(frozenset(alive)))
+            if died:
+                alive.discard(a)
+        return Bs
+
+    E_Q, E_bound = 0.0, 0.0
+    for prob, Nval, hist in outs:
+        Bs = burden_seq(hist)
+        Rs = [Bs[t] - delta*kappa*t for t in range(Nval)]
+        if Nval >= 2:
+            DeltaR = [Rs[s+1] - Rs[s] for s in range(Nval - 1)]
+            Q_at_stop = sum((T-1-s)*DeltaR[s] for s in range(Nval - 1))
+        else:
+            Q_at_stop = 0.0
+        E_Q += prob * Q_at_stop
+        E_bound += prob * (-(T-Nval)*Rs[Nval-1])
+    return E_Q, E_bound

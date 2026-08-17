@@ -1459,3 +1459,26 @@ def test_missing_term_is_policy_invariant():
     EY_values = [r[0] for r in results.values()]
     assert max(EY_values) - min(EY_values) < 1e-6, (
         "and the full E[Y_N] must match, confirming the decomposition is exact")
+
+
+def test_q_term_optional_stopping_does_not_trivially_vanish():
+    """Documents an inconclusive attempt: a predictable-reweighting martingale
+    construction (Q_t) has a genuine one-step martingale property, but E[Q] at
+    the natural stopping index is NOT zero, unlike what a naive Optional
+    Stopping application suggests. This is a real, reproducible finding
+    (not a bug) marking where the current martingale approach stalls -- the
+    two pieces still sum exactly to the known missing term."""
+    from experiments.exp53_t1_sufficiency_investigation import (
+        q_term_and_boundary, missing_term_by_policy)
+    v = np.array([1.0, 0.9, 0.8])
+    p = np.array([0.6, 0.5, 0.3])
+    kappa = 1.0
+    e = kappa / p
+    delta, T = 0.3, 6
+    pick = lambda S: max(S, key=lambda x: v[x])
+    eq, eb = q_term_and_boundary(v, p, e, delta, T, pick)
+    _, ER = missing_term_by_policy(v, p, e, delta, T, pick)
+    assert abs(eq) > 0.05, (
+        "documents that E[Q] at the stopping time is genuinely nonzero")
+    assert abs((eq + eb) - ER) < 1e-9, (
+        "the two pieces must still sum exactly to the known missing term")

@@ -2886,3 +2886,43 @@ sufficiency": construct a second martingale (most plausibly involving the
 quadratic variation of `R_t`, or a similarly-motivated correction) whose
 value at the stopping time `N` gives `E[Σ_{t=1}^N R_t]` directly via
 Optional Stopping.
+
+---
+
+## A further martingale refinement attempt: inconclusive, recorded honestly
+
+Following the `R_t` martingale finding, a natural next step was attempted: a
+predictable-reweighting construction `Q_t := Σ_{s} (T-1-s)·ΔR_s` (with
+`ΔR_s := R_{s+1}-R_s`), aiming to show `E[Q]` at the stopping time is zero via
+Optional Stopping, which would give a closed-form value for the previously-
+isolated missing term `E[Σ R_t]`.
+
+**The one-step martingale property of `Q_t` was verified directly** (not just
+derived): `E[Q_t | F_{t-1}] = Q_{t-1}` holds exactly at every bucket checked.
+
+**But applying Optional Stopping to conclude `E[Q]` at the natural stopping
+index equals zero does not match the true value.** On the same 3-arm test
+instance, the OST-based prediction and the numerically exact value diverge
+(`E[Q term] = -0.499590` against the true missing term of `-0.676620`, with
+a separate boundary piece `-0.177030` — the pieces sum correctly to the known
+total, but the individual `Q`-term is not zero as the OST argument was meant
+to show).
+
+**This is recorded as inconclusive rather than resolved.** The discrepancy
+indicates either a subtlety in how the bounded stopping time interacts with
+this specific reweighting (most likely — Optional Stopping has regularity
+conditions beyond "the stopping time is bounded" that may not transparently
+hold for this construction) or an indexing error not yet isolated despite
+several careful re-derivations. Given repeated indexing mistakes surfaced and
+self-corrected during this specific attempt, the responsible action is to
+stop rather than continue adjusting the argument until the numbers happen to
+match — that would repeat exactly the failure mode (a proof pattern-matched
+into apparent correctness) this project has worked to avoid throughout.
+
+**Status unchanged from the previous entry**: `R_t`'s martingale property and
+the policy-invariance of `E[Σ R_t]` remain the solid, verified reduction.
+This specific attempt to close that final sub-claim via a second-order
+predictable-weight construction did not succeed and is not the right tool as
+applied. A cleaner construction — possibly conditioning on `N` directly
+rather than reweighting by `T`, or a genuinely different technique — remains
+the target for the next attempt.
