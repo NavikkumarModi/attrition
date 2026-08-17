@@ -114,8 +114,12 @@ can finish net-negative while the optimum is positive. No-regret is not no-harm.
 must incur private regret $m\epsilon$. Preserving value \emph{requires} looking bad
 on the standard metric, and by Corollary~\ref{cor:tracks} the amount it looks bad by
 is proportional to the value it delivers.
-\item \textbf{Theorem~\ref{thm:char}}. Greedy is optimal if and only if
-$\kappa_a = p_a e_a$ is constant across arms. Neither factor alone is the invariant.
+\item \textbf{Theorem~\ref{thm:char}}. Necessity is proven: varying $\kappa_a =
+p_a e_a$ implies a failure instance exists. Sufficiency is proven for horizons
+shorter than the pool size, and exhaustively verified with zero violations on
+several thousand adversarial instances beyond that regime, with a fully general
+proof remaining the paper's main open theoretical question. Neither factor alone
+is the invariant.
 \item \textbf{Theorem~\ref{thm:floor}}. The externality cannot be estimated to
 arbitrary precision: the error floor does not decrease with the horizon, because
 the data-generating process is the consumption itself.
@@ -383,11 +387,15 @@ diverge, and a guarantee stated in the former says nothing about the latter.
 \label{thm:char}
 Fix the burden model of Section~\ref{sec:model} with additively separable burden.
 \begin{enumerate}
-\item[(i)] \emph{(Sufficiency.)} If $\kappa_a = \kappa$ for all arms $a$, then greedy
-is optimal at \emph{every} state $S$ and \emph{every} horizon $T$, for every choice
-of $\{v_a\}$.
-\item[(ii)] \emph{(Necessity.)} If $\kappa_a \neq \kappa_b$ for some pair $a,b$,
-then there exist $\{v_a\}$ and a horizon $T$ for which greedy is strictly
+\item[(i)] \emph{(Sufficiency, proven.)} If $\kappa_a = \kappa$ for all arms $a$ and
+$T < n$ (horizon shorter than the pool size), greedy is optimal at \emph{every}
+state $S$ reachable within that horizon, for every choice of $\{v_a\}$.
+\item[(i$'$)] \emph{(Sufficiency, $T\ge n$, exhaustively verified.)} The same
+conclusion is found to hold with zero violations across several thousand
+adversarial instances once the horizon may reach or exceed the pool size, but a
+complete general proof is not yet established; see the discussion below.
+\item[(ii)] \emph{(Necessity, proven.)} If $\kappa_a \neq \kappa_b$ for some pair
+$a,b$, then there exist $\{v_a\}$ and a horizon $T$ for which greedy is strictly
 suboptimal.
 \end{enumerate}
 \end{theorem}
@@ -398,7 +406,9 @@ failure instance, not failure on every instance. Varying $\kappa$ with, say, all
 $v_a$ equal, or a horizon so short that the relevant arms are never reached, need
 not produce a strict gap. The one-line summary---``greedy is optimal iff $\kappa$
 is constant''---is correct only when read as universal optimality versus existence
-of a counterexample.
+of a counterexample, and, for the sufficiency direction specifically, only as proven
+fact for $T<n$; beyond that it is exhaustively verified rather than proven, as
+detailed in the proof below.
 
 \begin{proof}[Sufficiency]
 \label{proof:char}
