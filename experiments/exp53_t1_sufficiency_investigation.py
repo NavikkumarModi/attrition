@@ -241,3 +241,77 @@ def pathwise_coupling_check(v, p, e, delta, T, coins, policies):
                 alive[a] = False
         return burden_total
     return [run_coupled(pick) for pick in policies]
+
+
+# ------------------------------------------------------------- martingale
+def one_step_martingale_check(v, p, e, delta, T, pick, check_t):
+    """Verify E[B(S_{t+1}) | F_{t-1}] = B(S_t) + delta*kappa at every
+    reachable state at round check_t, under policy `pick`."""
+    n = len(v)
+    full = frozenset(range(n))
+    kappa = float(p[0] * e[0])   # constant kappa hypothesis
+    etot = float(np.sum(e))
+    B = lambda S: delta * (etot - sum(e[i] for i in S))
+
+    def enum(S, t, prob, hist):
+        if t >= T or not S:
+            yield (prob, hist)
+            return
+        a = pick(S)
+        yield from enum(S, t + 1, prob*(1 - p[a]), hist + [(a, 0)])
+        yield from enum(S - {a}, t + 1, prob*p[a], hist + [(a, 1)])
+
+    outs = list(enum(full, 0, 1.0, []))
+    buckets = {}
+    for prob, hist in outs:
+        if len(hist) <= check_t:
+            continue
+        alive = set(range(n))
+        for (a, died) in hist[:check_t]:
+            if died:
+                alive.discard(a)
+        key = frozenset(alive)
+        buckets.setdefault(key, []).append((prob, hist))
+
+    results = []
+    for S_key, items in buckets.items():
+        if not S_key:
+            continue
+        totalprob = sum(pr for pr, _ in items)
+        Bt = B(S_key)
+        EB_next = 0.0
+        for prob, hist in items:
+            alive2 = set(S_key)
+            if len(hist) > check_t:
+                a, died = hist[check_t]
+                if died:
+                    alive2.discard(a)
+            EB_next += (prob / totalprob) * B(frozenset(alive2))
+        results.append((S_key, Bt, EB_next, Bt + delta*kappa))
+    return results
+
+
+def missing_term_by_policy(v, p, e, delta, T, pick):
+    """Compute E[Y_N] and E[sum R_t] under a given policy, to check the
+    latter's policy-invariance."""
+    n = len(v)
+    full = frozenset(range(n))
+    kappa = float(p[0] * e[0])
+    etot = float(np.sum(e))
+    B = lambda S: delta * (etot - sum(e[i] for i in S))
+
+    def enum(S, t, prob, bacc, Racc):
+        if t >= T or not S:
+            yield (prob, bacc, Racc)
+            return
+        a = pick(S)
+        b = B(S)
+        yield from enum(S, t + 1, prob*(1 - p[a]), bacc + b,
+                        Racc + (b - delta*kappa*t))
+        yield from enum(S - {a}, t + 1, prob*p[a], bacc + b,
+                        Racc + (b - delta*kappa*t))
+
+    outs = list(enum(full, 0, 1.0, 0.0, 0.0))
+    EY = sum(pr*ba for pr, ba, _ in outs)
+    ER = sum(pr*Ra for pr, _, Ra in outs)
+    return EY, ER

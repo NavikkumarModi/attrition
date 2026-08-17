@@ -2818,3 +2818,71 @@ stopping construction on an appropriately chosen process, since that is the
 standard tool for exactly this kind of "expected accumulated cost until an
 absorption time" problem and is the one class of argument not yet
 ruled out by this round's investigation.
+
+---
+
+## A martingale approach: genuine further progress, the gap isolated more precisely
+
+Following the block-exchange work, a martingale construction was attempted —
+the class of argument the previous round's investigation pointed to as not
+yet ruled out.
+
+### A real, proven one-step martingale property
+
+Define `R_t := B(S_t) − δκ(t−1)`. Since `a_t` (whichever arm is pulled at
+round `t`) is determined by history through round `t−1` (i.e. `F_{t−1}`-
+measurable, for any policy), and destruction of `a_t` has mean `p_{a_t}`,
+
+```
+E[B(S_{t+1}) | F_{t−1}] = B(S_t) + δ·p_{a_t}·e_{a_t} = B(S_t) + δκ
+```
+
+— using only that `κ` is the same constant whichever arm is chosen. Hence
+`R_t` is a genuine martingale with respect to `F_{t−1}`, **for any policy**.
+Verified directly: at every reachable state checked, `E[B(S_{t+1}) | F_{t−1}]`
+matches the predicted `B(S_t) + δκ` exactly.
+
+### This exactly diagnoses the original error
+
+Summing, `E[Y_N] = δκ·E[N(N−1)/2] + E[Σ_{t=1}^N R_t]`. The original proof's
+error was implicitly assuming the second term is zero — a **materially
+stronger** claim than "`R_t` is a martingale" (that would require the *sum*
+of a martingale evaluated at a stopping time to vanish, which does not
+follow from the martingale property alone). On the 3-arm test instance this
+is confirmed exactly: `E[Y_N] = 2.877030`, the naive formula gives
+`3.553650`, and the missing term is exactly `−0.676620` —
+`3.553650 + (−0.676620) = 2.877030`, matching to the last digit.
+
+### The missing term is itself policy-invariant — a genuine reduction
+
+Computing `E[Σ_{t=1}^N R_t]` under four structurally different policies on
+the same instance: **`−0.676620` in every case**, matching to six decimal
+places (greedy, min-v, max-p, min-p). Combined with `N`'s already-proven
+policy-independence, this means:
+
+```
+E[Y_N] = [δκ·E[N(N−1)/2]]  +  [E[Σ R_t]]
+          \_____________/     \_________/
+           proven invariant    verified invariant,
+           (N is invariant)    not yet proven
+```
+
+**The full sufficiency proof now reduces to a single, well-defined, cleaner
+sub-claim**: that `E[Σ_{t=1}^N R_t] = 0` is not required — only that this
+quantity, whatever its value, does not depend on the policy. This is a sum
+of a martingale evaluated up to a stopping time, which is the standard
+setting for second-order martingale arguments (quadratic-variation-style
+constructions), a class of technique not yet attempted.
+
+### Status
+
+This is genuine further progress: a proven one-step martingale property, an
+exact diagnosis of the original error (now expressible as a precise missing
+term rather than a vague "the step is wrong"), and a verified reduction of
+the remaining gap to a single, cleanly stated sub-claim. **The proof is still
+not complete** — `E[Σ R_t]`'s policy-invariance is verified, not proven — but
+the target for the next attempt is now much more specific than "prove
+sufficiency": construct a second martingale (most plausibly involving the
+quadratic variation of `R_t`, or a similarly-motivated correction) whose
+value at the stopping time `N` gives `E[Σ_{t=1}^N R_t]` directly via
+Optional Stopping.

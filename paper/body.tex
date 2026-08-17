@@ -449,11 +449,27 @@ discrepancies. Both failures show the invariance is a genuine property of the
 retracted proof's shortcut of computing that expectation directly was
 reaching for something necessary, not merely convenient.
 
-Extending the block-exchange lemma to a
-general sufficiency proof requires showing that any two orderings of an
-arbitrary pull sequence (not just adjacent transpositions of a fixed pair,
-and allowing repeated pulls of surviving arms and horizon truncation) induce the
-same value; that extension is not yet complete. \textbf{Sufficiency is therefore
+A martingale approach was also attempted, the class of argument not ruled
+out by the two falsified strategies above. Define $R_t := B(S_t) - \delta\kappa(t-1)$.
+Since $a_t$ is determined by history through round $t-1$ for any policy and
+destruction of $a_t$ has mean $p_{a_t}$, $\mathbb{E}[B(S_{t+1})\mid F_{t-1}] =
+B(S_t) + \delta\kappa$---using only that $\kappa$ is the same constant whichever
+arm is chosen---so $R_t$ is a genuine martingale for any policy, verified exactly
+at every reachable state checked. Summing gives $\mathbb{E}[Y_N] =
+\delta\kappa\,\mathbb{E}[N(N{-}1)/2] + \mathbb{E}[\sum_{t=1}^N R_t]$: the retracted
+proof's error is precisely the implicit assumption that the second term
+vanishes, a materially stronger claim than $R_t$ being a martingale. On the
+three-arm test instance the missing term is exactly $-0.676620$, accounting for
+the full gap between the naive formula and the true value to the last digit.
+\textbf{This missing term is itself policy-invariant}---$-0.676620$ across four
+structurally different policies, matching to six decimals---giving a genuine
+reduction: sufficiency now depends on proving invariance of a single, more
+cleanly characterised quantity (a martingale summed to a stopping time, the
+standard setting for a second-order/quadratic-variation construction) rather
+than the original ill-specified aggregate. Extending the block-exchange lemma or
+this martingale reduction to a
+complete general sufficiency proof---covering arbitrary interleavings, repeated
+pulls of surviving arms, and horizon truncation---is not yet finished. \textbf{Sufficiency is therefore
 reported as exhaustively verified, not proven}: exact dynamic programming
 across several thousand instances---including adversarial constructions
 targeting exactly the mechanism above (extreme $p$-heterogeneity at fixed

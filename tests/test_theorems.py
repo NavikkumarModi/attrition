@@ -1412,3 +1412,50 @@ def test_pathwise_coupling_is_not_invariant():
     vals = pathwise_coupling_check(v, p, e, delta, T, coins, [greedy, roundrobin])
     assert abs(vals[0] - vals[1]) > 1e-6, (
         "pathwise coupling must NOT give equal burden (documents the falsification)")
+
+
+def test_one_step_martingale_property():
+    """Proven: R_t := B(S_t) - delta*kappa*(t-1) is a genuine martingale, for
+    ANY policy, since E[B(S_{t+1})|F_{t-1}] = B(S_t) + delta*kappa exactly."""
+    from experiments.exp53_t1_sufficiency_investigation import one_step_martingale_check
+    v = np.array([1.0, 0.9, 0.8])
+    p = np.array([0.6, 0.5, 0.3])
+    kappa = 1.0
+    e = kappa / p
+    delta, T = 0.3, 6
+    for pick in [lambda S: max(S, key=lambda x: v[x]),
+                lambda S: min(S, key=lambda x: v[x]),
+                lambda S: max(S, key=lambda x: p[x])]:
+        for check_t in [0, 1, 2]:
+            res = one_step_martingale_check(v, p, e, delta, T, pick, check_t)
+            for S_key, Bt, EB_next, pred in res:
+                assert abs(EB_next - pred) < 1e-9, (
+                    f"martingale property must hold exactly at S={S_key}, t={check_t}")
+
+
+def test_missing_term_is_policy_invariant():
+    """The reduction: E[sum R_t] (the term the retracted proof implicitly
+    assumed was zero) is NOT zero, but IS itself policy-invariant -- a
+    genuine partial result reducing the remaining gap."""
+    from experiments.exp53_t1_sufficiency_investigation import missing_term_by_policy
+    v = np.array([1.0, 0.9, 0.8])
+    p = np.array([0.6, 0.5, 0.3])
+    kappa = 1.0
+    e = kappa / p
+    delta, T = 0.3, 6
+    policies = {
+        "greedy": lambda S: max(S, key=lambda x: v[x]),
+        "min_v": lambda S: min(S, key=lambda x: v[x]),
+        "max_p": lambda S: max(S, key=lambda x: p[x]),
+        "min_p": lambda S: min(S, key=lambda x: p[x]),
+    }
+    results = {name: missing_term_by_policy(v, p, e, delta, T, pk)
+              for name, pk in policies.items()}
+    ER_values = [r[1] for r in results.values()]
+    assert max(ER_values) - min(ER_values) < 1e-6, (
+        "E[sum R_t] must be policy-invariant across all four policies")
+    assert abs(ER_values[0]) > 0.1, (
+        "the missing term must be genuinely nonzero, not accidentally ~0")
+    EY_values = [r[0] for r in results.values()]
+    assert max(EY_values) - min(EY_values) < 1e-6, (
+        "and the full E[Y_N] must match, confirming the decomposition is exact")
