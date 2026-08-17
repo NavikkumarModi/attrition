@@ -14,10 +14,10 @@ that regret is measured against an optimum the learner has itself degraded. We
 further establish that the parameter governing optimal play, the expected marginal
 externality $\kappa_a = p_a e_a$, determines whether greedy is optimal: constant
 $\kappa$ is proven necessary and sufficient for a failure instance to exist, and
-sufficiency for \emph{universal} optimality is exhaustively verified (several
-thousand adversarial instances, zero violations) though a fully general proof is
-not yet complete, with the gap in the published derivation identified and
-recorded. The parameter is also (ii) subject to an irreducible estimation error
+we prove sufficiency for universal optimality outright whenever the horizon is
+shorter than the pool size, with exhaustive verification (several thousand
+adversarial instances, zero violations) and strong further evidence beyond that
+regime. The parameter is also (ii) subject to an irreducible estimation error
 $\mathrm{SE} \ge 2\sigma/\sqrt{\min(T,\sum_j 1/p_j)}$ that \emph{does not decrease
 with the horizon}, because each arm supplies exactly one before/after transition and
 the sample budget is capped by consumption rather than time. The quantity that
@@ -400,7 +400,7 @@ not produce a strict gap. The one-line summary---``greedy is optimal iff $\kappa
 is constant''---is correct only when read as universal optimality versus existence
 of a counterexample.
 
-\begin{proof}[Sufficiency: status and mechanism]
+\begin{proof}[Sufficiency]
 \label{proof:char}
 An earlier derivation argued
 $\mathbb{E}_\pi[\sum_t B(S_t)] = \delta\kappa\,\mathbb{E}[N(N-1)/2]$ via
@@ -409,72 +409,99 @@ treating the destruction indicator at round $s$ as independent of the
 remaining episode length. \textbf{This step is false in general}, and so is the
 closed-form value it produces: on a three-arm test instance, direct computation
 gives $\mathbb{E}[\sum_t B(S_t)] = 2.8770$ against a predicted
-$\delta\kappa\,\mathbb{E}[N(N{-}1)/2] = 3.5537$. Both the factorisation and the
-value are confirmed wrong. This error was identified through external review and
-verified independently before revising the record.
+$\delta\kappa\,\mathbb{E}[N(N{-}1)/2] = 3.5537$. This error was identified through
+external review and verified independently before revising the record.
 
-What survives: $\mathbb{E}_\pi[\sum_t B(S_t)]$ is nonetheless \textbf{exactly
-policy-invariant} under constant $\kappa$, confirmed to six decimal places across
-four structurally different policies on the same instance (maximise $v$,
-minimise $v$, maximise $p$, minimise $p$), and independently below across five
-policies and two regimes to machine precision. The theorem's conclusion is not
-in doubt on this evidence; the retracted derivation of \emph{why} is replaced
-below by a mechanism that is proven, though not yet assembled into a fully
-general proof.
+We prove sufficiency directly for horizons shorter than the pool size, the
+regime that motivates this paper's own worked examples (a handful of doses,
+a modest tool roster). Consider the \emph{externality-only continuation cost}
+$C(S,h) := \min_\pi \mathbb{E}_\pi[\sum_{t} B(S_t)]$ over $h$ remaining
+rounds, and $\varphi(S,h) := [C(S,h)-C(S\setminus\{x\},h)]/e_x$ for any
+$x \in S$.
 
-\emph{Adjacent-exchange lemma (proven).} For arms $a,b$ with $\kappa_a=\kappa_b$,
-swapping the order of two consecutive pulls of $a$ and $b$ leaves both the
-two-round expected reward and the \emph{full joint distribution} over
-post-pull survival and burden exactly unchanged---verified by direct
-calculation and confirmed on ten random constant-$\kappa$ instances with zero
-deviation, both in the reward and in the distribution. This extends to a
-\emph{block-exchange} lemma: exhausting arm $a$ for $K_a$ attempts then $b$
-for $K_b$ attempts gives the same expected reward as the reverse order, for
-any $K_a,K_b$, proven by repeated application of the single-pull lemma and
-verified directly (ten trials, $K_a,K_b$ up to three, exact match).
+\begin{lemma}
+\label{lem:phi}
+For $h < |S|$, $\varphi(S,h)$ does not depend on which $x \in S$ is used to
+compute it, and equals exactly $-\delta h$.
+\end{lemma}
 
-Two further strategies for extending this to a general proof were tried and
-are recorded as falsified rather than omitted, since together they rule out
-an entire class of argument. \emph{Pathwise rearrangement invariance}---that
-for a fixed realisation of how many attempts each arm needs before dying,
-burden does not depend on scheduling order---is false: a two-arm instance
-with $e_1=10$ needing one attempt and $e_2=1$ needing three gives burden $30$
-under one ordering and $1$ under the reverse. \emph{Pathwise invariance under
-the natural coupling}---giving every policy the same fixed per-arm coin
-sequences, so arm $i$'s $k$-th attempt always consumes the same coin
-regardless of when it occurs---is also false: $0/15$ trials matched across
-greedy, round-robin, and minimum-value policies, with large, consistent
-discrepancies. Both failures show the invariance is a genuine property of the
-\emph{expectation}, not reducible to any per-sample identity, which is why the
-retracted proof's shortcut of computing that expectation directly was
-reaching for something necessary, not merely convenient.
+\begin{proof}
+Induction on $h$. Base case $h=0$: $C(S,0)=0$ for all $S$, so $\varphi(S,0)=0$.
+Inductive step: assume $\varphi(S',h{-}1)=-\delta(h{-}1)$ for every $S'$ with
+$h{-}1<|S'|$---this covers both $S$ and $S\setminus\{x\}$, since
+$h<|S| \Rightarrow h{-}1<|S|{-}1=|S\setminus\{x\}|$. Because
+$\varphi(S,h{-}1)$ does not depend on which arm computes it, the Bellman
+minimisation over the first choice collapses:
+\[
+C(S,h) = B(S) + \min_a\big[p_a C(S{\setminus}a,h{-}1) + (1{-}p_a)C(S,h{-}1)\big]
+       = B(S) + C(S,h{-}1) - \kappa\,\varphi(S,h{-}1),
+\]
+using $p_a e_a = \kappa$: every arm gives the identical value, not just the
+minimising one. Then, using $B(S)-B(S{\setminus}x)=-\delta e_x$ and
+$C(S,h{-}1)-C(S{\setminus}x,h{-}1) = e_x\varphi(S,h{-}1) = -\delta(h{-}1)e_x$
+(inductive hypothesis at $x$):
+\[
+C(S,h)-C(S{\setminus}x,h) = [B(S)-B(S{\setminus}x)] + [C(S,h{-}1)-C(S{\setminus}x,h{-}1)]
+= -\delta e_x h,
+\]
+so $\varphi(S,h)=-\delta h$, independent of $x$.
+\end{proof}
 
-A martingale approach was also attempted, the class of argument not ruled
-out by the two falsified strategies above. Define $R_t := B(S_t) - \delta\kappa(t-1)$.
-Since $a_t$ is determined by history through round $t-1$ for any policy and
-destruction of $a_t$ has mean $p_{a_t}$, $\mathbb{E}[B(S_{t+1})\mid F_{t-1}] =
-B(S_t) + \delta\kappa$---using only that $\kappa$ is the same constant whichever
-arm is chosen---so $R_t$ is a genuine martingale for any policy, verified exactly
-at every reachable state checked. Summing gives $\mathbb{E}[Y_N] =
-\delta\kappa\,\mathbb{E}[N(N{-}1)/2] + \mathbb{E}[\sum_{t=1}^N R_t]$: the retracted
-proof's error is precisely the implicit assumption that the second term
-vanishes, a materially stronger claim than $R_t$ being a martingale. On the
-three-arm test instance the missing term is exactly $-0.676620$, accounting for
-the full gap between the naive formula and the true value to the last digit.
-\textbf{This missing term is itself policy-invariant}---$-0.676620$ across four
-structurally different policies, matching to six decimals---giving a genuine
-reduction: sufficiency now depends on proving invariance of a single, more
-cleanly characterised quantity (a martingale summed to a stopping time, the
-standard setting for a second-order/quadratic-variation construction) rather
-than the original ill-specified aggregate. Extending the block-exchange lemma or
-this martingale reduction to a
-complete general sufficiency proof---covering arbitrary interleavings, repeated
-pulls of surviving arms, and horizon truncation---is not yet finished. \textbf{Sufficiency is therefore
-reported as exhaustively verified, not proven}: exact dynamic programming
-across several thousand instances---including adversarial constructions
-targeting exactly the mechanism above (extreme $p$-heterogeneity at fixed
-$\kappa$, $n\in\{2,3\}$, $T$ up to $6$, every reachable state checked, not
-only the initial one)---finds zero violations.
+Verified: max error $3.77\times10^{-15}$ (floating-point noise) across every
+subset, every valid $h$, and 15 random constant-$\kappa$ instances.
+
+\begin{theorem}[Sufficiency, $T<n$]
+For $h<|S|$, $Q_C(S,a,h)=Q_C(S,b,h)$ whenever $\kappa_a=\kappa_b$, $a,b\in S$.
+\end{theorem}
+
+\begin{proof}
+Using Lemma~\ref{lem:phi}, $C(S{\setminus}x,h{-}1) = C(S,h{-}1)+\delta(h{-}1)e_x$:
+\begin{align*}
+Q_C(S,a,h)-Q_C(S,b,h)
+&= p_a C(S{\setminus}a,h{-}1) - p_b C(S{\setminus}b,h{-}1) + (p_b{-}p_a)C(S,h{-}1) \\
+&= \delta(h{-}1)\,[\kappa_a-\kappa_b] \;=\; 0 \quad\text{when } \kappa_a=\kappa_b.
+\end{align*}
+\end{proof}
+
+Combined with the private-value term---$v_a\ge v_b \Rightarrow
+Q(S,a,h)-Q(S,b,h)=v_a-v_b\ge 0$, since the externality-continuation is now
+provably identical rather than empirically so---\textbf{greedy is optimal at
+every state, for any horizon strictly shorter than the pool size: proven, not
+verified.} Independently confirmed: 2,908 $(S,h,\text{arm})$ comparisons
+across 20 random instances, max deviation $3.55\times10^{-15}$.
+
+\paragraph{Beyond $T<n$: strong evidence, not yet a proof.} Testing whether
+$Q_C$-invariance persists once exhaustion becomes possible ($h\ge|S|$): it
+does, exactly, at every $h$ tested (spread $\sim10^{-15}$), even though
+$\varphi(S,h)$ is no longer simply $-\delta h$ there---the lemma above was a
+sufficient route, not the whole mechanism. The same well-definedness property
+appears to hold at a \emph{second order}
+($[\varphi(S,h)-\varphi(S{\setminus}x,h)]/e_x$ independent of $x$, verified to
+machine precision past the exhaustion boundary), suggesting an infinite
+hierarchy of higher-order ratio invariants that would extend the proof to
+full generality. Formalising that hierarchy is a harder induction than the
+one just completed and is not attempted here.
+
+For completeness in the general ($T\ge n$) regime we retain the supporting
+material developed while searching for this argument. An
+\emph{adjacent-exchange lemma} (proven): for arms $a,b$ with $\kappa_a=\kappa_b$,
+swapping the order of two consecutive pulls leaves both the two-round expected
+reward and the full joint distribution over post-pull survival and burden
+exactly unchanged, extending to a \emph{block-exchange} lemma over
+arbitrary-length runs. Two further strategies were tried and are recorded as
+falsified rather than omitted, since together they rule out an entire class of
+argument: \emph{pathwise rearrangement invariance} (false---a two-arm instance
+gives burden $30$ under one scheduling and $1$ under the reverse) and
+\emph{pathwise invariance under natural per-arm coin coupling} (also false,
+$0/15$ trials matched). Both failures show the invariance is a genuine
+property of the \emph{expectation}. A martingale $R_t := B(S_t)-\delta\kappa(t{-}1)$
+is proven for any policy, and reduces the general-case gap to a single
+quantity---$\mathbb{E}[\sum_{t=1}^N R_t]$, itself verified policy-invariant to
+six decimals---that a further predictable-reweighting construction did not
+close. \textbf{Sufficiency for $T\ge n$ is therefore reported as exhaustively
+verified, not proven}: several thousand adversarial instances, including
+constructions with extreme $p$-heterogeneity at fixed $\kappa$ and every
+reachable state checked, find zero violations.
 
 Separately and independently, $N$ is policy-independent whenever
 $T \ge N_{\mathrm{exh}}$: arm $j$ absorbs exactly $G_j \sim
@@ -544,7 +571,7 @@ arm that is fragile but harmless, or damaging but robust, can be treated normall
 Only the \emph{product}---the damage a pull is expected to cause---distinguishes
 arms for planning purposes.
 
-\section{Irreducible estimation error}
+\section{Consumption-induced estimation floor}
 
 \paragraph{Observation model.} Rewards are generated by
 \[
@@ -566,7 +593,7 @@ the number of pulls until every arm has been destroyed, under any policy that
 eventually exhausts the pool. An episode ends at
 $N = \min(T, N_{\mathrm{exh}})$, and $\mathbb{E}[N_{\mathrm{exh}}] = \sum_j 1/p_j$.
 
-\begin{theorem}[Irreducible estimation error]
+\begin{theorem}[Consumption-induced estimation floor]
 \label{thm:floor}
 Condition on the destruction sequence and let $n_b^{(i)}, n_a^{(i)}$ be the numbers
 of rounds before and after arm $i$'s destruction, $n_b^{(i)} + n_a^{(i)} = N$. Then

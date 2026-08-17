@@ -1482,3 +1482,45 @@ def test_q_term_optional_stopping_does_not_trivially_vanish():
         "documents that E[Q] at the stopping time is genuinely nonzero")
     assert abs((eq + eb) - ER) < 1e-9, (
         "the two pieces must still sum exactly to the known missing term")
+
+
+# ------------------------------------------------- T<n sufficiency (PROVEN)
+def test_phi_lemma_exact_for_short_horizon():
+    """Lemma: phi(S,h) = -delta*h exactly, for h < |S|. Proven by induction
+    (see paper Lemma 5); verified here to machine precision."""
+    from experiments.exp54_sufficiency_proof_short_horizon import verify_lemma
+    err = verify_lemma(seeds=8)
+    assert err < 1e-9, f"lemma must hold to machine precision, got {err:.2e}"
+
+
+def test_sufficiency_proven_for_T_less_than_n():
+    """Theorem (proven, not just verified): Q_C(S,a,h)=Q_C(S,b,h) for
+    kappa_a=kappa_b, whenever h < |S| (horizon strictly shorter than pool
+    size). This is a real proof, following a reframing proposed in external
+    review, not an empirical check."""
+    from experiments.exp54_sufficiency_proof_short_horizon import verify_theorem
+    err, checked = verify_theorem(seeds=10)
+    assert checked > 100, "must check a substantial number of comparisons"
+    assert err < 1e-9, f"theorem must hold to machine precision, got {err:.2e}"
+
+
+def test_invariance_extends_past_exhaustion_empirically():
+    """Evidence (not proof) that Q_C invariance persists past h>=|S|, even
+    though phi is no longer simply -delta*h there -- the lemma was a
+    sufficient route, not the whole mechanism."""
+    from experiments.exp54_sufficiency_proof_short_horizon import build_C
+    import numpy as np
+    rng = np.random.default_rng(0)
+    n = 4
+    kappa = 1.0
+    p = np.clip(rng.uniform(0.1, 0.9, n), 0.05, 1.0)
+    e = kappa / p
+    delta = 0.4
+    full = frozenset(range(n))
+    C, B = build_C(p, e, delta)
+    for h in [4, 5, 6, 7]:
+        def QC(a, hh):
+            return B(full) + p[a]*C(full-{a}, hh-1) + (1-p[a])*C(full, hh-1)
+        vals = [QC(a, h) for a in full]
+        assert max(vals) - min(vals) < 1e-9, (
+            f"h={h}: invariance should hold empirically past exhaustion too")

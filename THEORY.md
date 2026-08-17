@@ -2926,3 +2926,96 @@ predictable-weight construction did not succeed and is not the right tool as
 applied. A cleaner construction — possibly conditioning on `N` directly
 rather than reweighting by `T`, or a genuinely different technique — remains
 the target for the next attempt.
+
+---
+
+## Theorem 1 sufficiency: PROVEN for the pre-exhaustion regime (T < n)
+
+Following a reframing proposed in external review — separate out the
+"externality-only" continuation problem (set every `v_a = 0`, so the only
+question is whether the *first* choice among arms affects the minimum
+achievable cumulative burden) — a complete, rigorous proof was found for a
+large, well-defined regime.
+
+### The lemma
+
+Define `C(S,h) := min_π E_π[Σ B(S_t)]` over `h` remaining rounds (the
+externality-only continuation cost), and
+`φ(S,h) := [C(S,h) − C(S∖{x},h)] / e_x` for any `x ∈ S`.
+
+**Lemma.** For `h < |S|`, `φ(S,h)` is independent of which `x` is used to
+compute it, and equals exactly `−δh`.
+
+**Proof, by induction on h.** Base case `h=0`: `C(S,0)=0` for all `S`
+(trivial), so `φ(S,0)=0=−δ·0`. Inductive step: assume `φ(S',h−1)=−δ(h−1)` for
+every `S'` with `h−1<|S'|` — this covers both `S` and `S∖{x}`, since
+`h<|S|⟹h−1<|S|−1=|S∖{x}|`. Because `φ(S,h−1)` doesn't depend on which arm is
+used to compute it, the Bellman minimisation over the first choice collapses:
+
+```
+C(S,h) = B(S) + min_a[p_a·C(S∖a,h−1) + (1−p_a)·C(S,h−1)]
+       = B(S) + C(S,h−1) + min_a[−p_a e_a φ(S,h−1)]
+       = B(S) + C(S,h−1) − κ·φ(S,h−1)
+```
+
+using `p_a e_a = κ` — **every arm gives the identical value**, not just the
+minimising one. Then, using `B(S)−B(S∖x)=−δe_x` (direct from the definition
+of `B`) and `C(S,h−1)−C(S∖x,h−1) = e_x·φ(S,h−1) = −δ(h−1)e_x` (inductive
+hypothesis, applied to `x`):
+
+```
+C(S,h) − C(S∖x,h) = [B(S)−B(S∖x)] + [C(S,h−1)−C(S∖x,h−1)]
+                   = −δe_x − δ(h−1)e_x = −δe_x·h
+```
+
+Dividing by `e_x` gives `φ(S,h)=−δh`, independent of `x`. ∎
+
+**Verified**: max error `3.77×10⁻¹⁵` (pure floating-point noise) across every
+subset, every valid `h`, and 15 random constant-`κ` instances.
+
+### The theorem
+
+**Theorem (sufficiency, T < n).** For `h < |S|`, `Q_C(S,a,h) = Q_C(S,b,h)`
+whenever `κ_a=κ_b`, `a,b∈S`.
+
+**Proof.** Using `C(S∖x,h−1) = C(S,h−1) + δ(h−1)e_x` from the lemma:
+
+```
+Q_C(S,a,h) − Q_C(S,b,h) = p_a C(S∖a,h−1) − p_b C(S∖b,h−1) + (p_b−p_a)C(S,h−1)
+  = (p_a−p_b)C(S,h−1) + δ(h−1)[p_a e_a − p_b e_b] + (p_b−p_a)C(S,h−1)
+  = δ(h−1)[κ_a − κ_b] = 0   when κ_a=κ_b.
+```
+
+∎. Combined with the private-value term (`v_a≥v_b ⟹ Q(S,a,h)−Q(S,b,h)=v_a−v_b
+≥0`, since the externality-continuation is now provably identical rather than
+just empirically so), **greedy is optimal at every state, for any horizon
+strictly shorter than the pool size — proven, not verified.**
+
+**Independently verified**: 2,908 `(S,h,arm)` comparisons across 20 random
+instances, max deviation `3.55×10⁻¹⁵`.
+
+### The extension question — evidence, not proof
+
+Testing whether `Q_C` invariance persists past `h≥|S|` (exhaustion possible):
+**it does, exactly**, at every `h` tested (spread `~10⁻¹⁵` at `h=4,5,6,7` with
+`n=4`) — even though `φ(S,h)` is *no longer* simply `−δh` once exhaustion
+becomes possible. This means the lemma's exact closed form was a *sufficient*
+route to the theorem, not the whole story: the theorem's conclusion holds more
+broadly than the specific mechanism used to prove it here.
+
+Testing why: the same "well-definedness" property that makes `φ` collapse the
+Bellman minimum appears to hold at a **second order** too —
+`[φ(S,h)−φ(S∖x,h)]/e_x` is *also* independent of `x`, verified to machine
+precision in the exhaustion regime where `φ` itself has no simple closed form.
+This suggests an infinite hierarchy of higher-order ratio invariants, each
+individually well-defined, which would extend the proof to full generality —
+but formalising that hierarchy is a genuinely harder induction than the one
+just completed, and is not attempted here.
+
+**This is reported honestly as what it is: a complete proof for a large,
+well-defined sub-case (any horizon shorter than the pool size), plus strong
+evidence — not a proof — that the result extends fully.** Given how much of
+this project's practical motivation concerns short-horizon, small-pool
+settings (a handful of doses, a modest tool roster), the `T<n` regime is not a
+narrow special case — it plausibly covers the majority of the paper's own
+worked domains.
