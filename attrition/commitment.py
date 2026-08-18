@@ -28,8 +28,8 @@ decision rather than on the next reward.
 import numpy as np
 
 __all__ = ["TerminalCommitment", "optimal_commitment_policy",
-           "greedy_commitment_policy", "edge_first_policy",
-           "evaluate_commitment_policy"]
+           "expand_outward_policy", "greedy_commitment_policy",
+           "edge_first_policy", "evaluate_commitment_policy"]
 
 
 class TerminalCommitment:
@@ -172,13 +172,19 @@ def edge_first_policy(env):
         env.experiment(int(s))
 
 
-def optimal_commitment_policy(env):
+def expand_outward_policy(env):
     """Expand outward from the centre, one step at a time.
 
     Contiguity is what makes this the right structure: an envelope is an interval
     containing the nominal point, so demonstrating a distant setting is worthless
-    unless everything between is also demonstrated. Expanding outward buys width
-    at the lowest failure probability per unit gained.
+    unless everything between is also demonstrated. Expanding outward is provably
+    optimal in its STRUCTURE -- see the boundary-only-expansion theorem in the
+    long-form appendix -- but the DIRECTION choice below (favouring the side with
+    higher expected value of a successful test, rather than simply the cheaper
+    side) is a well-tested heuristic, not a proven-optimal rule: exact-DP checks
+    show even this improved rule can still miss the true optimum, since the
+    correct choice can depend on remaining budget in a way no static index
+    captures. This function is deliberately NOT named 'optimal' for that reason.
     """
     while env.spent < env.budget:
         lo, hi = env.claimable_envelope()
@@ -189,9 +195,17 @@ def optimal_commitment_policy(env):
             cands.append(hi + 1)
         if not cands:
             break
-        # take the cheaper direction
-        s = min(cands, key=lambda c: env.fail_prob[c])
+        # expected value of a successful test at each candidate, rather than
+        # simply the cheaper (lower failure-probability) direction -- verified
+        # to close most, but not all, of the gap to the true DP optimum
+        s = max(cands, key=lambda c: (1 - env.fail_prob[c]) * env.yield_at[c])
         env.experiment(int(s))
+
+
+# Backward-compatible alias: the old name overclaimed optimality this
+# function's direction rule does not have. Kept so existing callers and
+# experiment scripts referencing the old name do not break.
+optimal_commitment_policy = expand_outward_policy
 
 
 def evaluate_commitment_policy(policy, seeds=300, **kwargs):

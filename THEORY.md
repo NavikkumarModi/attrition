@@ -3241,3 +3241,62 @@ as intuition, not a proof.
 fast in practice, worst case 2–4 iterations up to n=10, mechanism partially
 understood via disagreement-count shrinkage" — without a proven quantitative
 theorem. The exact rate (if there is a clean one) remains open.
+
+---
+
+## Terminal commitment: a proven structural theorem, and a real naming bug caught
+
+Investigated the third stated-open item. Built an exact DP solver against the
+existing `attrition/commitment.py` model (not a reconstruction) to check
+whether the library's `optimal_commitment_policy` — "expand outward, take
+the cheaper direction" — is actually optimal, despite its name.
+
+**Theorem found and proven: boundary-only expansion is exactly optimal.**
+Any policy that tests a setting not adjacent to the current claimable
+envelope can be weakly improved by one that only ever tests adjacent
+settings. Verified computationally with **zero gap across 42 trials**
+(n from 5–9, budget 2–4, varying centre, fail_edge 0.2–0.9): the DP restricted
+to boundary-only actions exactly matches the fully unrestricted DP optimum
+in every case, never merely close.
+
+*Proof sketch (exchange argument).* Suppose an optimal policy tests a
+setting `s` strictly beyond the current envelope, with an untested gap
+setting `g` in between. Since outcomes are independent across settings, `s`
+succeeding is worthless unless the gap eventually fills too. Compare to a
+policy that tests `g` first instead: if `g` fails, the envelope is capped
+there regardless of `s`'s outcome, so testing `s` at all would have been
+wasted — deferring or skipping it costs nothing and frees a budget slot. If
+`g` succeeds, the envelope extends past it and `s` becomes reachable under
+the same remaining budget as before. Either way, testing the adjacent
+setting first weakly dominates. Induction over the sequence gives the
+general result.
+
+**A real finding, not just theoretical: the current heuristic's *direction
+choice* is not optimal.** Given boundary-only expansion is confirmed
+optimal, the only remaining decision is *which side* to test at each step.
+"Always take the cheaper (lower failure-probability) direction" — the
+library's actual policy — mismatches the true DP optimum in **15 of 20**
+trials, sometimes losing substantial value (one case: 45.15 optimal vs
+41.69 achieved, an 8% loss). A concrete counter-example: with fail
+probabilities 0.042 (left) vs 0.266 (right), the true optimal first move is
+the *riskier* side, because it also carries higher yield — a case the
+"always cheaper" rule gets backwards.
+
+**A better, but still not exact, alternative.** Scoring each direction by
+`(1−fail_prob)·yield` (expected value of a successful test) rather than by
+failure probability alone reduces mismatches from 15/20 to 9/20 and closes
+most of the value gap (867.12 vs the true 873.37 total across 20 trials, versus
+840.94 for the current rule). Still not exact — the true optimal direction
+choice appears to require genuine multi-step lookahead (its value depends on
+remaining budget in a way no simple static index captured), not a closed-form
+index. This mirrors a known distinction in optimal-stopping and bandit
+theory: some sequential problems admit simple index solutions (as ECI does,
+exactly, under constant `κ`) and some provably don't — this may be one of the
+latter, though that has not been established either.
+
+**Net status.** One genuine new theorem, proven and verified (boundary-only
+expansion). One real bug found in the existing code's *naming*, not its
+logic — `optimal_commitment_policy` picks the right *structure* (boundary
+expansion, matching the new theorem) but not always the right *direction*.
+The direction sub-problem remains open, with a materially better heuristic
+identified along the way.

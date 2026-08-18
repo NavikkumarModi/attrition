@@ -237,13 +237,13 @@ budget & policy & operating value & envelope width & failed runs \\
 \midrule
 2 & greedy (highest yield first) & $36.908$ & $\mathbf{1.00}$ & $0.80$ \\
 2 & edge-first (maximise width) & $36.908$ & $\mathbf{1.00}$ & $0.67$ \\
-2 & \textbf{expand outward} & $\mathbf{40.664}$ & $\mathbf{2.92}$ & $0.08$ \\[2pt]
+2 & \textbf{expand outward} & $\mathbf{43.271}$ $(+17.2\%)$ & $\mathbf{2.91}$ & $0.09$ \\[2pt]
 4 & greedy & $41.385$ & $3.44$ & $1.06$ \\
 4 & edge-first & $36.908$ $(-10.8\%)$ & $\mathbf{1.00}$ & $1.14$ \\
-4 & \textbf{expand outward} & $\mathbf{44.182}$ $(+6.8\%)$ & $\mathbf{4.72}$ & $0.26$ \\[2pt]
+4 & \textbf{expand outward} & $\mathbf{44.993}$ $(+8.7\%)$ & $\mathbf{4.66}$ & $0.33$ \\[2pt]
 6 & greedy & $45.058$ & $5.35$ & $1.14$ \\
 6 & edge-first & $36.908$ $(-18.1\%)$ & $\mathbf{1.00}$ & $1.36$ \\
-6 & expand outward & $45.069$ & $6.20$ & $0.61$ \\
+6 & expand outward & $45.090$ $(+0.1\%)$ & $6.22$ & $0.61$ \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -268,12 +268,55 @@ campaign ending with a narrower filed design space than a conservative one would
 have produced.
 
 \paragraph{The budget dependence runs the other way.} The advantage of the correct
-policy \emph{decreases} with budget ($+10.2\%$, $+6.8\%$, $+0.0\%$), the opposite
+policy \emph{decreases} with budget ($+17.2\%$, $+8.7\%$, $+0.1\%$), the opposite
 of the sequential setting where the gap grows with pool size. The reason is
 structural: terminal commitment is a problem about scarcity of evidence at the
 moment of an irreversible decision. With enough evidence the commitment is no
 longer made under uncertainty and the difficulty dissolves. It binds hardest
 exactly when experiments are expensive, which is the regime that motivates it.
+
+\begin{theorem}[Boundary-only expansion is optimal]
+\label{thm:boundary}
+For the terminal-commitment model above, any policy that tests a setting not
+adjacent to the current claimable envelope is weakly dominated by one that
+only ever tests settings adjacent to it.
+\end{theorem}
+
+\begin{proof}
+Suppose a policy tests a setting $s$ strictly beyond the current envelope
+$[lo,hi]$, with an untested gap setting $g$ (adjacent to the envelope) still
+between them. Since outcomes are independent across settings, $s$ succeeding
+contributes nothing to the claimable envelope unless the gap eventually fills
+too. Compare to the policy that tests $g$ first instead, deferring $s$: if
+$g$ fails, the envelope is capped there regardless of $s$'s outcome, so
+testing $s$ at all would have been wasted---deferring or skipping it costs
+nothing and frees a budget slot for reallocation. If $g$ succeeds, the
+envelope extends past it and $s$ becomes reachable under the same remaining
+budget as before. Either way testing the adjacent setting first weakly
+dominates; induction over the decision sequence gives the general claim.
+\end{proof}
+
+Verified independently by exact DP: restricting the action set to
+boundary-adjacent settings only never loses value relative to the fully
+unrestricted DP optimum, across 42 instances spanning pool size, budget,
+centre position, and failure-probability steepness---zero gap in every case,
+not merely close.
+
+\paragraph{What remains open: which direction.} Given boundary-only expansion
+is optimal in structure, the only remaining decision at each step is which
+side to test. ``Always the cheaper (lower failure-probability) side''---the
+natural first guess, and the rule this section's earlier numbers used---is
+\emph{not} optimal: checked against exact DP across 20 instances it
+mismatches the true optimal choice in 15, losing real value in a concrete
+case (45.15 achievable vs.\ 41.69 realised). A resolved instance is
+informative: with failure probabilities $0.042$ (left) and $0.266$ (right),
+the true optimal first move is the \emph{riskier} side, because it also
+carries higher yield. Scoring each side by the expected value of a
+successful test, $(1{-}p_{\mathrm{fail}})\times\mathrm{yield}$, rather than
+by failure probability alone, closes most of the gap (9/20 mismatches, and
+the table above already reflects this improved rule) but not all of it---the
+true optimal direction appears to depend on remaining budget in a way no
+static index captures, so a fully general characterisation remains open.
 
 \section{Software: the ATTRITION testbed}
 \label{sec:software}

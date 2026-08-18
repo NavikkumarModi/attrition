@@ -1624,3 +1624,43 @@ def test_policy_iteration_converges_fast():
         it = count_iterations_to_convergence(v, p, e, delta, T, pick0)
         worst = max(worst, it)
     assert worst <= 6, f"policy iteration took unexpectedly many steps: {worst}"
+
+
+def test_boundary_only_expansion_optimal():
+    """Theorem: boundary-only expansion in terminal commitment is exactly
+    optimal -- zero gap vs the fully unrestricted DP optimum, across
+    randomized instances."""
+    from experiments.exp59_terminal_commitment_boundary import boundary_only_matches_unrestricted
+    n_trials, worst_gap = boundary_only_matches_unrestricted(seeds=10)
+    assert n_trials >= 8
+    assert worst_gap < 1e-6, f"boundary-only expansion lost value, gap={worst_gap}"
+
+
+def test_commitment_policy_naming_not_misleading():
+    """optimal_commitment_policy must exist as a backward-compatible alias,
+    and expand_outward_policy (its honest name) must be the real function."""
+    from attrition.commitment import optimal_commitment_policy, expand_outward_policy
+    assert optimal_commitment_policy is expand_outward_policy
+
+
+def test_expand_outward_beats_old_cheaper_direction_rule():
+    """The improved (1-fail_prob)*yield direction rule should not do worse
+    than the old 'always cheaper' rule on the library's default scenario."""
+    from attrition.commitment import (TerminalCommitment, expand_outward_policy,
+                                      evaluate_commitment_policy)
+    v_new, _, _ = evaluate_commitment_policy(expand_outward_policy, budget=2, seeds=100)
+    # old rule reproduced inline for comparison (cheaper direction)
+    def old_cheaper_policy(env):
+        while env.spent < env.budget:
+            lo, hi = env.claimable_envelope()
+            cands = []
+            if lo - 1 >= 0 and (lo - 1) not in env.blocked:
+                cands.append(lo - 1)
+            if hi + 1 < env.n and (hi + 1) not in env.blocked:
+                cands.append(hi + 1)
+            if not cands:
+                break
+            s = min(cands, key=lambda c: env.fail_prob[c])
+            env.experiment(int(s))
+    v_old, _, _ = evaluate_commitment_policy(old_cheaper_policy, budget=2, seeds=100)
+    assert v_new >= v_old - 1e-6, f"new rule ({v_new}) should not be worse than old ({v_old})"
