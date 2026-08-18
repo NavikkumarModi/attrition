@@ -447,21 +447,19 @@ second agent for price-of-anarchy experiments.
 
 ## Paper
 
-Two builds from the same body text:
-
-Three builds from one shared `body.tex`, so they cannot drift apart:
-
-| file | pages | contents | use |
-|---|---|---|---|
-| `no-regret-is-not-no-harm.pdf` | 14 | core results | reading, internal review |
-| `arxiv-no-regret-is-not-no-harm.pdf` | 13 | core results | arXiv preprint |
-| **`jmlr-consumable-action-sets.pdf`** | **20** | **+ multi-agent, terminal commitment, software** | **JMLR submission** |
+One document (`no-regret-is-not-no-harm.tex`), built from `body.tex` plus
+`sections_long.tex`, which is pulled in as a clearly-marked appendix (a
+divider page, then `\appendix` so the sections letter as A, B, C...). The same
+source targets JMLR and arXiv, so there is nothing to keep in sync.
 
 ```bash
-cd paper && make                      # figures + all three PDFs
-make arxiv-submission.tar.gz          # arXiv upload bundle
-make jmlr-submission.tar.gz           # JMLR upload bundle
+cd paper && make                # figures + the PDF
+make submission.tar.gz          # upload bundle
 ```
+
+For a JMLR submission specifically, swap the preamble for
+`\documentclass[wcp]{jmlr}` and add `jmlr.cls` (distributed from jmlr.org) --
+`body.tex` and `sections_long.tex` need no changes either way.
 
 The long-form version adds `sections_long.tex` via a `\LONGFORM` macro: price of
 anarchy under consumption, terminal commitment, a notation table, and a software

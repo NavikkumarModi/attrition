@@ -1,31 +1,28 @@
-PAPER  = no-regret-is-not-no-harm
-ARXIV  = arxiv-no-regret-is-not-no-harm
-JMLR   = jmlr-consumable-action-sets
+PAPER = no-regret-is-not-no-harm
 
-# All three builds share body.tex, so they cannot drift apart. The JMLR version
-# additionally pulls in sections_long.tex via the \LONGFORM macro.
-all: figures $(PAPER).pdf $(ARXIV).pdf $(JMLR).pdf
+# One consolidated document: body.tex is the main paper, sections_long.tex is
+# pulled in via \LONGFORM as a clearly-marked appendix (see the "Appendices"
+# divider before \appendix in $(PAPER).tex). This targets JMLR and arXiv with
+# the same source, so there is nothing to keep in sync across builds.
+all: figures $(PAPER).pdf
 
 figures:
 	cd .. && PYTHONPATH=. python3 paper/make_figures.py
 
-%.pdf: %.tex body.tex sections_long.tex
-	pdflatex -interaction=nonstopmode $<
-	pdflatex -interaction=nonstopmode $<
+$(PAPER).pdf: $(PAPER).tex body.tex sections_long.tex
+	pdflatex -interaction=nonstopmode $(PAPER).tex
+	pdflatex -interaction=nonstopmode $(PAPER).tex
 
-# arXiv upload bundle. No .bbl needed: the bibliography is inline.
-arxiv-submission.tar.gz: $(ARXIV).tex arxiv.sty body.tex sections_long.tex
-	tar czf $@ $(ARXIV).tex arxiv.sty body.tex sections_long.tex fig*.pdf
-
-# JMLR submission bundle. Swap the preamble for \documentclass[wcp]{jmlr} and
-# add jmlr.cls (distributed from jmlr.org) before submitting.
-jmlr-submission.tar.gz: $(JMLR).tex body.tex sections_long.tex
-	tar czf $@ $(JMLR).tex body.tex sections_long.tex fig*.pdf
+# Submission bundle. For JMLR, swap the preamble for \documentclass[wcp]{jmlr}
+# and add jmlr.cls (distributed from jmlr.org) before submitting -- body.tex
+# and sections_long.tex need no changes either way.
+submission.tar.gz: $(PAPER).tex body.tex sections_long.tex
+	tar czf $@ $(PAPER).tex body.tex sections_long.tex fig*.pdf
 
 clean:
 	rm -f *.aux *.log *.out *.toc
 
 distclean: clean
-	rm -f $(PAPER).pdf $(ARXIV).pdf $(JMLR).pdf fig*.pdf *.tar.gz
+	rm -f $(PAPER).pdf fig*.pdf *.tar.gz
 
 .PHONY: all figures clean distclean

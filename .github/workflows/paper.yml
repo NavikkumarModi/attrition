@@ -19,11 +19,8 @@ jobs:
         run: pip install -e .
       - uses: xu-cheng/latex-action@v3
         with:
-          root_file: |
-            paper/no-regret-is-not-no-harm.tex
-            paper/arxiv-no-regret-is-not-no-harm.tex
-            paper/jmlr-consumable-action-sets.tex
+          root_file: paper/no-regret-is-not-no-harm.tex
       - uses: actions/upload-artifact@v4
         with:
-          name: papers
-          path: paper/*.pdf
+          name: paper
+          path: paper/no-regret-is-not-no-harm.pdf
