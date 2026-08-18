@@ -23,7 +23,8 @@
 \newtheorem{definition}[theorem]{Definition}
 
 % include the long-form sections
-\newcommand{\LONGFORM}{\input{sections_long}}
+\newcommand{\LONGFORM}{\appendix\input{sections_long}}
+\newcommand{\IFLONG}[1]{#1}
 
 \title{\bfseries No-Regret is Not No-Harm:\\[2pt]
        Bandits with Consumable Action Sets}

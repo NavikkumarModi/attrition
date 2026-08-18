@@ -327,3 +327,30 @@ one regression test per theorem and several per result with multiple
 independently checkable parts, so breaking a theorem's numerical claim breaks a
 test. Experiments that produced negative or falsified results are retained in the
 repository rather than removed.
+
+\section{Agent tool ecosystems in detail}
+\label{sec:appendix-tools}
+
+Figure~\ref{fig:trace} returns to the routing example of Section~1 and shows the
+three quantities side by side over a single session. Panel (a) is what an
+operations dashboard displays; panels (b) and (c) are what is actually happening.
+The greedy router's regret trace is a flat line at zero for the entire session. Its
+value per call steps downward three times, and its tool count falls to one. The
+corrected router shows visible, non-zero regret throughout---and ends the session
+delivering more value per call with more tools still alive.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{fig5_agent_trace.pdf}
+\caption{A single routing session, identical seed and tool set. \textbf{(a)} The
+metric: greedy's per-step regret is zero throughout, while the corrected router
+accrues visible regret. \textbf{(b)} Value per call: the router with worse regret
+delivers more. \textbf{(c)} Surviving tools: the router with worse regret preserves
+more of the ecosystem. The visible regret in (a) is the \emph{price of
+preservation}, and the standard metric records it as a defect.}
+\label{fig:trace}
+\end{figure}
+
+This is the practical form of Theorem~\ref{thm:vacuity}: the monitored quantity
+carries no signal of the loss, so no alerting threshold defined on it can detect
+the failure.

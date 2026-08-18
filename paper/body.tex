@@ -558,13 +558,14 @@ findings.
 \centering
 \includegraphics[width=\textwidth]{fig2_characterisation.pdf}
 \caption{Theorem~\ref{thm:char}. \textbf{(a)} Five structural cases. Greedy is
-exactly optimal whenever $\kappa=p\,e$ is constant, and fails whenever it is not.
+exactly optimal whenever $\kappa=p\,e$ is constant; when it is not, an instance
+exists on which greedy fails, as constructed here.
 Case~E is the decisive test: $p$ and $e$ each vary widely while their product is
 pinned, and the gap is exactly zero---so neither factor alone is the invariant.
 Cases~C and~D isolate the two factors separately, and both break greedy.
 \textbf{(b)} The gap grows monotonically with the dispersion of $\kappa$, while the
-corrected index (Section~\ref{sec:eci}) stays flat, so its advantage grows without
-bound. Error bars are standard errors over 12 instances.}
+corrected index (Section~\ref{sec:eci}) stays flat, so its relative advantage
+increases across the tested dispersion range. Error bars are standard errors over 12 instances.}
 \label{fig:char}
 \end{figure}
 
@@ -834,8 +835,8 @@ regime.
 
 Against exact DP, ECI captures $52\%$--$99\%$ of the optimality gap, with capture
 improving as coupling strengthens. Its own gap is flat at $1.9$--$3.1\%$ across the
-entire dispersion range while greedy's grows five-fold, so ECI's advantage grows
-without bound in $\mathrm{std}(\kappa)$.
+entire dispersion range while greedy's grows five-fold, so ECI's relative
+advantage increases across the tested dispersion range.
 
 \subsection{Rollout}
 
@@ -901,6 +902,40 @@ externality $(n-s)$ times. Minimising requires pairing large $e$ with small $(n-
 Verified by brute force over all $n!$ orderings, exact at 8/8 instances. ECI is \emph{not} exactly
 optimal even here, and the exact rule inverts the usual intuition: when consumption is certain, an arm's value is
 irrelevant to scheduling; only its externality matters.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lll}
+\toprule
+Result & Status & Location \\
+\midrule
+Zero private regret, unbounded system regret & Proven & Thm.~\ref{thm:vacuity} \\
+Near-optimal policy forces private regret & Proven & Thm.~\ref{thm:converse} \\
+Reported regret tracks value delivered & Proven & Cor.~3 \\
+Constant $\kappa$ characterises greedy optimality & Proven, both directions & Thm.~\ref{thm:char} \\
+Externality estimation has a variance floor & Proven & Thm.~\ref{thm:floor} \\
+ECI has a finite worst-case performance gap & Proven (loose) & Sec.~\ref{sec:eci} \\
+ECI exact under constant $\kappa$ & Proven & Prop.~\ref{prop:eciexact} \\
+Policy improvement dominates its base policy & Proven & Thm.~\ref{thm:polimp} \\
+Pure sequencing: order by externality only & Proven & Thm.~\ref{thm:seq} \\
+Sequential multi-agent $\equiv$ single learner & Proven & long-form Sec.~11 \\
+Ordinal saturation, homogeneous rate & Proven & long-form Sec.~13 \\
+Characterisation survives correlated shocks & Verified conjecture & Sec.~\ref{sec:correlated} \\
+SECI matches/beats greedy under correlation & Empirical finding & Sec.~\ref{sec:correlated} \\
+Tighter ECI bound & Open & Sec.~\ref{sec:eci} \\
+Quantitative policy-improvement rate & Open & Sec.~7.2 \\
+Terminal commitment, optimal allocation & Open & long-form Sec.~14 \\
+\bottomrule
+\end{tabular}
+\caption{Every theoretical claim in this paper, by status. ``Proven'' means a
+complete proof with no remaining gap; ``verified conjecture'' means extensive
+adversarial testing with zero violations but no general proof; ``empirical
+finding'' means a result found and validated against exact ground truth
+without a supporting derivation; ``open'' means stated as future work, not
+attempted here.}
+\label{tab:status}
+\end{table}
 
 \section{Experiments}
 
@@ -1027,8 +1062,8 @@ both the chance of exhausting the drug-sensitive population ($p$) and the damage
 done when that happens ($e$), because the sensitive population was suppressing the
 resistant clone. Since $v$, $p$ and $e$ rise together, $\kappa = pe$ is highly
 dispersed---precisely the regime where Theorem~\ref{thm:char} says greedy fails. The
-model therefore reproduces \emph{competitive release} from first principles: it
-predicts that MTD is beaten by a dose-modulating policy, which is what adaptive
+model therefore captures a reduced-form competitive-release mechanism: it
+predicts that MTD is beaten by a dose-modulating policy, consistent with what adaptive
 therapy trials find. We stress this is a reduced form; real tumour dynamics are a
 population process, not additive burden from dead arms.
 
@@ -1074,8 +1109,7 @@ the control stream---the externality falls on arms nobody wanted to keep. Value 
 safety are aligned and greedy is already choosing correctly.
 
 The failure mode is therefore a property of domains in which pushing harder yields
-more now and costs more later. That is the common case under consumption, but it is
-not universal, and the platform trial is a clean counterexample the theory predicts
+more now and costs more later, and the platform trial is a clean counterexample the theory predicts
 correctly.
 
 \paragraph{Results.} Figure~\ref{fig:domains} runs all four. In all four, greedy records cumulative regret of exactly $0.0000$ and is beaten---by
@@ -1097,31 +1131,10 @@ with it; the policies that actually perform are the ones the metric penalises.}
 \label{fig:domains}
 \end{figure}
 
-\subsection{Agent tool ecosystems in detail}
-
-Figure~\ref{fig:trace} returns to the routing example of Section~1 and shows the
-three quantities side by side over a single session. Panel (a) is what an
-operations dashboard displays; panels (b) and (c) are what is actually happening.
-The greedy router's regret trace is a flat line at zero for the entire session. Its
-value per call steps downward three times, and its tool count falls to one. The
-corrected router shows visible, non-zero regret throughout---and ends the session
-delivering more value per call with more tools still alive.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\textwidth]{fig5_agent_trace.pdf}
-\caption{A single routing session, identical seed and tool set. \textbf{(a)} The
-metric: greedy's per-step regret is zero throughout, while the corrected router
-accrues visible regret. \textbf{(b)} Value per call: the router with worse regret
-delivers more. \textbf{(c)} Surviving tools: the router with worse regret preserves
-more of the ecosystem. The visible regret in (a) is the \emph{price of
-preservation}, and the standard metric records it as a defect.}
-\label{fig:trace}
-\end{figure}
-
-This is the practical form of Theorem~\ref{thm:vacuity}: the monitored quantity
-carries no signal of the loss, so no alerting threshold defined on it can detect
-the failure.
+\IFLONG{A detailed single-session trace of the agent-tool domain --- the regret
+metric staying at exactly zero while the corrected router visibly outperforms
+it, call by call --- makes the mechanism concrete beyond the aggregate view in
+Figure~\ref{fig:domains}; see Appendix~E.}
 
 \section{Robustness to the coupling form}
 \label{sec:robust}
@@ -1159,8 +1172,6 @@ This is a sharper statement than the original, not a weaker one: it names the
 structural property the result requires. The degradation is also graceful---the
 residual gap under non-separable coupling is $0.10\%$--$0.67\%$, against the
 $6.6\%$--$12.2\%$ gap greedy incurs when $\kappa$ genuinely varies.
-
-\LONGFORM
 
 \section{An untested assumption, tested}
 \label{sec:correlated}
@@ -1316,6 +1327,8 @@ library and the exact-DP reference via a single command, all random seeds are
 fixed and stated in code, and the test suite fails if any theorem's numerical
 claim breaks.
 \textbf{[Repository URL to be inserted before posting.]}
+
+\LONGFORM
 
 \begin{thebibliography}{9}
 \bibitem{badanidiyuru2013} A.~Badanidiyuru, R.~Kleinberg, A.~Slivkins.
