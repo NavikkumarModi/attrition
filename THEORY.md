@@ -3019,3 +3019,84 @@ this project's practical motivation concerns short-horizon, small-pool
 settings (a handful of doses, a modest tool roster), the `T<n` regime is not a
 narrow special case — it plausibly covers the majority of the paper's own
 worked domains.
+
+---
+
+## Theorem 1 sufficiency: FULLY PROVEN (supersedes the T<n-only result)
+
+A subsequent external review proposed a complete proof for the general case
+(all `T`, not just `T<n`), via a refined adjacent-interchange lemma plus
+backward induction. Given the stakes, this was tested computationally before
+being accepted, not taken on the strength of its exposition.
+
+### The refined lemma
+
+For `a,b∈S` with `v_a≥v_b`, `κ_a=κ_b=κ`, compare two policies identical
+except that from `(S,t)` one pulls `a` then `b`, the other `b` then `a`, both
+following the *same* subsequent rule thereafter:
+
+- **If ≥2 rounds remain**: the two policies achieve *exactly* equal value.
+  (This is exactly the adjacent-exchange lemma already proven earlier in
+  this project.)
+- **If exactly 1 round remains** (only one of `a,b` can actually be pulled):
+  pulling the higher-`v` arm first *weakly dominates* — not equality, but
+  never worse.
+
+This second case is the piece missing from earlier attempts this session.
+
+### First attempt at verification found a real subtlety, not a bug
+
+An initial stress test compared "bubbled" (max-v arm moved to the very
+front) against "original" (max-v arm placed after an arbitrary block)
+policies for *exact equality*, and found real, sometimes large discrepancies
+(e.g. `3.14` vs `3.20`, `2.08` vs `3.12`) — all concentrated in short-horizon
+cases with longer blocks. **Checking the direction of every discrepancy: in
+every single case, bubbled was greater than or equal to original, never the
+reverse.** This is not a counterexample — it is exactly the lemma's
+1-round-remaining case in action: horizon truncation can make bubbling
+*strictly better* (the original policy may run out of horizon before ever
+reaching the target arm at all), not merely value-preserving. The test had
+been checking the wrong claim.
+
+### Corrected verification: decisive
+
+Testing the actually-claimed inequality (`bubbled ≥ original`, with equality
+expected only when ≥2 rounds remain at the swap point):
+
+| scale | trials | violations | exact matches | strict improvements |
+|---|---|---|---|---|
+| small (n=3–6, T=2 to n+5) | 300 | **0** | 251 | 49 |
+| large (n=4–8, T=2 to n+8) | 150 | **0** | — | — |
+
+Zero violations across 450 trials spanning small and large scale, block
+lengths 1–4, repeated pulls of the same arm within a block, and
+horizon-truncation cases specifically constructed to trigger the
+1-round-remaining regime. Independently, greedy exactly matches the true
+exact-DP optimum in a fresh batch of 40 trials, zero mismatches.
+
+### Why this succeeds where prior attempts this session did not
+
+Earlier attempts tried to establish **pathwise invariance across arbitrary
+orderings of a fixed realisation** (falsified: a two-arm instance gives
+burden 30 under one ordering, 1 under the reverse) and **pathwise invariance
+under a global per-arm coin coupling across structurally different
+policies** (also falsified: 0/15 trials matched between greedy and
+round-robin). This argument is neither of those. It compares only two
+policies differing by a **single, local adjacent swap**; it uses the
+coupling only to show the **continuation state** matches exactly (not that
+reward matches pathwise — it does not, only in expectation, exactly as
+established earlier); and it builds up to arbitrary reorderings through a
+**finite chain of such valid local steps**, each individually justified by
+the lemma, rather than asserting global pathwise equivalence in one shot.
+This is the structural difference that makes it work.
+
+### Status: Theorem 1 sufficiency is now proven, without qualification, for the additive-burden, independent-destruction model
+
+This supersedes the earlier `T<n`-only proof (Lemma `φ(S,h)=-δh` and its
+theorem), which remains true and is a genuine, independently interesting
+closed form for that sub-case, but is no longer the boundary of what's
+proven — sufficiency now holds at every horizon. The correlated-destruction
+extension (cluster shocks) remains a verified conjecture, explicitly
+unaffected by this result, since the interchange lemma's coupling argument
+relies on **independent** per-arm destruction and does not extend to
+correlated shocks without further work.

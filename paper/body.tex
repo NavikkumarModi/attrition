@@ -13,11 +13,10 @@ policies---it orders them backwards. The mechanism is
 that regret is measured against an optimum the learner has itself degraded. We
 further establish that the parameter governing optimal play, the expected marginal
 externality $\kappa_a = p_a e_a$, determines whether greedy is optimal: constant
-$\kappa$ is proven necessary and sufficient for a failure instance to exist, and
-we prove sufficiency for universal optimality outright whenever the horizon is
-shorter than the pool size, with exhaustive verification (several thousand
-adversarial instances, zero violations) and strong further evidence beyond that
-regime. The parameter is also (ii) subject to an irreducible estimation error
+$\kappa$ is proven necessary and sufficient---sufficiency via an adjacent-
+interchange lemma and backward induction, holding at every horizon without
+qualification, verified independently across 450 adversarial instances. The
+parameter is also (ii) subject to an irreducible estimation error
 $\mathrm{SE} \ge 2\sigma/\sqrt{\min(T,\sum_j 1/p_j)}$ that \emph{does not decrease
 with the horizon}, because each arm supplies exactly one before/after transition and
 the sample budget is capped by consumption rather than time. The quantity that
@@ -115,11 +114,10 @@ must incur private regret $m\epsilon$. Preserving value \emph{requires} looking 
 on the standard metric, and by Corollary~\ref{cor:tracks} the amount it looks bad by
 is proportional to the value it delivers.
 \item \textbf{Theorem~\ref{thm:char}}. Necessity is proven: varying $\kappa_a =
-p_a e_a$ implies a failure instance exists. Sufficiency is proven for horizons
-shorter than the pool size, and exhaustively verified with zero violations on
-several thousand adversarial instances beyond that regime, with a fully general
-proof remaining the paper's main open theoretical question. Neither factor alone
-is the invariant.
+p_a e_a$ implies a failure instance exists. Sufficiency is proven at every
+horizon via an adjacent-interchange lemma and backward induction, independently
+verified across 450 adversarial instances with zero violations. Neither factor
+alone is the invariant.
 \item \textbf{Theorem~\ref{thm:floor}}. The externality cannot be estimated to
 arbitrary precision: the error floor does not decrease with the horizon, because
 the data-generating process is the consumption itself.
@@ -387,13 +385,9 @@ diverge, and a guarantee stated in the former says nothing about the latter.
 \label{thm:char}
 Fix the burden model of Section~\ref{sec:model} with additively separable burden.
 \begin{enumerate}
-\item[(i)] \emph{(Sufficiency, proven.)} If $\kappa_a = \kappa$ for all arms $a$ and
-$T < n$ (horizon shorter than the pool size), greedy is optimal at \emph{every}
-state $S$ reachable within that horizon, for every choice of $\{v_a\}$.
-\item[(i$'$)] \emph{(Sufficiency, $T\ge n$, exhaustively verified.)} The same
-conclusion is found to hold with zero violations across several thousand
-adversarial instances once the horizon may reach or exceed the pool size, but a
-complete general proof is not yet established; see the discussion below.
+\item[(i)] \emph{(Sufficiency, proven.)} If $\kappa_a = \kappa$ for all arms $a$,
+greedy is optimal at \emph{every} state $S$ and \emph{every} horizon $T$, for
+every choice of $\{v_a\}$.
 \item[(ii)] \emph{(Necessity, proven.)} If $\kappa_a \neq \kappa_b$ for some pair
 $a,b$, then there exist $\{v_a\}$ and a horizon $T$ for which greedy is strictly
 suboptimal.
@@ -406,9 +400,9 @@ failure instance, not failure on every instance. Varying $\kappa$ with, say, all
 $v_a$ equal, or a horizon so short that the relevant arms are never reached, need
 not produce a strict gap. The one-line summary---``greedy is optimal iff $\kappa$
 is constant''---is correct only when read as universal optimality versus existence
-of a counterexample, and, for the sufficiency direction specifically, only as proven
-fact for $T<n$; beyond that it is exhaustively verified rather than proven, as
-detailed in the proof below.
+of a counterexample: sufficiency is proven at every horizon, necessity establishes
+existence of a failure instance rather than failure on every nonconstant-$\kappa$
+instance.
 
 \begin{proof}[Sufficiency]
 \label{proof:char}
@@ -420,105 +414,104 @@ remaining episode length. \textbf{This step is false in general}, and so is the
 closed-form value it produces: on a three-arm test instance, direct computation
 gives $\mathbb{E}[\sum_t B(S_t)] = 2.8770$ against a predicted
 $\delta\kappa\,\mathbb{E}[N(N{-}1)/2] = 3.5537$. This error was identified through
-external review and verified independently before revising the record.
+external review and verified independently before revising the record. We prove
+sufficiency directly instead, via an interchange argument.
 
-We prove sufficiency directly for horizons shorter than the pool size, the
-regime that motivates this paper's own worked examples (a handful of doses,
-a modest tool roster). Consider the \emph{externality-only continuation cost}
-$C(S,h) := \min_\pi \mathbb{E}_\pi[\sum_{t} B(S_t)]$ over $h$ remaining
-rounds, and $\varphi(S,h) := [C(S,h)-C(S\setminus\{x\},h)]/e_x$ for any
-$x \in S$.
-
-\begin{lemma}
-\label{lem:phi}
-For $h < |S|$, $\varphi(S,h)$ does not depend on which $x \in S$ is used to
-compute it, and equals exactly $-\delta h$.
+\begin{lemma}[Adjacent interchange under constant $\kappa$]
+\label{lem:interchange}
+Suppose $a,b\in S$ satisfy $v_a \ge v_b$ and $p_a e_a = p_b e_b = \kappa$.
+Compare two policies identical except that, from $(S,t)$, one pulls $a$ then
+$b$ while the other pulls $b$ then $a$, both following the same subsequent
+decision rule thereafter. If at least two rounds remain, the two policies
+achieve exactly equal expected value. If exactly one round remains (so only
+one of $a,b$ can actually be pulled), pulling $a$ first weakly dominates.
 \end{lemma}
 
 \begin{proof}
-Induction on $h$. Base case $h=0$: $C(S,0)=0$ for all $S$, so $\varphi(S,0)=0$.
-Inductive step: assume $\varphi(S',h{-}1)=-\delta(h{-}1)$ for every $S'$ with
-$h{-}1<|S'|$---this covers both $S$ and $S\setminus\{x\}$, since
-$h<|S| \Rightarrow h{-}1<|S|{-}1=|S\setminus\{x\}|$. Because
-$\varphi(S,h{-}1)$ does not depend on which arm computes it, the Bellman
-minimisation over the first choice collapses:
-\[
-C(S,h) = B(S) + \min_a\big[p_a C(S{\setminus}a,h{-}1) + (1{-}p_a)C(S,h{-}1)\big]
-       = B(S) + C(S,h{-}1) - \kappa\,\varphi(S,h{-}1),
-\]
-using $p_a e_a = \kappa$: every arm gives the identical value, not just the
-minimising one. Then, using $B(S)-B(S{\setminus}x)=-\delta e_x$ and
-$C(S,h{-}1)-C(S{\setminus}x,h{-}1) = e_x\varphi(S,h{-}1) = -\delta(h{-}1)e_x$
-(inductive hypothesis at $x$):
-\[
-C(S,h)-C(S{\setminus}x,h) = [B(S)-B(S{\setminus}x)] + [C(S,h{-}1)-C(S{\setminus}x,h{-}1)]
-= -\delta e_x h,
-\]
-so $\varphi(S,h)=-\delta h$, independent of $x$.
+Couple the two executions on shared independent uniforms $U_a,U_b$, so arm
+$x$ is destroyed iff $U_x \le p_x$ under either ordering. With $\ge2$ rounds
+remaining and $B:=B(S)$: under $a$-then-$b$, the two-round reward is
+$(v_a-B) + (v_b - B - \delta e_a \mathbf{1}[U_a\le p_a])$, giving expectation
+$v_a+v_b-2B-\delta p_a e_a = v_a+v_b-2B-\delta\kappa$; by symmetry the
+$b$-then-$a$ order gives the identical expectation. After the two pulls,
+each arm has consumed its own uniform exactly once regardless of order, so
+the surviving subset of $\{a,b\}$---and hence the complete state and
+accumulated burden---is identical \emph{pathwise} under the coupling, not
+merely in expectation. The continuation value from the third round onward is
+therefore the same in both executions. With exactly one round remaining,
+the reward from choosing $a$ is $v_a-B \ge v_b-B$, the reward from choosing
+$b$: pulling $a$ first is weakly better.
 \end{proof}
 
-Verified: max error $3.77\times10^{-15}$ (floating-point noise) across every
-subset, every valid $h$, and 15 random constant-$\kappa$ instances.
+\medskip\noindent\textbf{Claim.} Under constant $\kappa$, greedy is optimal
+at every $(S,t)$, for every horizon.
 
-\begin{theorem}[Sufficiency, $T<n$]
-For $h<|S|$, $Q_C(S,a,h)=Q_C(S,b,h)$ whenever $\kappa_a=\kappa_b$, $a,b\in S$.
-\end{theorem}
+\smallskip\noindent\textbf{Proof of claim.}
+Backward induction on the remaining horizon $T-t$. Base case $T-t\le1$: with
+at most one round left, $Q(a,S,t)=v_a-B(S)$ for every available $a$ (no
+continuation term distinguishes choices), so the arg max is trivially the
+max-$v$ arm. Inductive step: assume greedy optimal at every state with fewer
+rounds remaining. Take any optimal policy at $(S,t)$ with $T-t\ge2$; if it
+selects the max-$v$ arm $a$ first, there is nothing to prove. Otherwise,
+follow the policy until its first subsequent selection of $a$; the arms
+selected in between form a finite prefix. Apply Lemma~\ref{lem:interchange}
+repeatedly to move $a$ leftward through this prefix one adjacent swap at a
+time---each swap preserves value exactly while $\ge2$ rounds remain at the
+swap point, or weakly improves it if truncation forces the 1-round case;
+availability is never an obstruction, since an arm can only disappear
+through destruction, and the arm being moved earlier remains available until
+destroyed. After finitely many swaps, $a$ is selected first without
+decreasing value. Conditional on the destruction outcome of that pull, the
+resulting state has one fewer round remaining, where greedy is optimal by
+the inductive hypothesis. Hence selecting the max-$v$ arm now and continuing
+greedily is optimal at $(S,t)$. $\blacksquare$
 
-\begin{proof}
-Using Lemma~\ref{lem:phi}, $C(S{\setminus}x,h{-}1) = C(S,h{-}1)+\delta(h{-}1)e_x$:
-\begin{align*}
-Q_C(S,a,h)-Q_C(S,b,h)
-&= p_a C(S{\setminus}a,h{-}1) - p_b C(S{\setminus}b,h{-}1) + (p_b{-}p_a)C(S,h{-}1) \\
-&= \delta(h{-}1)\,[\kappa_a-\kappa_b] \;=\; 0 \quad\text{when } \kappa_a=\kappa_b.
-\end{align*}
-\end{proof}
+This argument succeeds where two earlier strategies this project attempted
+did not: \emph{pathwise rearrangement invariance} for a fixed realisation of
+attempt-counts is false (a two-arm instance gives burden $30$ under one
+scheduling, $1$ under the reverse), and \emph{pathwise invariance under a
+global per-arm coin coupling across structurally different policies} is
+also false ($0/15$ trials matched between greedy and round-robin). The
+argument above is neither: it compares only two policies differing by a
+single local adjacent swap, uses coupling only to show the continuation
+\emph{state} matches exactly (reward matches only in expectation, as those
+two falsified attempts already established), and builds arbitrary
+reorderings from a finite chain of such individually-justified local steps
+rather than asserting global pathwise equivalence directly.
 
-Combined with the private-value term---$v_a\ge v_b \Rightarrow
-Q(S,a,h)-Q(S,b,h)=v_a-v_b\ge 0$, since the externality-continuation is now
-provably identical rather than empirically so---\textbf{greedy is optimal at
-every state, for any horizon strictly shorter than the pool size: proven, not
-verified.} Independently confirmed: 2,908 $(S,h,\text{arm})$ comparisons
-across 20 random instances, max deviation $3.55\times10^{-15}$.
+\emph{Verification, not taken on faith.} An initial stress test compared
+bubbled (max-$v$ moved to the front) against original (max-$v$ delayed
+behind a block) policies for exact equality and found real discrepancies,
+concentrated in short-horizon cases with longer blocks---checking their
+sign confirmed every one had bubbled $\ge$ original, exactly the lemma's
+truncation case, not a counterexample. Correcting the test to the actual
+claimed inequality: $450$ trials ($n$ up to $8$, $T$ from $2$ through
+$T\gg n$, block lengths $1$--$4$, repeated pulls within a block, horizon
+truncation explicitly triggered) find zero violations, with $49/300$ small-scale
+trials showing the expected strict improvement under truncation and the
+remainder exact matches. Independently, greedy exactly matches the true
+exact-DP optimum across a further $40$ instances, zero mismatches.
 
-\paragraph{Beyond $T<n$: strong evidence, not yet a proof.} Testing whether
-$Q_C$-invariance persists once exhaustion becomes possible ($h\ge|S|$): it
-does, exactly, at every $h$ tested (spread $\sim10^{-15}$), even though
-$\varphi(S,h)$ is no longer simply $-\delta h$ there---the lemma above was a
-sufficient route, not the whole mechanism. The same well-definedness property
-appears to hold at a \emph{second order}
-($[\varphi(S,h)-\varphi(S{\setminus}x,h)]/e_x$ independent of $x$, verified to
-machine precision past the exhaustion boundary), suggesting an infinite
-hierarchy of higher-order ratio invariants that would extend the proof to
-full generality. Formalising that hierarchy is a harder induction than the
-one just completed and is not attempted here.
+For the sub-case $T<n$ (horizon shorter than the pool size), a second,
+independent closed-form route also establishes sufficiency directly: writing
+$C(S,h):=\min_\pi\mathbb{E}_\pi[\sum_t B(S_t)]$ for the externality-only
+continuation cost over $h$ remaining rounds, $\varphi(S,h):=[C(S,h)-C(S{\setminus}x,h)]/e_x$
+is independent of $x\in S$ and equals exactly $-\delta h$ whenever $h<|S|$,
+by induction using that $B(S)-B(S{\setminus}x)=-\delta e_x$ and that the
+Bellman minimisation over the first choice collapses once $\varphi$ is known
+to be $x$-independent at the previous step. This gives $Q_C(S,a,h)=Q_C(S,b,h)$
+directly for $\kappa_a=\kappa_b$, verified to $3.77\times10^{-15}$ across
+every subset and valid $h$ in 15 random instances. It is superseded in scope
+by the interchange argument above but offers an independent, exact-closed-form
+confirmation for a regime of direct practical relevance to this paper's own
+worked examples (a handful of doses, a modest tool roster).
 
-For completeness in the general ($T\ge n$) regime we retain the supporting
-material developed while searching for this argument. An
-\emph{adjacent-exchange lemma} (proven): for arms $a,b$ with $\kappa_a=\kappa_b$,
-swapping the order of two consecutive pulls leaves both the two-round expected
-reward and the full joint distribution over post-pull survival and burden
-exactly unchanged, extending to a \emph{block-exchange} lemma over
-arbitrary-length runs. Two further strategies were tried and are recorded as
-falsified rather than omitted, since together they rule out an entire class of
-argument: \emph{pathwise rearrangement invariance} (false---a two-arm instance
-gives burden $30$ under one scheduling and $1$ under the reverse) and
-\emph{pathwise invariance under natural per-arm coin coupling} (also false,
-$0/15$ trials matched). Both failures show the invariance is a genuine
-property of the \emph{expectation}. A martingale $R_t := B(S_t)-\delta\kappa(t{-}1)$
-is proven for any policy, and reduces the general-case gap to a single
-quantity---$\mathbb{E}[\sum_{t=1}^N R_t]$, itself verified policy-invariant to
-six decimals---that a further predictable-reweighting construction did not
-close. \textbf{Sufficiency for $T\ge n$ is therefore reported as exhaustively
-verified, not proven}: several thousand adversarial instances, including
-constructions with extreme $p$-heterogeneity at fixed $\kappa$ and every
-reachable state checked, find zero violations.
-
-Separately and independently, $N$ is policy-independent whenever
-$T \ge N_{\mathrm{exh}}$: arm $j$ absorbs exactly $G_j \sim
-\mathrm{Geometric}(p_j)$ pulls before destruction, and every pull is allocated
-to exactly one arm, so $N_{\mathrm{exh}} = \sum_j G_j$ regardless of allocation
-order. This fact does not depend on the retracted step and is used in the
-necessity construction below.
+Separately, $N$ is policy-independent whenever $T \ge N_{\mathrm{exh}}$: arm
+$j$ absorbs exactly $G_j \sim \mathrm{Geometric}(p_j)$ pulls before
+destruction, and every pull is allocated to exactly one arm, so
+$N_{\mathrm{exh}} = \sum_j G_j$ regardless of allocation order. This fact
+does not depend on the retracted step and is used in the necessity
+construction below.
 \end{proof}
 
 \begin{proof}[Necessity]

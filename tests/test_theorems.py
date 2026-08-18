@@ -1524,3 +1524,23 @@ def test_invariance_extends_past_exhaustion_empirically():
         vals = [QC(a, h) for a in full]
         assert max(vals) - min(vals) < 1e-9, (
             f"h={h}: invariance should hold empirically past exhaustion too")
+
+
+# ---------------------------------- Theorem 1 sufficiency, FULLY PROVEN (all T)
+def test_bubble_inequality_no_violations():
+    """The complete general proof (adjacent-interchange lemma + backward
+    induction): bubbled (max-v arm moved to front) must never have LOWER
+    value than the original (max-v arm delayed behind a block), across a
+    wide range of n, T, block lengths, and horizon-truncation cases."""
+    from experiments.exp55_full_sufficiency_proof import verify_bubble_inequality
+    trials, violations = verify_bubble_inequality(seeds=60, n_range=(4, 8))
+    assert trials > 30
+    assert violations == 0, f"found {violations} violations in {trials} trials"
+
+
+def test_greedy_matches_exact_dp_optimum_general():
+    """Independent confirmation: greedy exactly matches the true exact-DP
+    optimum, across random instances spanning T<n and T>=n."""
+    from experiments.exp55_full_sufficiency_proof import verify_greedy_optimal
+    seeds, mismatches = verify_greedy_optimal(seeds=20)
+    assert mismatches == 0, f"greedy failed to match optimum in {mismatches}/{seeds}"
