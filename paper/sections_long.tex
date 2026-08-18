@@ -354,3 +354,59 @@ preservation}, and the standard metric records it as a defect.}
 This is the practical form of Theorem~\ref{thm:vacuity}: the monitored quantity
 carries no signal of the loss, so no alerting threshold defined on it can detect
 the failure.
+
+\section{Correlated-destruction diagnostics: a rollout bug and a scale-fairness artifact}
+\label{sec:appendix-mc}
+
+\paragraph{An unreliable Monte Carlo estimate, excluded rather than reported.}
+A Monte Carlo rollout was tested as an independent large-scale reference. It
+failed a basic sanity check --- policy improvement should never make an
+estimate worse with more compute, and increasing rollout depth moved the
+estimate substantially in the wrong direction, the signature of an
+implementation error rather than noise. The cause: planning-phase and
+actual-trajectory random draws shared one stream, so different compute
+budgets consumed different amounts of randomness before each real step,
+changing the realised trajectory for reasons unrelated to policy quality. With
+this corrected, the estimate stabilised but remained theoretically suspect (a
+valid rollout cannot underperform its base policy), and cross-checking it
+against exact DP at $n=6$ showed a 4--5\% undershoot even at high depth. The
+tool is excluded on these grounds; the fix is retained in the released code,
+but no conclusion is drawn from its output.
+
+Exact computation itself goes further than the original small-scale check used:
+$n=12$ runs in roughly $12$ seconds. Re-running the full $q$-sweep there, real
+ground truth throughout:
+
+\begin{center}
+\begin{tabular}{rrrrrr}
+\toprule
+$q$ & $V^\star$ & greedy & greedy gap & SECI & SECI gap \\
+\midrule
+0.0 & 11.299 & 10.482 & 7.2\% & 11.096 & $\mathbf{1.80\%}$ \\
+0.2 & 4.171 & 3.994 & 4.3\% & 4.136 & $\mathbf{0.84\%}$ \\
+0.4 & 2.765 & 2.736 & 1.1\% & 2.757 & $\mathbf{0.29\%}$ \\
+0.6 & 1.921 & 1.916 & 0.3\% & 1.919 & $\mathbf{0.11\%}$ \\
+0.8 & 1.512 & 1.512 & 0.0\% & 1.512 & $\mathbf{0.03\%}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+SECI captures $4$--$5\times$ more of the available opportunity than greedy at
+every $q$ with meaningful opportunity remaining, confirmed at double the arm
+count of the original check. The absolute margin between the two shrinks with
+$q$ because the opportunity itself shrinks --- greedy's own gap collapses from
+$7.2\%$ to $0.0\%$ --- not because SECI's relative advantage weakens.
+
+\paragraph{A scale-dependent shortfall, and its cause.} At larger scale SECI
+beats plain ECI everywhere but trails greedy by a small margin in the mid-$q$
+range. Varying cluster size and count independently leaves this gap unchanged,
+ruling out cluster structure as the cause; sweeping $n$ directly shows both
+policies' values turning \emph{negative} once $n$ exceeds roughly $20$ under a
+$\delta$ held fixed across the sweep. The cause is an unfair comparison, not a
+failure of the correction:
+total burden capacity $\delta\sum_i e_i$ scales with $n$ while $\delta$ was held
+constant, so the $n=40$ instances were a strictly harder problem than the $n=6$
+ones. Rescaling $\delta$ to hold problem difficulty comparable across scale closes
+the gap to noise level ($-0.029$ to $+0.417$ against values of $1.17$--$37.46$,
+i.e. under $0.2\%$ except where SECI wins outright), while SECI continues to beat
+plain ECI at every $q$ without exception.

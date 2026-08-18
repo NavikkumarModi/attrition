@@ -13,10 +13,11 @@ policies---it orders them backwards. The mechanism is
 that regret is measured against an optimum the learner has itself degraded. We
 further establish that the parameter governing optimal play, the expected marginal
 externality $\kappa_a = p_a e_a$, determines whether greedy is optimal: constant
-$\kappa$ is proven necessary and sufficient---sufficiency via an adjacent-
+$\kappa$ is proven sufficient for universal optimality---via an adjacent-
 interchange lemma and backward induction, holding at every horizon without
-qualification, verified independently across 450 adversarial instances. The
-parameter is also (ii) subject to a consumption-induced estimation floor
+qualification, verified independently across 450 adversarial instances---and
+non-constant $\kappa$ is proven to admit a counterexample instance, not
+universal failure. The parameter is also (ii) subject to a consumption-induced estimation floor
 $\mathrm{SE} \ge 2\sigma/\sqrt{\min(T,\sum_j 1/p_j)}$ that \emph{does not decrease
 with the horizon}, because each arm supplies exactly one before/after transition and
 the sample budget is capped by consumption rather than time. The quantity that
@@ -136,7 +137,15 @@ free-riding specifically, not coordination.
 under correlated cluster-level destruction, the characterisation appears to survive
 exactly (a verified conjecture) while the correction fails and is repaired (SECI),
 validated against exact ground truth at up to twice the originally checked scale.
-\item An open-source testbed, \textsc{Attrition}, with 50 experiments and 76
+\item A practical consequence borne out experimentally: once estimation is
+consumption-limited, a conservative upper bound on $\kappa$ outperforms every
+learned estimator we tested (Section~\ref{sec:experiments})---the paper's
+central practical recommendation follows directly from this.
+\item A structural fact worth flagging before it is used (Section~\ref{sec:bound}):
+the model has no null action, so having \emph{more} available arms can lower
+achievable value---an intuitively obvious monotonicity property that is false,
+with a concrete counterexample.
+\item An open-source testbed, \textsc{Attrition}, with 55 experiments and 96
 regression tests---at least one per theorem, several per result with multiple
 independently checkable parts.
 \end{itemize}
@@ -232,6 +241,45 @@ $R_{\mathrm{sys}}(\pi) = V^\star - W(\pi)$ & system-value regret \\
 $I(a,t) = v_a - \delta\kappa_a(T-t)$ & externality-corrected index (ECI) \\
 \bottomrule
 \end{tabular}
+\end{table}
+
+\paragraph{A roadmap of what is proven versus what is not.} Before the formal
+development, Table~\ref{tab:status} summarises every claim in this paper by
+status---proven, verified conjecture, empirical finding, or open---since this
+distinction matters for how each result should be read.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lll}
+\toprule
+Result & Status & Location \\
+\midrule
+Zero private regret, unbounded system regret & Proven & Thm.~\ref{thm:vacuity} \\
+Near-optimal policy forces private regret & Proven & Thm.~\ref{thm:converse} \\
+Reported regret tracks value delivered & Proven & Cor.~3 \\
+Constant $\kappa$ characterises greedy optimality & Proven, both directions & Thm.~\ref{thm:char} \\
+Externality estimation has a variance floor & Proven & Thm.~\ref{thm:floor} \\
+ECI has a finite worst-case performance gap & Proven (loose) & Sec.~\ref{sec:eci} \\
+ECI exact under constant $\kappa$ & Proven & Prop.~\ref{prop:eciexact} \\
+Policy improvement dominates its base policy & Proven & Thm.~\ref{thm:polimp} \\
+Pure sequencing: order by externality only & Proven & Thm.~\ref{thm:seq} \\
+Sequential multi-agent $\equiv$ single learner & Proven & long-form Sec.~11 \\
+Ordinal saturation, homogeneous rate & Proven & long-form Sec.~13 \\
+Characterisation survives correlated shocks & Verified conjecture & Sec.~\ref{sec:correlated} \\
+SECI matches/beats greedy under correlation & Empirical finding & Sec.~\ref{sec:correlated} \\
+Tighter ECI bound & Open & Sec.~\ref{sec:eci} \\
+Quantitative policy-improvement rate & Open & Sec.~7.2 \\
+Terminal commitment, optimal allocation & Open & long-form Sec.~14 \\
+\bottomrule
+\end{tabular}
+\caption{Every theoretical claim in this paper, by status. ``Proven'' means a
+complete proof with no remaining gap; ``verified conjecture'' means extensive
+adversarial testing with zero violations but no general proof; ``empirical
+finding'' means a result found and validated against exact ground truth
+without a supporting derivation; ``open'' means stated as future work, not
+attempted here.}
+\label{tab:status}
 \end{table}
 
 \section{Setting}
@@ -477,7 +525,15 @@ two falsified attempts already established), and builds arbitrary
 reorderings from a finite chain of such individually-justified local steps
 rather than asserting global pathwise equivalence directly.
 
-\emph{Empirical verification of the bubble inequality.} An initial stress test compared
+Separately, $N$ is policy-independent whenever $T \ge N_{\mathrm{exh}}$: arm
+$j$ absorbs exactly $G_j \sim \mathrm{Geometric}(p_j)$ pulls before
+destruction, and every pull is allocated to exactly one arm, so
+$N_{\mathrm{exh}} = \sum_j G_j$ regardless of allocation order. This fact
+does not depend on the flawed factorisation and is used in the necessity
+construction below.
+\end{proof}
+
+\paragraph{Empirical verification of the bubble inequality.} An initial stress test compared
 bubbled (max-$v$ moved to the front) against original (max-$v$ delayed
 behind a block) policies for exact equality and found real discrepancies,
 concentrated in short-horizon cases with longer blocks---checking their
@@ -490,7 +546,7 @@ trials showing the expected strict improvement under truncation and the
 remainder exact matches. Independently, greedy exactly matches the true
 exact-DP optimum across a further $40$ instances, zero mismatches.
 
-For the sub-case $T<n$ (horizon shorter than the pool size), a second,
+\paragraph{An independent closed-form route for $T<n$.} For the sub-case $T<n$ (horizon shorter than the pool size), a second,
 independent closed-form route also establishes sufficiency directly: writing
 $C(S,h):=\min_\pi\mathbb{E}_\pi[\sum_t B(S_t)]$ for the externality-only
 continuation cost over $h$ remaining rounds, $\varphi(S,h):=[C(S,h)-C(S{\setminus}x,h)]/e_x$
@@ -503,14 +559,6 @@ every subset and valid $h$ in 15 random instances. It is superseded in scope
 by the interchange argument above but offers an independent, exact-closed-form
 confirmation for a regime of direct practical relevance to this paper's own
 worked examples (a handful of doses, a modest tool roster).
-
-Separately, $N$ is policy-independent whenever $T \ge N_{\mathrm{exh}}$: arm
-$j$ absorbs exactly $G_j \sim \mathrm{Geometric}(p_j)$ pulls before
-destruction, and every pull is allocated to exactly one arm, so
-$N_{\mathrm{exh}} = \sum_j G_j$ regardless of allocation order. This fact
-does not depend on the flawed factorisation and is used in the necessity
-construction below.
-\end{proof}
 
 \begin{proof}[Necessity]
 The hot/safe construction of Theorem~\ref{thm:vacuity} has $\kappa_H = E > 0 =
@@ -544,7 +592,9 @@ rely on the incorrect closed form.
 Two further empirical checks. Varying $p$ and $e$ widely while pinning $\kappa$
 constant leaves greedy exactly optimal (0/10 instances broken, gap $0.000\%$);
 varying the product breaks it (10/10, gap $5.4$--$6.3\%$). The theorem also
-implies the interchange inequality $v_a - v_b \ge p_a D_a - p_b D_b$, which we
+implies the interchange inequality $v_a - v_b \ge p_a D_a - p_b D_b$
+(writing $D_a(S,t) := V(S,t{+}1) - V(S{\setminus}\{a\},t{+}1)$ for the marginal
+value of $a$'s availability), which we
 audit exhaustively as a consistency check: $0$ violations in $6{,}842$ ordered
 pairs under constant $\kappa$, versus $56.2\%$ when $\kappa$ varies.
 
@@ -914,41 +964,8 @@ Verified by brute force over all $n!$ orderings, exact at 8/8 instances. ECI is 
 optimal even here, and the exact rule inverts the usual intuition: when consumption is certain, an arm's value is
 irrelevant to scheduling; only its externality matters.
 
-\begin{table}[h]
-\centering
-\small
-\begin{tabular}{lll}
-\toprule
-Result & Status & Location \\
-\midrule
-Zero private regret, unbounded system regret & Proven & Thm.~\ref{thm:vacuity} \\
-Near-optimal policy forces private regret & Proven & Thm.~\ref{thm:converse} \\
-Reported regret tracks value delivered & Proven & Cor.~3 \\
-Constant $\kappa$ characterises greedy optimality & Proven, both directions & Thm.~\ref{thm:char} \\
-Externality estimation has a variance floor & Proven & Thm.~\ref{thm:floor} \\
-ECI has a finite worst-case performance gap & Proven (loose) & Sec.~\ref{sec:eci} \\
-ECI exact under constant $\kappa$ & Proven & Prop.~\ref{prop:eciexact} \\
-Policy improvement dominates its base policy & Proven & Thm.~\ref{thm:polimp} \\
-Pure sequencing: order by externality only & Proven & Thm.~\ref{thm:seq} \\
-Sequential multi-agent $\equiv$ single learner & Proven & long-form Sec.~11 \\
-Ordinal saturation, homogeneous rate & Proven & long-form Sec.~13 \\
-Characterisation survives correlated shocks & Verified conjecture & Sec.~\ref{sec:correlated} \\
-SECI matches/beats greedy under correlation & Empirical finding & Sec.~\ref{sec:correlated} \\
-Tighter ECI bound & Open & Sec.~\ref{sec:eci} \\
-Quantitative policy-improvement rate & Open & Sec.~7.2 \\
-Terminal commitment, optimal allocation & Open & long-form Sec.~14 \\
-\bottomrule
-\end{tabular}
-\caption{Every theoretical claim in this paper, by status. ``Proven'' means a
-complete proof with no remaining gap; ``verified conjecture'' means extensive
-adversarial testing with zero violations but no general proof; ``empirical
-finding'' means a result found and validated against exact ground truth
-without a supporting derivation; ``open'' means stated as future work, not
-attempted here.}
-\label{tab:status}
-\end{table}
-
 \section{Experiments}
+\label{sec:experiments}
 
 Table~\ref{tab:main} compares policies on $20$ arms, $60$ rounds, $25$ seeds.
 
@@ -1243,58 +1260,14 @@ At the same scale as above, SECI matches or beats greedy at \emph{every} $q$
 tested, confirmed across 30 seeds, staying within $0.01\%$--$1.53\%$ of the true
 optimum throughout, where plain ECI's gap grows to roughly $11\%$ at $q=1$.
 
-\paragraph{An unreliable Monte Carlo estimate, excluded rather than reported.}
-A Monte Carlo rollout was tested as an independent large-scale reference. It
-failed a basic sanity check --- policy improvement should never make an
-estimate worse with more compute, and increasing rollout depth moved the
-estimate substantially in the wrong direction, the signature of an
-implementation error rather than noise. The cause: planning-phase and
-actual-trajectory random draws shared one stream, so different compute
-budgets consumed different amounts of randomness before each real step,
-changing the realised trajectory for reasons unrelated to policy quality. With
-this corrected, the estimate stabilised but remained theoretically suspect (a
-valid rollout cannot underperform its base policy), and cross-checking it
-against exact DP at $n=6$ showed a 4--5\% undershoot even at high depth. The
-tool is excluded on these grounds; the fix is retained in the released code,
-but no conclusion is drawn from its output.
-
-Exact computation itself goes further than the original small-scale check used:
-$n=12$ runs in roughly $12$ seconds. Re-running the full $q$-sweep there, real
-ground truth throughout:
-
-\begin{center}
-\begin{tabular}{rrrrrr}
-\toprule
-$q$ & $V^\star$ & greedy & greedy gap & SECI & SECI gap \\
-\midrule
-0.0 & 11.299 & 10.482 & 7.2\% & 11.096 & $\mathbf{1.80\%}$ \\
-0.2 & 4.171 & 3.994 & 4.3\% & 4.136 & $\mathbf{0.84\%}$ \\
-0.4 & 2.765 & 2.736 & 1.1\% & 2.757 & $\mathbf{0.29\%}$ \\
-0.6 & 1.921 & 1.916 & 0.3\% & 1.919 & $\mathbf{0.11\%}$ \\
-0.8 & 1.512 & 1.512 & 0.0\% & 1.512 & $\mathbf{0.03\%}$ \\
-\bottomrule
-\end{tabular}
-\end{center}
-
-SECI captures $4$--$5\times$ more of the available opportunity than greedy at
-every $q$ with meaningful opportunity remaining, confirmed at double the arm
-count of the original check. The absolute margin between the two shrinks with
-$q$ because the opportunity itself shrinks --- greedy's own gap collapses from
-$7.2\%$ to $0.0\%$ --- not because SECI's relative advantage weakens.
-
-\paragraph{A scale-dependent shortfall, and its cause.} At larger scale SECI
-beats plain ECI everywhere but trails greedy by a small margin in the mid-$q$
-range. Varying cluster size and count independently leaves this gap unchanged,
-ruling out cluster structure as the cause; sweeping $n$ directly shows both
-policies' values turning \emph{negative} once $n$ exceeds roughly $20$ under a
-$\delta$ held fixed across the sweep. The cause is an unfair comparison, not a
-failure of the correction:
-total burden capacity $\delta\sum_i e_i$ scales with $n$ while $\delta$ was held
-constant, so the $n=40$ instances were a strictly harder problem than the $n=6$
-ones. Rescaling $\delta$ to hold problem difficulty comparable across scale closes
-the gap to noise level ($-0.029$ to $+0.417$ against values of $1.17$--$37.46$,
-i.e. under $0.2\%$ except where SECI wins outright), while SECI continues to beat
-plain ECI at every $q$ without exception.
+\paragraph{A rollout cross-check, and a scale-fairness diagnosis.} An initial
+Monte Carlo rollout used as an independent scale-level reference failed a
+basic sanity check and was traced to an implementation bug rather than
+reported; a subsequent scale comparison at $n=40$ initially appeared to show
+SECI trailing greedy, which turned out to be an unfair comparison (holding
+$\delta$ fixed while $n$ grew) rather than a real shortfall. Both episodes are
+given in full, since the debugging process is itself informative, in
+Appendix~F.
 
 \paragraph{Empirical finding (not a theorem).}
 The paper's central practical recommendation --- specify $\kappa$, do not attempt
