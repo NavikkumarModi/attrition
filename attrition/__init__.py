@@ -35,7 +35,14 @@ from .commitment import (TerminalCommitment, optimal_commitment_policy,
                          evaluate_commitment_policy)
 from .engines import (LotkaVolterraTumour, derive_arm_parameters,
                       PlatformTrialEngine, derive_trial_parameters,
-                      DesignSpaceEngine, derive_design_space_parameters)
+                      DesignSpaceEngine, derive_design_space_parameters,
+                      derive_antibiotic_parameters)
+from .llm import LLMClient, MockLLMClient, CallableLLMClient
+from .persona import Persona, PHARMA_PERSONAS
+from .llm_policy import LLMPolicy
+from .population import (Population, simulate_population,
+                         simulate_population_simultaneous,
+                         compare_population_to_baselines)
 
 __version__ = "0.2.0"
 __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
@@ -45,10 +52,16 @@ __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
            "LotkaVolterraTumour", "derive_arm_parameters",
            "PlatformTrialEngine", "derive_trial_parameters",
            "DesignSpaceEngine", "derive_design_space_parameters",
+           "derive_antibiotic_parameters",
            "ConsumableBanditEnv", "MultiAgentConsumableEnv",
            "SCENARIOS", "load", "describe",
            "TerminalCommitment", "optimal_commitment_policy",
            "greedy_commitment_policy", "edge_first_policy",
            "evaluate_commitment_policy",
            "SimultaneousPool", "planner_value_simultaneous",
-           "decentralised_value_simultaneous", "price_of_anarchy"]
+           "decentralised_value_simultaneous", "price_of_anarchy",
+           "LLMClient", "MockLLMClient", "CallableLLMClient",
+           "Persona", "PHARMA_PERSONAS", "LLMPolicy",
+           "Population", "simulate_population",
+           "simulate_population_simultaneous",
+           "compare_population_to_baselines"]

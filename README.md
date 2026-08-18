@@ -99,6 +99,37 @@ for row in result["log"][:10]:
 
 ---
 
+## LLM agent populations
+
+`attrition.population` runs several LLM-driven policies against a shared
+consumable pool — an OASIS-style multi-agent layer built on the primitives
+above, first applied to pharma (an `antibiotic-stewardship` scenario: several
+prescribers whose broad-spectrum choices select for resistance that degrades
+future treatment options for everyone). No API key required: it defaults to a
+deterministic offline `MockLLMClient`.
+
+```python
+from attrition import (Population, PHARMA_PERSONAS, MockLLMClient,
+                       ConsumableBandit, derive_antibiotic_parameters,
+                       simulate_population)
+
+v, p, e, _ = derive_antibiotic_parameters()
+population = Population.from_personas(
+    [PHARMA_PERSONAS["dr-conservative"], PHARMA_PERSONAS["dr-aggressive"]],
+    client=MockLLMClient())
+
+env = ConsumableBandit(v, p, e, delta=0.35, horizon=9, seed=0)
+result = simulate_population(env, population)
+print(result["system_value"], result["system_regret"])
+```
+
+To use a real model instead of `MockLLMClient`, wrap your provider's SDK in a
+function and pass `CallableLLMClient(that_function)` as `client` — see
+`attrition/llm.py`. Full walkthrough, including the genuine-price-of-anarchy
+simultaneous-action version: `examples/04_pharma_population.py`.
+
+---
+
 ## The model
 
 Arm `a` has value `v_a`, destruction probability `p_a`, and externality

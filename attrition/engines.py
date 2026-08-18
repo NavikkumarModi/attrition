@@ -14,6 +14,14 @@ Implemented:
     DesignSpaceEngine     -- process development where an out-of-spec run narrows
                              the defensible filing envelope for every later
                              operating choice.
+    derive_antibiotic_parameters -- susceptible/resistant bacterial competition
+                             under antibiotic selection pressure. Reuses
+                             `LotkaVolterraTumour` unchanged: sensitive/resistant
+                             clonal competition under drug-induced kill is the
+                             same two-compartment structure as susceptible/
+                             resistant bacterial competition under antibiotic
+                             selection pressure, a standard isomorphism in the
+                             antimicrobial-resistance literature.
 
 Not a clinical model. It is the standard two-compartment competition system used
 in the adaptive-therapy literature, reduced to the minimum that exhibits
@@ -24,7 +32,8 @@ import numpy as np
 
 __all__ = ["LotkaVolterraTumour", "derive_arm_parameters",
            "PlatformTrialEngine", "derive_trial_parameters",
-           "DesignSpaceEngine", "derive_design_space_parameters"]
+           "DesignSpaceEngine", "derive_design_space_parameters",
+           "derive_antibiotic_parameters"]
 
 
 class LotkaVolterraTumour:
@@ -146,6 +155,41 @@ def derive_arm_parameters(doses=None, engine_kwargs=None, horizon=30,
                   f"kappa={p_a*e_a:.4f}")
 
     return (np.array(v), np.array(p), np.array(e), doses)
+
+
+def derive_antibiotic_parameters(spectrum=None, engine_kwargs=None, horizon=20,
+                                 susceptible_floor=0.02, s0_sd=0.26, verbose=False):
+    """Derive (v, p, e) for antibiotic choices from susceptible/resistant
+    bacterial competition.
+
+    Reuses `LotkaVolterraTumour` unchanged: susceptible bacteria under
+    antibiotic selection pressure play the role of the drug-sensitive
+    compartment, resistant bacteria the drug-resistant compartment. `spectrum`
+    indexes antibiotic choice from narrow (low selection pressure) to broad
+    (high selection pressure), standing in for `derive_arm_parameters`'s dose.
+
+    For each choice:
+
+      v_a  immediate reduction in bacterial burden this course achieves
+      p_a  probability this course drives the susceptible population below
+           `susceptible_floor` -- the irreversible event, since once the
+           susceptible strain is suppressed it can no longer hold the
+           resistant strain in check (competitive release)
+      e_a  permanent loss of future clearance once that happens: the
+           difference in achievable burden reduction, over the remaining
+           horizon, between a population that retains its susceptible strain
+           and one that has lost it
+
+    Not a clinical model. See `LotkaVolterraTumour`'s caveat: this is the
+    standard mechanism, reduced to the minimum that exhibits the effect, not a
+    model fit to real resistance-surveillance data.
+    """
+    spectrum = np.linspace(0.15, 1.0, 5) if spectrum is None else np.asarray(spectrum)
+    engine_kwargs = {"dt": 5.0} if engine_kwargs is None else engine_kwargs
+    v, p, e, _ = derive_arm_parameters(doses=spectrum, engine_kwargs=engine_kwargs,
+                                       horizon=horizon, sensitive_floor=susceptible_floor,
+                                       s0_sd=s0_sd, verbose=verbose)
+    return v, p, e, spectrum
 
 
 # ============================================================ platform trials

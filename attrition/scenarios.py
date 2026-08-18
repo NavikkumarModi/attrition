@@ -16,7 +16,7 @@ import numpy as np
 
 from .envs import ConsumableBanditEnv, MultiAgentConsumableEnv
 from .engines import (derive_arm_parameters, derive_trial_parameters,
-                      derive_design_space_parameters)
+                      derive_design_space_parameters, derive_antibiotic_parameters)
 
 __all__ = ["SCENARIOS", "load", "describe"]
 
@@ -95,6 +95,27 @@ SCENARIOS = {
         "agents": 1,
         "build": lambda: (derive_design_space_parameters(n_settings=6)[:3],
                           dict(delta=0.6, horizon=8)),
+    },
+
+    # ------------------------------------------------------------ pharma pop
+    "antibiotic-stewardship": {
+        "description": "Several prescribers drawing on one population's "
+                       "antimicrobial susceptibility. Choosing broader-"
+                       "spectrum coverage clears the current patient's "
+                       "infection more reliably but selects for resistance "
+                       "that degrades future treatment options for everyone.",
+        "phenomenon": "zero-regret ruin under a shared resistance pool",
+        "expected_behaviour": "each prescriber's greedy (broadest-coverage) "
+                              "choice is privately zero-regret, with kappa "
+                              "dispersed across spectrum choices exactly as "
+                              "in adaptive-therapy. Turn-taking here "
+                              "(Theorem 6) has no genuine price of anarchy; "
+                              "see attrition.population and "
+                              "examples/04_pharma_population.py for the "
+                              "simultaneous-action version where one exists.",
+        "agents": 3,
+        "build": lambda: (derive_antibiotic_parameters()[:3],
+                          dict(delta=0.35, horizon=9)),
     },
 
     # -------------------------------------------------------------- stress
