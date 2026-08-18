@@ -873,6 +873,29 @@ regime. This is reported as a genuine negative result: the bound appears loose
 not only in constant but in asymptotic order too, a more precise
 characterisation than simply ``loose.''
 
+\paragraph{A mechanistic account, though not yet a general theorem.} A
+follow-up attempt at a genuinely tighter bound, adapting a compensated-coupling
+argument, produced one new provable lemma and two verified mechanisms that
+together explain the saturate-then-decay behaviour above, though a fully
+general closed-form bound remains open. Writing $W(S,t):=V(S,t)+B(S)$, which
+satisfies exactly $W(S,t)=\max_a[v_a-\kappa_a+p_aW(S{\setminus}a,t{+}1)+(1{-}p_a)W(S,t{+}1)]$
+with no constant-$\kappa$ assumption needed, a max-is-1-Lipschitz argument
+comparing $W$ to $W_{\mathrm{bar}}$ (the same recursion with every $\kappa_a$
+replaced by the mean $\bar\kappa$) gives
+$|W(S,t)-W_{\mathrm{bar}}(S,t)|\le(T{-}t)\,\delta\max_a|\kappa_a-\bar\kappa|$,
+verified to hold with exact equality in every test. Two further facts,
+verified but not assembled into a general theorem: restricted to rounds
+where ECI's action actually disagrees with the true optimal one, $\mathrm{reg}(S,t)$
+does not grow with the remaining horizon (correlation $-0.04$ across 62
+disagreement points); and the expected number of disagreement rounds along
+ECI's own trajectory saturates near the pool's exhaustion scale and then
+decays, rather than growing with $T$. A rigorous bound on the disagreement
+count itself---the one remaining piece---was not found: two natural
+candidates stayed empirically bounded but neither showed unambiguous general
+structure, and forcing a constant here risked fitting the test set rather
+than proving a real relationship, so it is left open rather than
+manufactured.
+
 \section{Corrections}
 
 \subsection{The externality-corrected index}

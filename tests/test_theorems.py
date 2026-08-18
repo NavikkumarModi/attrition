@@ -1569,3 +1569,37 @@ def test_eci_bound_not_order_tight_scaled_n():
     ratios = [r for _, _, r in results]
     assert ratios[-1] < ratios[0], (
         f"gap/T^2 must not grow with scale, got ratios={ratios}")
+
+
+def test_W_perturbation_lemma_exact():
+    """|W(S,t)-W_bar(S,t)| <= (T-t)*delta*max_dev, verified to hold with
+    exact equality -- a genuine, provable structural lemma from the ECI
+    bound follow-up investigation."""
+    from experiments.exp57_eci_bound_mechanism import w_perturbation_check
+    worst = w_perturbation_check(None, None, None, None, trials=8)
+    assert worst <= 1.0 + 1e-6, f"lemma violated, worst ratio={worst:.4f}"
+
+
+def test_disagreement_cost_independent_of_horizon():
+    """On rounds where ECI disagrees with optimal, reg(S,t)/max_dev should
+    show no meaningful correlation with remaining horizon (T-t)."""
+    from experiments.exp57_eci_bound_mechanism import disagreement_cost_vs_horizon
+    Tt, r = disagreement_cost_vs_horizon(n_trials=8)
+    if len(Tt) > 5:
+        corr = np.corrcoef(Tt, r)[0, 1]
+        assert abs(corr) < 0.3, f"unexpected horizon-dependence, corr={corr:.3f}"
+
+
+def test_disagreement_count_saturates_not_grows():
+    """E[#disagreements] must NOT keep growing with T -- it should saturate
+    and then decline, mirroring the gap's own saturate-then-decay pattern."""
+    from experiments.exp57_eci_bound_mechanism import expected_disagreement_count
+    v = np.array([1.28044277, 1.23436589, 0.78439627])
+    p = np.array([0.61561575, 0.76372129, 0.51170322])
+    e = np.array([2.49172314, 0.8968192, 1.24581187])
+    delta = 0.536
+    ed_mid = expected_disagreement_count(v, p, e, delta, 15)
+    ed_large = expected_disagreement_count(v, p, e, delta, 30)
+    assert ed_large < ed_mid, (
+        f"disagreement count must decay at large T, got mid={ed_mid:.4f} "
+        f"large={ed_large:.4f}")

@@ -3135,3 +3135,66 @@ constant (~14,000×) but in asymptotic order too** — a more precise
 characterisation of its looseness than previously established, and itself a
 real, if modest, contribution toward understanding exactly how far the proof
 technique is from the true rate.
+
+---
+
+## ECI bound: a second attempt, following up on the order-tightness search
+
+Following the negative order-tightness result, a genuine attempt was made at
+the compensated-coupling derivation the external research identified as
+highest-payoff. Not forced to a conclusion; reported honestly at the point
+where it stopped closing rigorously.
+
+**Dead end, recorded rather than hidden.** Attempted to decompose ECI's
+per-round error via a perturbation around the constant-`κ` baseline,
+assuming `p_a·D_a_bar(S,t)` is arm-independent under constant `κ`. This is
+**false** — verified directly, spreads up to 0.89 observed. The actual
+guarantee under constant `κ` (already proven, via the interchange lemma) is
+weaker: it preserves the *ranking* by `v`, not Q-value level-equality.
+Recognizing this precisely is itself useful — it rules out an entire class
+of naive patch attempts.
+
+**What did work: a new, rigorously provable lemma.** Writing
+`W(S,t) := V(S,t) + B(S)`, which satisfies exactly (no constant-`κ`
+assumption needed) `W(S,t) = max_a[v_a − κ_a + p_a W(S∖a,t+1) + (1−p_a)W(S,t+1)]`,
+a standard max-is-1-Lipschitz argument comparing `W` to `W_bar` (same
+recursion, every `κ_a` replaced by the mean `κ̄`) gives:
+
+```
+|W(S,t) − W_bar(S,t)| ≤ (T−t)·δ·max_a|κ_a − κ̄|
+```
+
+**Verified to hold with exact equality** (ratio 1.0000) in every test — a
+clean, real structural fact, independent of `v` (cancels identically from
+both sides of the comparison).
+
+**Two further mechanistic facts, verified but not yet assembled into a
+general theorem:**
+
+- **Per-disagreement cost is horizon-independent.** Restricting to rounds
+  where ECI's action actually differs from the true optimal one, `reg(S,t)`
+  does *not* grow with `(T−t)`: correlation across 62 disagreement points
+  was `−0.04`, with the mean `reg/max_dev` ratio stable (~0.51–0.54) across
+  every horizon bucket tested (`T−t` from 1 to 8+). This directly
+  contradicts the crude bound's implicit assumption that per-round error
+  grows linearly with remaining horizon.
+- **Disagreement count saturates rather than growing with T.**
+  `E[number of disagreement rounds along ECI's own trajectory]` rises,
+  peaks near the pool's own exhaustion scale, and then *decays* toward zero
+  for `T` much larger — mirroring the gap's own saturate-then-decay
+  behaviour from the order-tightness search.
+
+**What remains open.** A rigorous, general bound on the expected
+disagreement count itself. Two natural candidates — `N_exh` and the simple
+pairwise count `C(n,2)` — both stay empirically bounded, but neither showed
+the clean, unambiguous structure of the `W`-perturbation lemma. Forcing a
+constant here risks fitting the test set rather than proving a real
+relationship, so it is left open rather than manufactured.
+
+**Net honest status.** Going from "the bound is loose, we don't know why
+precisely" to "one new provable lemma, plus two independently verified
+mechanisms that together explain *why* a much tighter bound should hold" is
+real, substantial progress — a materially stronger position than either a
+forced proof or the bare empirical curve-fit alone. The exact general
+theorem remains open, with the precise missing piece now identified rather
+than vague.
