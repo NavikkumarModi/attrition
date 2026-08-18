@@ -16,7 +16,7 @@ externality $\kappa_a = p_a e_a$, determines whether greedy is optimal: constant
 $\kappa$ is proven necessary and sufficient---sufficiency via an adjacent-
 interchange lemma and backward induction, holding at every horizon without
 qualification, verified independently across 450 adversarial instances. The
-parameter is also (ii) subject to an irreducible estimation error
+parameter is also (ii) subject to a consumption-induced estimation floor
 $\mathrm{SE} \ge 2\sigma/\sqrt{\min(T,\sum_j 1/p_j)}$ that \emph{does not decrease
 with the horizon}, because each arm supplies exactly one before/after transition and
 the sample budget is capped by consumption rather than time. The quantity that
@@ -1268,7 +1268,7 @@ the gap to noise level ($-0.029$ to $+0.417$ against values of $1.17$--$37.46$,
 i.e. under $0.2\%$ except where SECI wins outright), while SECI continues to beat
 plain ECI at every $q$ without exception.
 
-\begin{corollary}
+\paragraph{Empirical finding (not a theorem).}
 The paper's central practical recommendation --- specify $\kappa$, do not attempt
 to estimate it --- extends to correlated destruction via SECI, which requires
 only the additional cluster shock rate $q$, and matches or beats greedy at every
@@ -1280,7 +1280,6 @@ effective-horizon correction based on an arm's expected survival time under
 shock risk --- was attempted and performed \emph{worse}, which is itself
 informative: the more theoretically motivated derivation was wrong, and testing
 against exact DP caught it before it became a claimed result.
-\end{corollary}
 
 \section{Limitations}
 
@@ -1302,15 +1301,15 @@ most promising direction this work opens.
 
 When actions consume the action set, regret is measured against an optimum the
 learner has already degraded. A policy can hold regret at exactly zero while
-driving value arbitrarily negative, and the parameter that would let it do better admits an
-irreducible estimation error that worsens precisely as it becomes important, because
+driving value arbitrarily negative, and the parameter that would let it do better admits a
+consumption-induced estimation floor that worsens precisely as it becomes important, because
 acquiring each observation destroys the resource being priced. The practical consequence is
 direct: for irreversible actions, externality costs must be \emph{specified}, not
 discovered. A crude uniform upper bound outperforms every learned estimator we
 tested.
 
-\paragraph{Code and reproducibility.} The library, released as \textsc{Attrition} (Agent Testbed for Task, Resource and Irreversible-Tradeoff Investigation), all 50 experiments including
-negative and falsified results, and a regression suite of 76 tests --- at least
+\paragraph{Code and reproducibility.} The library, released as \textsc{Attrition} (Agent Testbed for Task, Resource and Irreversible-Tradeoff Investigation), all 55 experiments including
+negative and falsified results, and a regression suite of 96 tests --- at least
 one per theorem, several per result where a claim has multiple independently
 checkable parts --- are released openly. Every figure regenerates from the
 library and the exact-DP reference via a single command, all random seeds are
