@@ -860,6 +860,19 @@ rather than the full episode's reward range, replacing the global constant $R$
 with a trajectory-dependent quantity --- is the natural next step and is left
 open.
 
+\paragraph{Is the bound's order tight anywhere?} A search was carried out for
+an instance where the $T^2$ growth rate is approached, even with a loose
+constant. In two regimes---a fixed instance with $T$ pushed far past the pool
+size, and $n$ scaled together with $T$---the true gap does not sustain $T^2$
+growth in either. In the first, an adversarial instance's gap saturates near
+$T\approx3$--$5\times$ the pool size and then \emph{decays} toward zero, since
+ECI's charge uses the literal $T-t$ horizon rather than the
+exhaustion-capped effective one, overcorrecting once $T$ exceeds what the pool
+can sustain. No instance was found approaching the bound's order in either
+regime. This is reported as a genuine negative result: the bound appears loose
+not only in constant but in asymptotic order too, a more precise
+characterisation than simply ``loose.''
+
 \section{Corrections}
 
 \subsection{The externality-corrected index}

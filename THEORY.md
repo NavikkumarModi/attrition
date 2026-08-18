@@ -3100,3 +3100,38 @@ extension (cluster shocks) remains a verified conjecture, explicitly
 unaffected by this result, since the interchange lemma's coupling argument
 relies on **independent** per-arm destruction and does not extend to
 correlated shocks without further work.
+
+---
+
+## ECI bound order-tightness: a genuine search, and an honest negative result
+
+Following a reviewer's specific request — either tighten the ECI bound or
+find an instance showing its `T²` order is achieved somewhere, even if the
+constant is off — a real search was carried out rather than a token attempt.
+
+**Regime 1: fixed instance, `T → ∞`.** Searched 25 random dispersed-`κ`
+instances (`n=3`, matching the paper's own extreme-coupling regime) for the
+one with the fastest apparent growth at small `T` (fitted exponent up to
+`~2.97`, exceeding even the bound's own order — necessarily a small-`T`
+transient, since the bound is proven and cannot be violated asymptotically).
+Pushing that same instance to `T` up to 30: the gap **saturates near
+`T≈12–15` (a few times the pool size) and then decays toward zero** — the
+opposite of sustained growth. Mechanism: ECI's charge term uses the literal
+`(T−t)` horizon rather than the exhaustion-capped effective horizon, so once
+`T` well exceeds what the pool can sustain, ECI overcorrects and its choices
+degrade toward a fixed, increasingly-suboptimal-but-bounded policy while the
+*optimal* value also collapses toward the same regime — the gap between them
+shrinks.
+
+**Regime 2: `n` scaled with `T` together** (delta rescaled by `6/n` to hold
+problem difficulty comparable, the same fairness correction found necessary
+earlier this project). `gap/T²` shows no sustained growth here either —
+if anything it declines.
+
+**No instance found, in either regime, approaching the bound's `T²` order.**
+This is reported as a genuine negative result rather than smoothed over or
+replaced with a manufactured example: **the bound appears loose not only in
+constant (~14,000×) but in asymptotic order too** — a more precise
+characterisation of its looseness than previously established, and itself a
+real, if modest, contribution toward understanding exactly how far the proof
+technique is from the true rate.

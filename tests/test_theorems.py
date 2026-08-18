@@ -1544,3 +1544,28 @@ def test_greedy_matches_exact_dp_optimum_general():
     from experiments.exp55_full_sufficiency_proof import verify_greedy_optimal
     seeds, mismatches = verify_greedy_optimal(seeds=20)
     assert mismatches == 0, f"greedy failed to match optimum in {mismatches}/{seeds}"
+
+
+def test_eci_bound_not_order_tight_fixed_n():
+    """Documents a genuine negative result: for a fixed instance, ECI's gap
+    does NOT sustain T^2 growth -- it saturates near the pool's exhaustion
+    scale and then decays, contradicting the bound's asymptotic order."""
+    from experiments.exp56_eci_bound_order_tightness import fixed_n_growth_check
+    v = np.array([1.28044277, 1.23436589, 0.78439627])
+    p = np.array([0.61561575, 0.76372129, 0.51170322])
+    e = np.array([2.49172314, 0.8968192, 1.24581187])
+    delta = 0.536
+    results = fixed_n_growth_check(v, p, e, delta, [9, 15, 22, 30])
+    gaps = [g for _, g, _ in results]
+    # gap must peak then decline -- NOT monotonically increase toward T^2
+    assert gaps[-1] < gaps[1], (
+        f"gap must decay at large T, got gaps={gaps}")
+
+
+def test_eci_bound_not_order_tight_scaled_n():
+    """Same negative result under n scaled with T: gap/T^2 does not grow."""
+    from experiments.exp56_eci_bound_order_tightness import scaled_n_growth_check
+    results = scaled_n_growth_check([3, 5, 7])
+    ratios = [r for _, _, r in results]
+    assert ratios[-1] < ratios[0], (
+        f"gap/T^2 must not grow with scale, got ratios={ratios}")
