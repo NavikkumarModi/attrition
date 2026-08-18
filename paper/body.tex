@@ -143,18 +143,18 @@ independently checkable parts.
 
 \section{Related work}
 
-\textbf{Rotting bandits} \cite{levine2017,seznec2019,seznec2020} model rewards that
+\textbf{Rotting bandits} \citep{levine2017,seznec2019,seznec2020} model rewards that
 decay with the number of pulls (\emph{rested}) or with elapsed time
-(\emph{restless}); Seznec et al.~\cite{seznec2020} give a single adaptive-window
+(\emph{restless}); \citet{seznec2020} give a single adaptive-window
 policy near-optimal for both. Decay there is gradual rather than removal, and
 critically the learner is assumed to know which regime it is in.
-\textbf{Mortal bandits} \cite{chakrabarti2008} have arms with stochastic lifetimes,
+\textbf{Mortal bandits} \citep{chakrabarti2008} have arms with stochastic lifetimes,
 but expiry is exogenous. \textbf{Blocking bandits} make a pulled arm temporarily
-unavailable. \textbf{Sleeping bandits} \cite{kleinberg2010} allow arbitrary
+unavailable. \textbf{Sleeping bandits} \citep{kleinberg2010} allow arbitrary
 exogenous availability. None of these couple arms: destroying one does not change
 another's reward distribution.
 
-\textbf{Bandits with knapsacks} \cite{badanidiyuru2013} is the closest structural
+\textbf{Bandits with knapsacks} \citep{badanidiyuru2013} is the closest structural
 neighbour: playing an arm consumes resources and the process halts when a budget is
 exhausted. The budget is global and exogenous, and consumption leaves other arms'
 rewards untouched. Here consumption permanently degrades \emph{every} future
@@ -162,7 +162,7 @@ reward. That difference is why the governing quantity is $\kappa = p\cdot e$ rat
 than a consumption rate.
 
 \textbf{Bandit learning with positive externalities}
-\cite{shah2018} is the only prior work we are aware of that places externalities in
+\citet{shah2018} is the only prior work we are aware of that places externalities in
 a bandit model. There, satisfied users attract similar users, so externalities are
 positive and act on the \emph{arrival process}; the authors show UCB incurs linear
 regret and develop balanced exploration. Our externalities are negative, act on
@@ -171,8 +171,8 @@ worth drawing: in both settings a standard algorithm fails badly, indicating tha
 externality structure of either sign breaks classical guarantees.
 
 \textbf{Estimation under adaptive data collection.} A separate literature studies
-bias and variance in estimates built from bandit-collected data: Nie et
-al.~\cite{nie2018} show common bandit algorithms produce systematically biased
+bias and variance in estimates built from bandit-collected data:
+\citet{nie2018} show common bandit algorithms produce systematically biased
 sample means because the data-generating process is entangled with the
 decisions being evaluated. Theorem~\ref{thm:floor} is in this family but is not
 a bias result: we hold the estimator unbiased (ordinary least squares) and
@@ -199,7 +199,7 @@ makers, not the actions, and is independent of what is played.
 \paragraph{The novelty claim, stated precisely.} We do not claim novelty for any one
 ingredient. Irreversible arm removal appears in mortal bandits; consumption appears
 in knapsacks; decay with pulls appears in rotting bandits; cross-arm externalities
-appear in \cite{shah2018}. The combination we study---\emph{(a)} removal that is
+appear in \citep{shah2018}. The combination we study---\emph{(a)} removal that is
 permanent, \emph{(b)} triggered by the learner's own action, \emph{(c)} carrying a
 negative externality onto every remaining arm's reward, and \emph{(d)} evaluated
 against a benchmark that conditions on the already-damaged state---is, to our
@@ -614,7 +614,7 @@ Condition on the realised pull sequence $(a_1,\dots,a_N)$ and the realised
 destruction times, so the design matrix is fixed. Consider first the oracle
 problem in which every $e_j$, $j \ne i$, is \emph{known} and subtracted from
 $y_t$ exactly, leaving $v_1,\dots,v_n$ and $\delta e_i$ as the unknowns. By the
-Frisch--Waugh--Lovell theorem~\cite{frischwaugh1933,lovell1963}, the variance of $\delta\hat e_i$ in this
+Frisch--Waugh--Lovell theorem~\citep{frischwaugh1933,lovell1963}, the variance of $\delta\hat e_i$ in this
 regression equals $\sigma^2/\mathrm{RSS}_i$, where $\mathrm{RSS}_i$ is the
 residual sum of squares from regressing the treatment indicator
 $\mathbf{1}[t>\tau_i]$ on the arm-pull indicators. Writing $n_a^{(b)}, n_a^{(c)}$
@@ -750,7 +750,7 @@ For any policy $\pi$, $V^\star(S_0,0) - W(\pi) = \mathbb{E}_\pi\big[\sum_t
 Q^\star(\pi(S,t),S,t)$ and the expectation is over $\pi$'s own trajectory
 distribution. This is the finite-horizon, undiscounted, deterministic-policy
 specialisation of the performance difference lemma of
-Kakade and Langford~\cite{kakadelangford2002}, proved directly below for this
+\citet{kakadelangford2002}, proved directly below for this
 MDP class rather than invoked from the discounted, stochastic-policy general
 form.
 \end{theorem}
@@ -864,7 +864,7 @@ For any deterministic Markov policy $\pi_0$, define $\pi_1(S,t) :=
 \arg\max_a Q^{\pi_0}(a,S,t)$, where $Q^{\pi_0}$ is computed from $\pi_0$'s own
 value function. Then $V^{\pi_1}(S,t) \ge V^{\pi_0}(S,t)$ for all $(S,t)$. This
 is the classical conservative-policy-improvement guarantee of
-Kakade and Langford~\cite{kakadelangford2002}, specialised to a setting where it
+\citet{kakadelangford2002}, specialised to a setting where it
 holds \emph{exactly} rather than approximately: our finite-horizon,
 undiscounted MDP with a single deterministic transition structure admits a
 short direct proof with no total-variation penalty term, unlike the general
@@ -1348,36 +1348,36 @@ claim breaks.
 \LONGFORM
 
 \begin{thebibliography}{9}
-\bibitem{badanidiyuru2013} A.~Badanidiyuru, R.~Kleinberg, A.~Slivkins.
+\bibitem[Badanidiyuru et~al.(2013)]{badanidiyuru2013} A.~Badanidiyuru, R.~Kleinberg, A.~Slivkins.
   Bandits with knapsacks. \emph{FOCS}, 2013.
-\bibitem{chakrabarti2008} D.~Chakrabarti, R.~Kumar, F.~Radlinski, E.~Upfal.
+\bibitem[Chakrabarti et~al.(2008)]{chakrabarti2008} D.~Chakrabarti, R.~Kumar, F.~Radlinski, E.~Upfal.
   Mortal multi-armed bandits. \emph{NeurIPS}, 2008.
-\bibitem{dixitpindyck1994} A.~K.~Dixit, R.~S.~Pindyck.
+\bibitem[Dixit and Pindyck(1994)]{dixitpindyck1994} A.~K.~Dixit, R.~S.~Pindyck.
   \emph{Investment Under Uncertainty}. Princeton University Press, 1994.
-\bibitem{frischwaugh1933} R.~Frisch, F.~V.~Waugh.
+\bibitem[Frisch and Waugh(1933)]{frischwaugh1933} R.~Frisch, F.~V.~Waugh.
   Partial time regressions as compared with individual trends.
   \emph{Econometrica}, 1933.
-\bibitem{kakadelangford2002} S.~Kakade, J.~Langford.
+\bibitem[Kakade and Langford(2002)]{kakadelangford2002} S.~Kakade, J.~Langford.
   Approximately optimal approximate reinforcement learning. \emph{ICML}, 2002.
-\bibitem{kleinberg2010} R.~Kleinberg, A.~Niculescu-Mizil, Y.~Sharma.
+\bibitem[Kleinberg et~al.(2010)]{kleinberg2010} R.~Kleinberg, A.~Niculescu-Mizil, Y.~Sharma.
   Regret bounds for sleeping experts and bandits. \emph{Machine Learning}, 2010.
-\bibitem{koutsoupias1999} E.~Koutsoupias, C.~Papadimitriou.
+\bibitem[Koutsoupias and Papadimitriou(1999)]{koutsoupias1999} E.~Koutsoupias, C.~Papadimitriou.
   Worst-case equilibria. \emph{STACS}, 1999.
-\bibitem{levine2017} N.~Levine, K.~Crammer, S.~Mannor.
+\bibitem[Levine et~al.(2017)]{levine2017} N.~Levine, K.~Crammer, S.~Mannor.
   Rotting bandits. \emph{NeurIPS}, 2017.
-\bibitem{lovell1963} M.~C.~Lovell.
+\bibitem[Lovell(1963)]{lovell1963} M.~C.~Lovell.
   Seasonal adjustment of economic time series and multiple regression analysis.
   \emph{Journal of the American Statistical Association}, 1963.
-\bibitem{nie2018} X.~Nie, X.~Tian, J.~Taylor, J.~Zou.
+\bibitem[Nie et~al.(2018)]{nie2018} X.~Nie, X.~Tian, J.~Taylor, J.~Zou.
   Why adaptively collected data have negative bias and how to correct for it.
   \emph{AISTATS}, 2018.
-\bibitem{seznec2019} J.~Seznec, A.~Locatelli, A.~Carpentier, A.~Lazaric,
+\bibitem[Seznec et~al.(2019)]{seznec2019} J.~Seznec, A.~Locatelli, A.~Carpentier, A.~Lazaric,
   M.~Valko. Rotting bandits are no harder than stochastic ones.
   \emph{AISTATS}, 2019.
-\bibitem{seznec2020} J.~Seznec, P.~Menard, A.~Lazaric, M.~Valko.
+\bibitem[Seznec et~al.(2020)]{seznec2020} J.~Seznec, P.~Menard, A.~Lazaric, M.~Valko.
   A single algorithm for both restless and rested rotting bandits.
   \emph{AISTATS}, 2020.
-\bibitem{shah2018} V.~Shah, R.~Johari, J.~Scheinkman.
+\bibitem[Shah et~al.(2018)]{shah2018} V.~Shah, R.~Johari, J.~Scheinkman.
   Bandit learning with positive externalities. \emph{NeurIPS}, 2018.
 \end{thebibliography}
 
