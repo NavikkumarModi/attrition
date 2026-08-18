@@ -406,15 +406,14 @@ instance.
 
 \begin{proof}[Sufficiency]
 \label{proof:char}
-An earlier derivation argued
+A natural but incorrect derivation argues
 $\mathbb{E}_\pi[\sum_t B(S_t)] = \delta\kappa\,\mathbb{E}[N(N-1)/2]$ via
 $\mathbb{E}[\mathbf{1}[\text{destruction at }s]\,(N-s)] = p_{a_s}\,\mathbb{E}[N-s]$,
 treating the destruction indicator at round $s$ as independent of the
 remaining episode length. \textbf{This step is false in general}, and so is the
 closed-form value it produces: on a three-arm test instance, direct computation
 gives $\mathbb{E}[\sum_t B(S_t)] = 2.8770$ against a predicted
-$\delta\kappa\,\mathbb{E}[N(N{-}1)/2] = 3.5537$. This error was identified through
-external review and verified independently before revising the record. We prove
+$\delta\kappa\,\mathbb{E}[N(N{-}1)/2] = 3.5537$. We prove
 sufficiency directly instead, via an interchange argument.
 
 \begin{lemma}[Adjacent interchange under constant $\kappa$]
@@ -466,8 +465,7 @@ resulting state has one fewer round remaining, where greedy is optimal by
 the inductive hypothesis. Hence selecting the max-$v$ arm now and continuing
 greedily is optimal at $(S,t)$. $\blacksquare$
 
-This argument succeeds where two earlier strategies this project attempted
-did not: \emph{pathwise rearrangement invariance} for a fixed realisation of
+This argument succeeds where two natural but incorrect strategies fail: \emph{pathwise rearrangement invariance} for a fixed realisation of
 attempt-counts is false (a two-arm instance gives burden $30$ under one
 scheduling, $1$ under the reverse), and \emph{pathwise invariance under a
 global per-arm coin coupling across structurally different policies} is
@@ -479,7 +477,7 @@ two falsified attempts already established), and builds arbitrary
 reorderings from a finite chain of such individually-justified local steps
 rather than asserting global pathwise equivalence directly.
 
-\emph{Verification, not taken on faith.} An initial stress test compared
+\emph{Empirical verification of the bubble inequality.} An initial stress test compared
 bubbled (max-$v$ moved to the front) against original (max-$v$ delayed
 behind a block) policies for exact equality and found real discrepancies,
 concentrated in short-horizon cases with longer blocks---checking their
@@ -510,14 +508,14 @@ Separately, $N$ is policy-independent whenever $T \ge N_{\mathrm{exh}}$: arm
 $j$ absorbs exactly $G_j \sim \mathrm{Geometric}(p_j)$ pulls before
 destruction, and every pull is allocated to exactly one arm, so
 $N_{\mathrm{exh}} = \sum_j G_j$ regardless of allocation order. This fact
-does not depend on the retracted step and is used in the necessity
+does not depend on the flawed factorisation and is used in the necessity
 construction below.
 \end{proof}
 
 \begin{proof}[Necessity]
 The hot/safe construction of Theorem~\ref{thm:vacuity} has $\kappa_H = E > 0 =
 \kappa_S$ and gap exactly $m\delta E > 0$ by direct calculation, exhibiting the
-required instance. This direction does not depend on the retracted step above
+required instance. This direction does not depend on the flawed factorisation above
 and stands independently.
 \end{proof}
 
@@ -541,7 +539,7 @@ varying $\kappa$ (control, $T{=}5$, $n{=}10$) & $0.4444$--$1.0261$ & $7.3 \times
 Identical to machine precision in both regimes---including the exhausting case,
 where $N$ is random---and differing by three orders of magnitude when $\kappa$
 varies. This table's numbers were independently computed by direct DP and do not
-rely on the retracted closed form.
+rely on the incorrect closed form.
 
 Two further empirical checks. Varying $p$ and $e$ widely while pinning $\kappa$
 constant leaves greedy exactly optimal (0/10 instances broken, gap $0.000\%$);
@@ -644,7 +642,7 @@ Finally $N = \min(T, N_{\mathrm{exh}})$, and once $T$ exceeds $N_{\mathrm{exh}}$
 the binding constraint is the pool rather than the clock.
 \end{proof}
 
-\paragraph{A corrected step, recorded.} An earlier version of this proof treated
+\paragraph{A common pitfall.} A natural but incorrect approach treats
 the oracle problem's residual as a simple two-group difference of means with
 variance $\sigma^2(1/n_b+1/n_a)$ using \emph{global} pre/post counts. This is
 incorrect once $v_a$ is heterogeneous across arms: the residual after
@@ -652,18 +650,18 @@ subtracting known $e_j,\,j\ne i$, is $v_{a_t} - \delta e_i\mathbf{1}[t>\tau_i] +
 \eta_t$, still containing the unknown, arm-varying $v_{a_t}$ term, so a global
 mean difference conflates the treatment effect with whatever composition shift
 occurs in \emph{which arms happen to be pulled} before versus after $\tau_i$.
-The Frisch--Waugh--Lovell argument above replaces it with the exact,
+The Frisch--Waugh--Lovell argument above avoids this: the exact,
 arm-controlled variance and a direct AM--GM bound in place of AM--HM on global
-counts; the final bound $4\sigma^2/N$ is unchanged, but the route to it no
-longer assumes the flawed identity. Verified against the exact formula on 500
+counts give the same final bound $4\sigma^2/N$ without the flawed identity.
+Verified against the exact formula on 500
 random and deliberately adversarial pull sequences (fully segregated arms,
 skewed allocation): the AM--GM step $\mathrm{RSS}_i \le N/4$ held with zero
 violations, worst observed ratio $0.997$.
 
 All three components verify numerically: the variance formula matches Monte Carlo
 to within $0.1\%$; the AM--HM floor is attained exactly at the balanced split
-(ratio $1.0000$); and $\mathbb{E}[N] = \min(T, \sum_j 1/p_j)$ holds including when
-$T$ binds.
+(ratio $1.0000$); and $\mathbb{E}[N] \le \min(T, \sum_j 1/p_j)$ holds throughout,
+with the gap closing as $T$ grows past the exhaustion scale.
 
 The horizon-independence is stark, and Figure~\ref{fig:floor} makes it visible. At
 $p = 0.9$, increasing $T$ from $20$ to $320$---a sixteenfold increase---changes RMSE
@@ -795,9 +793,22 @@ losses ($\delta \in [0.02, 3.0]$), but it is loose --- $1{,}335\times$ to
 $72{,}569\times$ the exact gap, averaging roughly $14{,}000\times$. It proves
 $\mathrm{Gap}(\mathrm{ECI})$ is finite and scales as $O(T^2\delta)$, which matches
 the qualitative behaviour observed empirically, without matching its magnitude.
-Tightening it --- most plausibly by bounding $D_a$ through the burden actually
-accrued along $\pi$'s trajectory rather than the full episode's reward range ---
-is the natural next step and is left open.
+
+\paragraph{Why the bound is loose.} The looseness traces to a single step:
+Lemma~\ref{lem:magnitude} bounds $|V(S,t)|$ by $(T-t)R$, using $R$ as the
+\emph{worst-case} magnitude any single round's reward could reach anywhere in
+the state space. This is a global constant, blind to the trajectory actually
+taken --- it allows for burden that accumulates instantly and reward that sits
+at its extreme every round, neither of which happens along a typical or optimal
+path. Since $D_a(S,t)$ inherits this bound doubled, the argmax-perturbation step
+inherits it again, and the horizon sum in
+Theorem~\ref{thm:pd}'s telescoping compounds it a third time --- three
+successive worst-case substitutions, each individually valid, produce a bound
+far above what any single trajectory realises. Tightening it --- most plausibly
+by bounding $D_a$ through the burden actually accrued along $\pi$'s trajectory
+rather than the full episode's reward range, replacing the global constant $R$
+with a trajectory-dependent quantity --- is the natural next step and is left
+open.
 
 \section{Corrections}
 
@@ -1209,7 +1220,7 @@ arm for its cluster-mates' shared shock exposure in addition to $\kappa_a$ --- w
 tested and made matters \emph{worse}, falling below greedy at $q=0.7$. A working
 correction for correlated destruction is an open problem, not a solved one.
 
-\paragraph{A derived correction.} ECI's blind spot is that it only discourages
+\paragraph{An empirically motivated correction.} ECI's blind spot is that it only discourages
 \emph{pulling} an arm; it never accounts for the cost of \emph{not} pulling one,
 since a held-back arm can be destroyed by a correlated shock before it is ever
 used. As the shock rate $q$ rises, destruction increasingly happens regardless of
@@ -1220,26 +1231,32 @@ I_{\mathrm{SECI}}(a,t) = v_a - \delta\, p_a e_a (T-t)(1-q)^2,
 \]
 which reduces exactly to ECI at $q=0$ and degrades smoothly to greedy as
 $q\to1$ --- correctly, since preservation is worthless once destruction is
-certain regardless of action.
+certain regardless of action. The square is not derived; a plausible, unconfirmed
+reading is that deferring a pull requires the cluster to survive twice over ---
+once for the arm to remain available at the current decision, and again for
+the deferred value to still be collectable later --- so a single-factor
+$(1-q)$ discount, tested separately and found to underperform, accounts for only
+the first of these. This is offered as intuition, not a derivation; see below
+for a properly derived alternative that was also tried and performed worse.
 
 At the same scale as above, SECI matches or beats greedy at \emph{every} $q$
 tested, confirmed across 30 seeds, staying within $0.01\%$--$1.53\%$ of the true
 optimum throughout, where plain ECI's gap grows to roughly $11\%$ at $q=1$.
 
-\paragraph{Pushing exact computation further, rather than trusting an
-unvalidated approximation.} A Monte Carlo rollout was attempted as an
-independent large-scale reference. It failed a basic sanity check --- policy
-improvement should never make an estimate worse with more compute, and
-increasing rollout depth moved the estimate substantially in the wrong
-direction, the signature of a bug rather than noise. We found it: planning-phase
-and actual-trajectory random draws shared one stream, so different compute
+\paragraph{An unreliable Monte Carlo estimate, excluded rather than reported.}
+A Monte Carlo rollout was tested as an independent large-scale reference. It
+failed a basic sanity check --- policy improvement should never make an
+estimate worse with more compute, and increasing rollout depth moved the
+estimate substantially in the wrong direction, the signature of an
+implementation error rather than noise. The cause: planning-phase and
+actual-trajectory random draws shared one stream, so different compute
 budgets consumed different amounts of randomness before each real step,
-changing the realised trajectory for reasons unrelated to policy quality. Fixed,
-the estimate stabilised but remained theoretically suspect (a valid rollout
-cannot underperform its base policy), and cross-checking it against exact DP at
-$n=6$ showed a 4--5\% undershoot even at high depth. We abandoned the tool
-rather than report an unvalidated number, keeping the bug fix but drawing no
-conclusion from its output.
+changing the realised trajectory for reasons unrelated to policy quality. With
+this corrected, the estimate stabilised but remained theoretically suspect (a
+valid rollout cannot underperform its base policy), and cross-checking it
+against exact DP at $n=6$ showed a 4--5\% undershoot even at high depth. The
+tool is excluded on these grounds; the fix is retained in the released code,
+but no conclusion is drawn from its output.
 
 Exact computation itself goes further than the original small-scale check used:
 $n=12$ runs in roughly $12$ seconds. Re-running the full $q$-sweep there, real
