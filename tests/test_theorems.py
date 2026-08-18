@@ -1603,3 +1603,24 @@ def test_disagreement_count_saturates_not_grows():
     assert ed_large < ed_mid, (
         f"disagreement count must decay at large T, got mid={ed_mid:.4f} "
         f"large={ed_large:.4f}")
+
+
+def test_policy_iteration_converges_fast():
+    """Worst-case policy iteration should converge in a small number of
+    iterations (<=6, generous margin over the observed worst of 4), even
+    from deliberately adversarial starting policies -- the empirical
+    upgrade to the previously fully-open policy-improvement rate question."""
+    from experiments.exp58_policy_improvement_rate import count_iterations_to_convergence
+    rng = np.random.default_rng(50)
+    worst = 0
+    for _ in range(15):
+        n = int(rng.integers(3, 7))
+        T = n + 2
+        delta = rng.uniform(0.2, 2.0)
+        p = np.clip(rng.uniform(0.1, 0.9, n), 0.05, 1.0)
+        e = rng.uniform(0.2, 4.0, n)
+        v = rng.uniform(0.2, 4.0, n)
+        pick0 = lambda S, t: min(S, key=lambda a: v[a])
+        it = count_iterations_to_convergence(v, p, e, delta, T, pick0)
+        worst = max(worst, it)
+    assert worst <= 6, f"policy iteration took unexpectedly many steps: {worst}"

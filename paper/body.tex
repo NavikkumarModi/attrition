@@ -269,7 +269,7 @@ Ordinal saturation, homogeneous rate & Proven & long-form Sec.~13 \\
 Characterisation survives correlated shocks & Verified conjecture & Sec.~\ref{sec:correlated} \\
 SECI matches/beats greedy under correlation & Empirical finding & Sec.~\ref{sec:correlated} \\
 Tighter ECI bound & Open & Sec.~\ref{sec:eci} \\
-Quantitative policy-improvement rate & Open & Sec.~7.2 \\
+Policy-improvement rate: fast in practice, not proven & Empirical finding & Sec.~7.2 \\
 Terminal commitment, optimal allocation & Open & long-form Sec.~14 \\
 \bottomrule
 \end{tabular}
@@ -981,6 +981,21 @@ but not a rate, and a matching quantitative bound---closing the empirical
 log-log slopes of $1.11$--$1.25$ observed between base gap and rollout gap---
 remains open. Standard contraction arguments for policy-improvement rates rely on
 a discount factor, unavailable in this finite-horizon undiscounted setting.
+
+\paragraph{How fast, empirically.} Running full policy iteration (repeatedly
+applying the improvement step to exact convergence) from three deliberately
+adversarial starting policies, across $n=3$ to $10$ and $T=4$ to $16$, the
+worst-case number of iterations to \emph{exact} convergence never exceeds $4$,
+far below any generic polynomial-in-problem-size guarantee. The mechanism
+appears to be super-linear shrinkage of the number of states where the
+current policy disagrees with the true optimum: shrinkage factors of
+$3\times$ to $14\times$ per iteration were observed (e.g.\ $333\to42\to2\to0$),
+though a specific quadratic-in-state-count hypothesis tested directly did not
+fit precisely, so this is reported as a qualitative pattern rather than a
+derived rate. A plausible, unformalised intuition: unlike an adjacent-swap
+argument that fixes one disagreement per step, policy improvement re-derives
+the entire policy at once using an accurate continuation value, which
+plausibly explains the speed without yet proving it.
 
 \subsection{An exactly solvable case}
 
