@@ -1,0 +1,12 @@
+{
+  "domain": "antibiotic-stewardship",
+  "mode": "simultaneous",
+  "seed": 0,
+  "population": [
+    {"persona": "dr-conservative"},
+    {"persona": "dr-balanced"},
+    {"persona": "dr-aggressive"}
+  ],
+  "baselines": ["greedy", "eci"],
+  "run_id": "antibiotic-stewardship-demo"
+}

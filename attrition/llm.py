@@ -25,6 +25,7 @@ Wiring a real backend:
     llm = CallableLLMClient(call)
 """
 
+import hashlib
 import re
 
 import numpy as np
@@ -67,15 +68,23 @@ class MockLLMClient(LLMClient):
     This stands in for behaviour, not for language -- it exists so the rest
     of the stack (prompting, parsing, fallback, population loop) is exercised
     end to end with no network access and no API key.
+
+    The response is a pure function of `(seed, system, user)`, hashed to seed
+    the noise term: no mutable call-order state, so the same inputs always
+    give the same output regardless of how many other calls happened first
+    or whether calls run concurrently. This matters once `population.py`
+    starts dispatching agent decisions through a thread pool (see
+    `max_workers` on `simulate_population_simultaneous`) -- a call-counter
+    based seed would both race under concurrency and make results depend on
+    scheduling order.
     """
 
     def __init__(self, seed=0):
         self._seed = int(seed)
-        self._calls = 0
 
     def complete(self, system, user):
-        self._calls += 1
-        rng = np.random.default_rng((self._seed, self._calls))
+        digest = hashlib.sha256(f"{self._seed}\n{system}\n{user}".encode()).digest()
+        rng = np.random.default_rng(int.from_bytes(digest[:8], "big"))
         rows = _ARM_LINE.findall(user)
         if not rows:
             return "CHOICE: 0"

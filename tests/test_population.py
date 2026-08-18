@@ -104,3 +104,52 @@ def test_derive_antibiotic_parameters_has_dispersed_kappa():
     assert len(v) == len(p) == len(e) == len(spectrum)
     kappa = p * e
     assert kappa.std() > 0.0
+
+
+def test_mock_llm_client_is_content_addressed_not_call_order():
+    """Same (seed, system, user) -> same output, regardless of call order or
+    how many other calls happened first -- required for max_workers safety.
+    """
+    client = MockLLMClient(seed=0)
+    st = _state(0)
+    policy = LLMPolicy(PERSONA, client=client)
+    system, user = policy._render_prompt(st)
+
+    first = client.complete(system, user)
+    for _ in range(5):
+        client.complete("noise", "unrelated call")
+    second = client.complete(system, user)
+    assert first == second
+
+
+def test_simulate_population_simultaneous_max_workers_matches_serial():
+    v = np.array([1.0, 0.9, 0.8, 0.6])
+    p = np.array([0.6, 0.6, 0.6, 0.6])
+    e = np.array([1.0, 0.5, 0.2, 0.0])
+
+    pool_serial = SimultaneousPool(v, p, e, delta=0.1, horizon=6, n_agents=3, seed=1)
+    serial = simulate_population_simultaneous(pool_serial, _small_population(),
+                                              rounds=6)
+
+    pool_parallel = SimultaneousPool(v, p, e, delta=0.1, horizon=6, n_agents=3,
+                                     seed=1)
+    parallel = simulate_population_simultaneous(pool_parallel, _small_population(),
+                                                rounds=6, max_workers=4)
+
+    assert serial["system_value"] == pytest.approx(parallel["system_value"])
+    assert serial["system_regret"] == pytest.approx(parallel["system_regret"])
+
+
+def test_simulate_population_writes_to_trace_store(tmp_path):
+    from attrition import TraceStore
+
+    v = np.array([1.0, 0.9, 0.8, 0.6])
+    p = np.array([0.5, 0.5, 0.5, 0.5])
+    e = np.array([1.0, 0.5, 0.2, 0.0])
+    env = ConsumableBandit(v, p, e, delta=0.1, horizon=8, seed=1)
+    store = TraceStore(str(tmp_path / "trace.sqlite3"))
+    result = simulate_population(env, _small_population(), trace_store=store,
+                                 run_id="t1")
+    rows = store.read("t1")
+    assert len(rows) == len(result["trace"])
+    store.close()

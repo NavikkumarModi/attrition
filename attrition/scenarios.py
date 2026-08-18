@@ -10,6 +10,12 @@ produces a fresh environment for a given seed.
 Every scenario records which phenomenon it is meant to exhibit, and
 `expected_behaviour` states what the theory predicts, so a scenario that stops
 behaving as documented is a detectable regression rather than a silent drift.
+
+`SCENARIOS` is the extension point: `SCENARIOS.register(...)` or the
+convenience `from_arrays(...)` add a new named, discoverable domain -- pharma
+or otherwise -- without editing this file. Anything with a consumable-choice
+structure (inventory allocation, hiring funnels, credit-limit decisions,
+ad-budget pacing, ...) registers the same way the built-in scenarios do.
 """
 
 import numpy as np
@@ -18,7 +24,24 @@ from .envs import ConsumableBanditEnv, MultiAgentConsumableEnv
 from .engines import (derive_arm_parameters, derive_trial_parameters,
                       derive_design_space_parameters, derive_antibiotic_parameters)
 
-__all__ = ["SCENARIOS", "load", "describe"]
+__all__ = ["SCENARIOS", "load", "describe", "ScenarioRegistry", "from_arrays",
+           "get_arrays"]
+
+
+class ScenarioRegistry(dict):
+    """Dict of named scenario specs, plus a `.register` convenience method.
+
+    Fully dict-compatible (`SCENARIOS[name]`, `.items()`, `sorted(SCENARIOS)`,
+    `in`) -- a drop-in for the plain dict literal it replaces. `.register` is
+    the only addition, and is what external code calls to add a new domain.
+    """
+
+    def register(self, name, description, phenomenon, expected_behaviour,
+                build, agents=1):
+        self[name] = {"description": description, "phenomenon": phenomenon,
+                     "expected_behaviour": expected_behaviour,
+                     "agents": agents, "build": build}
+        return self[name]
 
 
 def _agent_tools():
@@ -36,7 +59,7 @@ def _agent_tools():
             [r[0] for r in roster])
 
 
-SCENARIOS = {
+SCENARIOS = ScenarioRegistry({
     # ------------------------------------------------------ agent ecosystems
     "shared-quota": {
         "description": "Orchestrator routing across API tools that share upstream "
@@ -141,7 +164,54 @@ SCENARIOS = {
                            np.linspace(0.1, 2.0, 6)),
                           dict(delta=0.3, horizon=8)),
     },
-}
+})
+
+
+def from_arrays(v, p, e, name="custom", agents=1, delta=0.05, horizon=50,
+                description=None, phenomenon="user-supplied",
+                expected_behaviour="not characterised -- user-supplied domain"):
+    """Register a scenario directly from arrays.
+
+    The extension point for any consumable-action-set domain outside this
+    package's built-in presets -- no new Python function required, just three
+    arrays:
+
+        from attrition.scenarios import from_arrays, load
+        from_arrays(v=[...], p=[...], e=[...], name="my-domain", agents=3)
+        env = load("my-domain", seed=0)
+
+    `v`, `p`, `e` are copied into the registered build closure, so later
+    mutating the arrays passed in does not change the registered scenario.
+    """
+    v = np.asarray(v, float).copy()
+    p = np.asarray(p, float).copy()
+    e = np.asarray(e, float).copy()
+    if description is None:
+        description = (f"user-supplied domain ({len(v)} arms, {agents} "
+                       f"agent{'s' if agents > 1 else ''})")
+    return SCENARIOS.register(
+        name, description=description, phenomenon=phenomenon,
+        expected_behaviour=expected_behaviour,
+        build=lambda: ((v, p, e), dict(delta=delta, horizon=horizon)),
+        agents=agents)
+
+
+def get_arrays(name):
+    """Return a scenario's raw `(v, p, e, kw)`, without wrapping it in a Gym
+    env. `load()` wraps the same build in `ConsumableBanditEnv`/
+    `MultiAgentConsumableEnv` (envs.py); callers that instead want
+    `ConsumableBandit`/`SimultaneousPool` -- e.g. `attrition.population`,
+    `attrition.config` -- need the arrays directly.
+    """
+    if name not in SCENARIOS:
+        raise KeyError(f"unknown scenario {name!r}; "
+                       f"available: {sorted(SCENARIOS)}")
+    spec = SCENARIOS[name]
+    (v, p, e), kw = spec["build"]()
+    v = np.asarray(v, float)
+    p = np.clip(np.asarray(p, float), 1e-6, 1.0)
+    e = np.asarray(e, float)
+    return v, p, e, dict(kw)
 
 
 def load(name, seed=0, **overrides):

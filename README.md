@@ -128,6 +128,58 @@ function and pass `CallableLLMClient(that_function)` as `client` — see
 `attrition/llm.py`. Full walkthrough, including the genuine-price-of-anarchy
 simultaneous-action version: `examples/04_pharma_population.py`.
 
+### Define your own domain
+
+Any problem with a consumable-choice structure — inventory allocation, hiring
+funnels, credit-limit decisions, ad-budget pacing — registers the same way
+`antibiotic-stewardship` does, from three arrays, no new Python function
+required:
+
+```python
+from attrition import from_arrays, load
+
+from_arrays(v=[...], p=[...], e=[...], name="my-domain", agents=3)
+env = load("my-domain", seed=0)          # now discoverable via describe()
+```
+
+### Run from the command line
+
+No Python needed once a domain and a population are defined in a config file
+(see `examples/antibiotic-stewardship.json` for the schema):
+
+```bash
+pip install -e .        # registers the `attrition` command
+attrition list-domains
+attrition run examples/antibiotic-stewardship.json --trace run.sqlite3
+```
+
+### Scale with concurrent calls
+
+`simulate_population_simultaneous` and `compare_population_to_baselines` take
+a `max_workers` argument: when set, each round's agent decisions (or each
+seed's episode) are dispatched over a thread pool instead of one at a time —
+the point at which real, network-bound LLM calls stop being wall-clock-bound
+by agent count. `MockLLMClient`'s response is a pure function of its inputs,
+so results are identical with or without concurrency, up to floating-point
+associativity.
+
+### Persist and analyze runs
+
+Pass `trace_store=TraceStore("run.sqlite3")` (stdlib `sqlite3`, no extra
+dependency) to either `simulate_population*` function to write every decision
+as it happens, in addition to the in-memory trace already returned:
+
+```python
+from attrition import TraceStore
+
+store = TraceStore("run.sqlite3")
+simulate_population_simultaneous(pool, population, trace_store=store, run_id="run-1")
+df = store.to_dataframe("run-1")   # requires: pip install attrition[analysis]
+```
+
+`attrition.plot_system_value_over_time`/`plot_burden_over_time` take the same
+trace shape directly (`pip install attrition[figures]`).
+
 ---
 
 ## The model

@@ -27,7 +27,8 @@ from .policies import (State, Greedy, ECI, SECI, Conservative, SortByE,
 from .domains import (agent_tools, adaptive_therapy, platform_trial,
                       design_space, DOMAIN_NOTES)
 from .envs import ConsumableBanditEnv, MultiAgentConsumableEnv
-from .scenarios import SCENARIOS, load, describe
+from .scenarios import (SCENARIOS, load, describe, ScenarioRegistry, from_arrays,
+                        get_arrays)
 from .simultaneous import (SimultaneousPool, planner_value_simultaneous,
                            decentralised_value_simultaneous, price_of_anarchy)
 from .commitment import (TerminalCommitment, optimal_commitment_policy,
@@ -43,6 +44,9 @@ from .llm_policy import LLMPolicy
 from .population import (Population, simulate_population,
                          simulate_population_simultaneous,
                          compare_population_to_baselines)
+from .trace import TraceStore
+from .viz import plot_system_value_over_time, plot_burden_over_time
+from .config import load_config, build_from_config
 
 __version__ = "0.2.0"
 __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
@@ -54,7 +58,8 @@ __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
            "DesignSpaceEngine", "derive_design_space_parameters",
            "derive_antibiotic_parameters",
            "ConsumableBanditEnv", "MultiAgentConsumableEnv",
-           "SCENARIOS", "load", "describe",
+           "SCENARIOS", "load", "describe", "ScenarioRegistry", "from_arrays",
+           "get_arrays",
            "TerminalCommitment", "optimal_commitment_policy",
            "greedy_commitment_policy", "edge_first_policy",
            "evaluate_commitment_policy",
@@ -64,4 +69,6 @@ __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
            "Persona", "PHARMA_PERSONAS", "LLMPolicy",
            "Population", "simulate_population",
            "simulate_population_simultaneous",
-           "compare_population_to_baselines"]
+           "compare_population_to_baselines", "TraceStore",
+           "plot_system_value_over_time", "plot_burden_over_time",
+           "load_config", "build_from_config"]

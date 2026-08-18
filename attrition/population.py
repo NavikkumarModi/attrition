@@ -14,19 +14,29 @@ Two loop shapes, matching the two multi-agent models already in this repo:
                                        over m*T pulls, so it has no genuine
                                        price of anarchy -- useful as a
                                        baseline-comparable setting, not as a
-                                       coordination-failure demo.
+                                       coordination-failure demo. Inherently
+                                       sequential (each turn depends on the
+                                       previous one), so no `max_workers`.
 
     simulate_population_simultaneous  genuine simultaneous action over a
                                        `SimultaneousPool`: every agent commits
                                        before anyone's pull resolves, so
                                        collisions and blindness are real
-                                       effects. Use this when "what happens
-                                       when many independent decision-makers
-                                       share a resource" is the actual
-                                       question -- e.g. several prescribers
-                                       drawing on one population's
-                                       antimicrobial susceptibility.
+                                       effects. Every agent's decision this
+                                       round reads a state snapshot taken
+                                       before any pull resolves and mutates
+                                       nothing, so the per-round decisions are
+                                       safe to dispatch concurrently -- pass
+                                       `max_workers` to do that over a thread
+                                       pool once real (network-bound) LLM
+                                       calls make it worth it.
+
+Both accept an optional `trace_store` (see `trace.py`) to persist every
+decision as it happens, in addition to the in-memory trace already returned;
+pass `keep_trace=False` on a long run to skip building the in-memory list.
 """
+
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 
@@ -58,7 +68,8 @@ class Population:
         return len(self.members)
 
 
-def simulate_population(env, population, known=True, log=True):
+def simulate_population(env, population, known=True, log=True,
+                        trace_store=None, run_id=None, keep_trace=True):
     """Run a population turn-taking on a shared `ConsumableBandit`.
 
     Every agent in `population` pulls once per round, in a fixed order, until
@@ -79,19 +90,39 @@ def simulate_population(env, population, known=True, log=True):
             per_agent[aid]["regret"] += regret
             per_agent[aid]["pulls"] += 1
             if log:
-                trace.append({"t": env.t - 1, "agent": aid, "arm": arm,
-                              "value": realised, "regret": regret,
-                              "destroyed": destroyed,
-                              "alive": int(env.alive.sum())})
+                row = {"t": env.t - 1, "agent": aid, "arm": arm,
+                      "value": realised, "regret": regret,
+                      "destroyed": destroyed, "alive": int(env.alive.sum())}
+                if keep_trace:
+                    trace.append(row)
+                if trace_store is not None:
+                    trace_store.write_rows(run_id, [row])
     system_value = sum(a["value"] for a in per_agent.values())
     system_regret = sum(a["regret"] for a in per_agent.values())
     return {"agents": per_agent, "system_value": system_value,
             "system_regret": system_regret, "trace": trace}
 
 
-def simulate_population_simultaneous(pool, population, rounds=None, log=True):
+def _select_all(agent_ids, members, states, max_workers):
+    if not max_workers or max_workers <= 1:
+        return [members[aid].select(states[aid]) for aid in agent_ids]
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        futures = [pool.submit(members[aid].select, states[aid])
+                  for aid in agent_ids]
+        return [f.result() for f in futures]
+
+
+def simulate_population_simultaneous(pool, population, rounds=None, log=True,
+                                     max_workers=None, trace_store=None,
+                                     run_id=None, keep_trace=True):
     """Run a population with every agent committing simultaneously each round
     on a shared `SimultaneousPool`, then resolving together.
+
+    `max_workers`: when set (>1), the per-round agent decisions are dispatched
+    over a `concurrent.futures.ThreadPoolExecutor` instead of called one at a
+    time -- safe because every agent reads the same pre-round state snapshot
+    and mutates nothing during `select`. Default `None` keeps calls serial and
+    output identical to before concurrency support existed.
     """
     pool.reset()
     rounds = pool.T if rounds is None else int(rounds)
@@ -105,28 +136,33 @@ def simulate_population_simultaneous(pool, population, rounds=None, log=True):
         idx = np.flatnonzero(pool.alive)
         b = pool.burden
         best_available = float(np.max(pool.v[idx] - b))
-        actions = []
-        for aid in agent_ids:
-            st = State(available=idx, t=pool.t, horizon=rounds, v_hat=pool.v,
-                      p=pool.p, e=pool.e, delta=pool.delta)
-            actions.append(population.members[aid].select(st))
+        states = {aid: State(available=idx, t=pool.t, horizon=rounds,
+                             v_hat=pool.v, p=pool.p, e=pool.e, delta=pool.delta)
+                 for aid in agent_ids}
+        actions = _select_all(agent_ids, population.members, states, max_workers)
         rewards, destroyed = pool.step(actions)
+        rows = []
         for aid, arm, reward in zip(agent_ids, actions, rewards):
             regret = best_available - reward
             per_agent[aid]["value"] += reward
             per_agent[aid]["regret"] += regret
             per_agent[aid]["pulls"] += 1
             if log:
-                trace.append({"t": r, "agent": aid, "arm": arm, "value": reward,
-                              "regret": regret, "destroyed": arm in destroyed,
-                              "alive": int(pool.alive.sum())})
+                rows.append({"t": r, "agent": aid, "arm": arm, "value": reward,
+                            "regret": regret, "destroyed": arm in destroyed,
+                            "alive": int(pool.alive.sum())})
+        if log and keep_trace:
+            trace.extend(rows)
+        if log and trace_store is not None:
+            trace_store.write_rows(run_id, rows)
     system_value = sum(a["value"] for a in per_agent.values())
     system_regret = sum(a["regret"] for a in per_agent.values())
     return {"agents": per_agent, "system_value": system_value,
             "system_regret": system_regret, "trace": trace}
 
 
-def compare_population_to_baselines(env_factory, population, baselines, seeds=10):
+def compare_population_to_baselines(env_factory, population, baselines, seeds=10,
+                                    max_workers=None):
     """Compare a population's system value/regret against classical
     single-agent baselines (e.g. `Greedy()`, `ECI()`) on matched seeded
     `ConsumableBandit` environments from `env_factory`, over the same total
@@ -134,15 +170,23 @@ def compare_population_to_baselines(env_factory, population, baselines, seeds=10
     paper's question applied to a population: does it land near Greedy
     (zero regret, high harm) or near ECI (positive regret, low harm)?
 
+    `max_workers`: when set (>1), the per-seed population runs -- fully
+    independent episodes -- are dispatched over a thread pool.
+
     Note: `population`'s policy instances are reused and reset across seeds;
     for `LLMPolicy` this means `.log` accumulates across the whole sweep
     rather than reflecting a single seed's run.
     """
-    pop_vals, pop_regs = [], []
-    for s in range(seeds):
-        r = simulate_population(env_factory(s), population)
-        pop_vals.append(r["system_value"])
-        pop_regs.append(r["system_regret"])
+    if max_workers and max_workers > 1:
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            results = list(pool.map(
+                lambda s: simulate_population(env_factory(s), population),
+                range(seeds)))
+    else:
+        results = [simulate_population(env_factory(s), population)
+                  for s in range(seeds)]
+    pop_vals = [r["system_value"] for r in results]
+    pop_regs = [r["system_regret"] for r in results]
     out = {"population": {"value": float(np.mean(pop_vals)),
                           "regret": float(np.mean(pop_regs))}}
     for pol in baselines:
