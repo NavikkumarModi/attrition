@@ -158,11 +158,18 @@ a theorem.
 
 **Effort:** weeks. Solver already supports all five forms.
 
-### T-E. Terminal commitment and nested irreversibility — *specified, never built*
+### T-E. Terminal commitment and nested irreversibility — *built, with a proven theorem*
 
-The CMC design-space case from the original spec, never developed: a finite budget
-of irreversible experiments followed by a **one-shot declaration** that fixes the
-feasible set permanently.
+The CMC design-space case from the original spec: a finite budget of irreversible
+experiments followed by a **one-shot declaration** that fixes the feasible set
+permanently. Implemented (`attrition/commitment.py`), with empirical results in
+the paper's appendix, and now a genuine proven result: boundary-only expansion
+(never testing a setting non-adjacent to the current claimable envelope) is
+exactly optimal, proven via an exchange argument and verified with zero gap
+against the fully unrestricted DP optimum across 42 instances. The remaining
+open question is the optimal *direction* choice at each step, which a
+follow-up investigation showed is not simply "cheaper" and does not appear to
+admit a static index.
 
 An optimal-stopping layer atop the bandit, where the stopping action determines the
 future action space. No existing bandit formulation carries it. This is the most
@@ -170,7 +177,8 @@ distinctive single unclaimed object in the programme, and it generalises well
 beyond CMC: any commitment that trades future flexibility for present certainty
 has this shape.
 
-**Effort:** months. New machinery, but well-posed.
+**Effort:** the boundary-only theorem is done; a full characterisation of the
+optimal direction rule remains open.
 
 ### T-F. Mechanism design under irreversible externalities
 
@@ -345,11 +353,15 @@ Every result becomes evidence for that sentence rather than an item on a list.
 
 Bold items are the new work. Everything else exists.
 
-### What stays out — and why that protects the flagship
+### What was reconsidered, and what still stays out
 
-**T-E terminal commitment** is a different mathematical object (optimal stopping
-where the stopping action fixes the feasible set). Including it dilutes the thesis
-and invites "unclear scope." It is strong enough to carry its own paper.
+**T-E terminal commitment** was originally planned to stay out entirely — a
+different mathematical object (optimal stopping where the stopping action
+fixes the feasible set), with a real risk of diluting the thesis or inviting
+"unclear scope." That plan was revised: it is included, but as an appendix
+rather than in the main thesis, which captures the original concern (the main
+narrative stays focused on the sequential-consumption result) while not
+leaving a genuine, now-proven result unused.
 
 **T-F mechanism design** addresses a different community with different
 conventions. Its framing — *Pigouvian design under an irreducible

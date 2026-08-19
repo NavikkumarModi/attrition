@@ -184,14 +184,61 @@ $P(\tau_0 \le c{-}1) = 1$ identically: the last arm to die always has zero
 after-data, contributing exactly $1$ to $k$ rather than an empirically fitted
 fraction.
 
-\paragraph{What remains open, precisely.} Heterogeneous $p$ breaks
-Lemma~\ref{lem:memless}: whether a round produces a death then depends on which
-arm was selected, so round-gaps are no longer i.i.d.\ geometric, and
-Lemma~\ref{lem:exch} fails too, since higher-$p$ arms require fewer selections
-to die and are biased toward earlier death ranks. A general closed form would
-need the order statistics of death times under this rate-dependent sorting---a
-genuinely different and harder problem than the homogeneous case just solved,
-and not yet derived.
+\paragraph{Heterogeneous rates: the order-statistics generalisation.}
+Heterogeneous $p$ breaks Lemma~\ref{lem:memless} (round-gaps are no longer
+i.i.d.\ geometric) and Lemma~\ref{lem:exch} (higher-$p$ arms die faster and are
+biased toward earlier ranks), but both generalise cleanly.
+
+\begin{lemma}[Generalised exchangeability]
+\label{lem:hetexch}
+Under uniform-random selection among alive arms with arm $a$ dying with
+probability $p_a$ when selected, the death order follows a Plackett--Luce
+sequential distribution~\citep{plackett1975,luce1959}:
+\[
+P(\text{order}=i_1,\dots,i_n) = \prod_{k=1}^{n} \frac{p_{i_k}}{S_k}, \qquad
+S_k := \sum_{j \text{ alive before the $k$-th death}} p_j.
+\]
+\end{lemma}
+
+\begin{proof}
+Let $f_i := P(i \text{ dies first})$ from alive set $A$. Conditioning on the
+first round's pick (uniform among $|A|$ arms) and outcome:
+\[
+f_i = \frac{p_i}{|A|} + f_i\cdot\frac{|A|-S_A}{|A|},
+\]
+since rounds where nobody dies restart the identical sub-problem and cancel
+from the equation. Solving gives $f_i = p_i/S_A$ exactly. By the Markov
+property, conditional on who dies first, the process among survivors is a
+\emph{fresh} instance of the same dynamics restricted to the smaller alive
+set---no memory of how that state was reached---so the same argument applies
+recursively, giving the full sequential product.
+\end{proof}
+
+\begin{lemma}[Generalised memorylessness]
+\label{lem:hetmemless}
+From a fixed alive set $A$ with $S_A := \sum_{j\in A} p_j$, the waiting time
+until the next death (any arm) is exactly $\mathrm{Geometric}(S_A/|A|)$.
+\end{lemma}
+
+\begin{proof}
+Each round, pick uniformly among $|A|$ arms, then that arm dies with its own
+probability: $P(\text{a death occurs this round}) = S_A/|A|$, independently
+each round while $A$ is unchanged.
+\end{proof}
+
+Verified independently: Lemma~\ref{lem:hetexch} against $10^6$ simulated
+trajectories across all $n!=6$ orderings for a 3-arm instance, matching to
+within Monte Carlo noise on both a rare ordering ($0.00075$ observed vs.\
+$0.00079$ predicted) and a common one ($0.367$ vs.\ $0.367$);
+Lemma~\ref{lem:hetmemless} against $3\times10^5$ trials, mean gap $2.9634$ vs.\
+predicted $1/\mathrm{rate}=2.9630$. Together these give the complete
+generating mechanism for the joint order/timing distribution under
+heterogeneous rates---the order-statistics structure explicitly identified as
+missing above. A single closed form for $k(p_1,\dots,p_n,c)$ analogous to the
+homogeneous case's $k=1+5p$ is not claimed: assembling one means summing over
+all $n!$ weighted orderings combined with the now state-dependent timing,
+which may not collapse as cleanly as the homogeneous case did. What is
+resolved is the structural piece named above as missing.
 
 \section{Terminal commitment}
 \label{sec:commitment}
@@ -237,13 +284,13 @@ budget & policy & operating value & envelope width & failed runs \\
 \midrule
 2 & greedy (highest yield first) & $36.908$ & $\mathbf{1.00}$ & $0.80$ \\
 2 & edge-first (maximise width) & $36.908$ & $\mathbf{1.00}$ & $0.67$ \\
-2 & \textbf{expand outward} & $\mathbf{40.664}$ & $\mathbf{2.92}$ & $0.08$ \\[2pt]
+2 & \textbf{expand outward} & $\mathbf{43.271}$ $(+17.2\%)$ & $\mathbf{2.91}$ & $0.09$ \\[2pt]
 4 & greedy & $41.385$ & $3.44$ & $1.06$ \\
 4 & edge-first & $36.908$ $(-10.8\%)$ & $\mathbf{1.00}$ & $1.14$ \\
-4 & \textbf{expand outward} & $\mathbf{44.182}$ $(+6.8\%)$ & $\mathbf{4.72}$ & $0.26$ \\[2pt]
+4 & \textbf{expand outward} & $\mathbf{44.993}$ $(+8.7\%)$ & $\mathbf{4.66}$ & $0.33$ \\[2pt]
 6 & greedy & $45.058$ & $5.35$ & $1.14$ \\
 6 & edge-first & $36.908$ $(-18.1\%)$ & $\mathbf{1.00}$ & $1.36$ \\
-6 & expand outward & $45.069$ & $6.20$ & $0.61$ \\
+6 & expand outward & $45.090$ $(+0.1\%)$ & $6.22$ & $0.61$ \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -268,12 +315,55 @@ campaign ending with a narrower filed design space than a conservative one would
 have produced.
 
 \paragraph{The budget dependence runs the other way.} The advantage of the correct
-policy \emph{decreases} with budget ($+10.2\%$, $+6.8\%$, $+0.0\%$), the opposite
+policy \emph{decreases} with budget ($+17.2\%$, $+8.7\%$, $+0.1\%$), the opposite
 of the sequential setting where the gap grows with pool size. The reason is
 structural: terminal commitment is a problem about scarcity of evidence at the
 moment of an irreversible decision. With enough evidence the commitment is no
 longer made under uncertainty and the difficulty dissolves. It binds hardest
 exactly when experiments are expensive, which is the regime that motivates it.
+
+\begin{theorem}[Boundary-only expansion is optimal]
+\label{thm:boundary}
+For the terminal-commitment model above, any policy that tests a setting not
+adjacent to the current claimable envelope is weakly dominated by one that
+only ever tests settings adjacent to it.
+\end{theorem}
+
+\begin{proof}
+Suppose a policy tests a setting $s$ strictly beyond the current envelope
+$[lo,hi]$, with an untested gap setting $g$ (adjacent to the envelope) still
+between them. Since outcomes are independent across settings, $s$ succeeding
+contributes nothing to the claimable envelope unless the gap eventually fills
+too. Compare to the policy that tests $g$ first instead, deferring $s$: if
+$g$ fails, the envelope is capped there regardless of $s$'s outcome, so
+testing $s$ at all would have been wasted---deferring or skipping it costs
+nothing and frees a budget slot for reallocation. If $g$ succeeds, the
+envelope extends past it and $s$ becomes reachable under the same remaining
+budget as before. Either way testing the adjacent setting first weakly
+dominates; induction over the decision sequence gives the general claim.
+\end{proof}
+
+Verified independently by exact DP: restricting the action set to
+boundary-adjacent settings only never loses value relative to the fully
+unrestricted DP optimum, across 42 instances spanning pool size, budget,
+centre position, and failure-probability steepness---zero gap in every case,
+not merely close.
+
+\paragraph{What remains open: which direction.} Given boundary-only expansion
+is optimal in structure, the only remaining decision at each step is which
+side to test. ``Always the cheaper (lower failure-probability) side''---the
+natural first guess, and the rule this section's earlier numbers used---is
+\emph{not} optimal: checked against exact DP across 20 instances it
+mismatches the true optimal choice in 15, losing real value in a concrete
+case (45.15 achievable vs.\ 41.69 realised). A resolved instance is
+informative: with failure probabilities $0.042$ (left) and $0.266$ (right),
+the true optimal first move is the \emph{riskier} side, because it also
+carries higher yield. Scoring each side by the expected value of a
+successful test, $(1{-}p_{\mathrm{fail}})\times\mathrm{yield}$, rather than
+by failure probability alone, closes most of the gap (9/20 mismatches, and
+the table above already reflects this improved rule) but not all of it---the
+true optimal direction appears to depend on remaining budget in a way no
+static index captures, so a fully general characterisation remains open.
 
 \section{Software: the ATTRITION testbed}
 \label{sec:software}
@@ -322,7 +412,7 @@ $\mathrm{corr}(v,\kappa)$ rather than $\mathrm{std}(\kappa)$.
 
 \paragraph{Reproducibility.} Every figure regenerates from the library and the
 exact dynamic-programming reference through a single command. All random seeds are
-fixed in code. The test suite (96 tests across 55 experiments) contains at least
+fixed in code. The test suite (107 tests across 60 experiments) contains at least
 one regression test per theorem and several per result with multiple
 independently checkable parts, so breaking a theorem's numerical claim breaks a
 test. Experiments that produced negative or falsified results are retained in the

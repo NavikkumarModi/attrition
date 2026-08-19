@@ -1544,3 +1544,141 @@ def test_greedy_matches_exact_dp_optimum_general():
     from experiments.exp55_full_sufficiency_proof import verify_greedy_optimal
     seeds, mismatches = verify_greedy_optimal(seeds=20)
     assert mismatches == 0, f"greedy failed to match optimum in {mismatches}/{seeds}"
+
+
+def test_eci_bound_not_order_tight_fixed_n():
+    """Documents a genuine negative result: for a fixed instance, ECI's gap
+    does NOT sustain T^2 growth -- it saturates near the pool's exhaustion
+    scale and then decays, contradicting the bound's asymptotic order."""
+    from experiments.exp56_eci_bound_order_tightness import fixed_n_growth_check
+    v = np.array([1.28044277, 1.23436589, 0.78439627])
+    p = np.array([0.61561575, 0.76372129, 0.51170322])
+    e = np.array([2.49172314, 0.8968192, 1.24581187])
+    delta = 0.536
+    results = fixed_n_growth_check(v, p, e, delta, [9, 15, 22, 30])
+    gaps = [g for _, g, _ in results]
+    # gap must peak then decline -- NOT monotonically increase toward T^2
+    assert gaps[-1] < gaps[1], (
+        f"gap must decay at large T, got gaps={gaps}")
+
+
+def test_eci_bound_not_order_tight_scaled_n():
+    """Same negative result under n scaled with T: gap/T^2 does not grow."""
+    from experiments.exp56_eci_bound_order_tightness import scaled_n_growth_check
+    results = scaled_n_growth_check([3, 5, 7])
+    ratios = [r for _, _, r in results]
+    assert ratios[-1] < ratios[0], (
+        f"gap/T^2 must not grow with scale, got ratios={ratios}")
+
+
+def test_W_perturbation_lemma_exact():
+    """|W(S,t)-W_bar(S,t)| <= (T-t)*delta*max_dev, verified to hold with
+    exact equality -- a genuine, provable structural lemma from the ECI
+    bound follow-up investigation."""
+    from experiments.exp57_eci_bound_mechanism import w_perturbation_check
+    worst = w_perturbation_check(None, None, None, None, trials=8)
+    assert worst <= 1.0 + 1e-6, f"lemma violated, worst ratio={worst:.4f}"
+
+
+def test_disagreement_cost_independent_of_horizon():
+    """On rounds where ECI disagrees with optimal, reg(S,t)/max_dev should
+    show no meaningful correlation with remaining horizon (T-t)."""
+    from experiments.exp57_eci_bound_mechanism import disagreement_cost_vs_horizon
+    Tt, r = disagreement_cost_vs_horizon(n_trials=8)
+    if len(Tt) > 5:
+        corr = np.corrcoef(Tt, r)[0, 1]
+        assert abs(corr) < 0.3, f"unexpected horizon-dependence, corr={corr:.3f}"
+
+
+def test_disagreement_count_saturates_not_grows():
+    """E[#disagreements] must NOT keep growing with T -- it should saturate
+    and then decline, mirroring the gap's own saturate-then-decay pattern."""
+    from experiments.exp57_eci_bound_mechanism import expected_disagreement_count
+    v = np.array([1.28044277, 1.23436589, 0.78439627])
+    p = np.array([0.61561575, 0.76372129, 0.51170322])
+    e = np.array([2.49172314, 0.8968192, 1.24581187])
+    delta = 0.536
+    ed_mid = expected_disagreement_count(v, p, e, delta, 15)
+    ed_large = expected_disagreement_count(v, p, e, delta, 30)
+    assert ed_large < ed_mid, (
+        f"disagreement count must decay at large T, got mid={ed_mid:.4f} "
+        f"large={ed_large:.4f}")
+
+
+def test_policy_iteration_converges_fast():
+    """Worst-case policy iteration should converge in a small number of
+    iterations (<=6, generous margin over the observed worst of 4), even
+    from deliberately adversarial starting policies -- the empirical
+    upgrade to the previously fully-open policy-improvement rate question."""
+    from experiments.exp58_policy_improvement_rate import count_iterations_to_convergence
+    rng = np.random.default_rng(50)
+    worst = 0
+    for _ in range(15):
+        n = int(rng.integers(3, 7))
+        T = n + 2
+        delta = rng.uniform(0.2, 2.0)
+        p = np.clip(rng.uniform(0.1, 0.9, n), 0.05, 1.0)
+        e = rng.uniform(0.2, 4.0, n)
+        v = rng.uniform(0.2, 4.0, n)
+        pick0 = lambda S, t: min(S, key=lambda a: v[a])
+        it = count_iterations_to_convergence(v, p, e, delta, T, pick0)
+        worst = max(worst, it)
+    assert worst <= 6, f"policy iteration took unexpectedly many steps: {worst}"
+
+
+def test_boundary_only_expansion_optimal():
+    """Theorem: boundary-only expansion in terminal commitment is exactly
+    optimal -- zero gap vs the fully unrestricted DP optimum, across
+    randomized instances."""
+    from experiments.exp59_terminal_commitment_boundary import boundary_only_matches_unrestricted
+    n_trials, worst_gap = boundary_only_matches_unrestricted(seeds=10)
+    assert n_trials >= 8
+    assert worst_gap < 1e-6, f"boundary-only expansion lost value, gap={worst_gap}"
+
+
+def test_commitment_policy_naming_not_misleading():
+    """optimal_commitment_policy must exist as a backward-compatible alias,
+    and expand_outward_policy (its honest name) must be the real function."""
+    from attrition.commitment import optimal_commitment_policy, expand_outward_policy
+    assert optimal_commitment_policy is expand_outward_policy
+
+
+def test_expand_outward_beats_old_cheaper_direction_rule():
+    """The improved (1-fail_prob)*yield direction rule should not do worse
+    than the old 'always cheaper' rule on the library's default scenario."""
+    from attrition.commitment import (TerminalCommitment, expand_outward_policy,
+                                      evaluate_commitment_policy)
+    v_new, _, _ = evaluate_commitment_policy(expand_outward_policy, budget=2, seeds=100)
+    # old rule reproduced inline for comparison (cheaper direction)
+    def old_cheaper_policy(env):
+        while env.spent < env.budget:
+            lo, hi = env.claimable_envelope()
+            cands = []
+            if lo - 1 >= 0 and (lo - 1) not in env.blocked:
+                cands.append(lo - 1)
+            if hi + 1 < env.n and (hi + 1) not in env.blocked:
+                cands.append(hi + 1)
+            if not cands:
+                break
+            s = min(cands, key=lambda c: env.fail_prob[c])
+            env.experiment(int(s))
+    v_old, _, _ = evaluate_commitment_policy(old_cheaper_policy, budget=2, seeds=100)
+    assert v_new >= v_old - 1e-6, f"new rule ({v_new}) should not be worse than old ({v_old})"
+
+
+def test_heterogeneous_death_order_plackett_luce():
+    """Theorem: death order under heterogeneous destruction rates follows
+    the Plackett-Luce sequential distribution, verified against direct
+    simulation."""
+    from experiments.exp60_heterogeneous_death_order import verify_order_distribution
+    err = verify_order_distribution([0.15, 0.35, 0.55], n_sims=200_000, seed=1)
+    assert err < 0.01, f"order distribution mismatch, max error={err:.4f}"
+
+
+def test_heterogeneous_gap_geometric():
+    """Theorem: waiting time until next death from a fixed alive set is
+    exactly Geometric(S_A/|A|), verified against direct simulation."""
+    from experiments.exp60_heterogeneous_death_order import verify_gap_distribution
+    import numpy as np
+    err = verify_gap_distribution(np.array([0.1, 0.25, 0.4, 0.6]), n_sims=100_000, seed=2)
+    assert err < 0.01, f"gap distribution mismatch, max error={err:.4f}"

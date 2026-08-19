@@ -352,15 +352,15 @@ no approval, outside it triggers a variation.
 
 ```python
 from attrition import (evaluate_commitment_policy, edge_first_policy,
-                              optimal_commitment_policy)
-evaluate_commitment_policy(optimal_commitment_policy, budget=2)
+                              expand_outward_policy)
+evaluate_commitment_policy(expand_outward_policy, budget=2)
 ```
 
 | budget | policy | operating value | envelope width |
 |---|---|---|---|
 | 2 | greedy (best yield first) | 36.908 | **1.00** |
 | 2 | edge-first (chase width) | 36.908 | **1.00** |
-| 2 | **expand outward** | **40.664 (+10.2%)** | **2.92** |
+| 2 | **expand outward** | **43.271 (+17.2%)** | **2.91** |
 | 6 | edge-first | 36.908 (**−18.1%**) | **1.00** |
 
 **Two failure modes, both absent from the sequential setting.**

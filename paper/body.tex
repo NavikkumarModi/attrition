@@ -128,8 +128,7 @@ order is ascending in $e$; arm values are irrelevant.
 (Proposition~\ref{prop:eciexact}) with a proven general bound
 (Theorem~\ref{thm:ecibound}), and a rollout policy reaching 99.5--99.9\% of
 optimum.
-\item \textbf{A sequential-equivalence theorem} (long-form edition,
-Section~11): multi-agent consumption on a shared pool reduces exactly to a
+\item \textbf{A sequential-equivalence theorem} (Appendix~\ref{sec:multiagent}): multi-agent consumption on a shared pool reduces exactly to a
 single-agent problem over a longer horizon---so no price of anarchy arises from
 consumption externalities alone, and the target for mechanism design is
 free-riding specifically, not coordination.
@@ -145,7 +144,20 @@ central practical recommendation follows directly from this.
 the model has no null action, so having \emph{more} available arms can lower
 achievable value---an intuitively obvious monotonicity property that is false,
 with a concrete counterexample.
-\item An open-source testbed, \textsc{Attrition}, with 55 experiments and 96
+\item \textbf{Two structural results in the appendices resolve stated-open
+questions.} Terminal commitment (Appendix~\ref{sec:commitment}): boundary-only expansion---never
+testing a setting non-adjacent to the current claimable envelope---is exactly
+optimal, proven via an exchange argument. Ordinal recovery (Appendix~\ref{sec:ordinal}):
+under heterogeneous destruction rates, the death order follows a
+Plackett--Luce sequential distribution and inter-death gaps are independent
+geometrics with a state-dependent rate, both proven via short renewal
+arguments, resolving the order-statistics structure a homogeneous-rate-only
+treatment had left open.
+\item Policy improvement converges far faster in practice than any generic
+guarantee: worst case $4$ iterations to exact convergence, tested up to
+$n=10$, from deliberately adversarial starting policies---an empirical
+finding, not a proven rate, but a substantial one.
+\item An open-source testbed, \textsc{Attrition}, with 60 experiments and 107
 regression tests---at least one per theorem, several per result with multiple
 independently checkable parts.
 \end{itemize}
@@ -264,13 +276,15 @@ ECI has a finite worst-case performance gap & Proven (loose) & Sec.~\ref{sec:eci
 ECI exact under constant $\kappa$ & Proven & Prop.~\ref{prop:eciexact} \\
 Policy improvement dominates its base policy & Proven & Thm.~\ref{thm:polimp} \\
 Pure sequencing: order by externality only & Proven & Thm.~\ref{thm:seq} \\
-Sequential multi-agent $\equiv$ single learner & Proven & long-form Sec.~11 \\
-Ordinal saturation, homogeneous rate & Proven & long-form Sec.~13 \\
+Sequential multi-agent $\equiv$ single learner & Proven & Appendix~\ref{sec:multiagent} \\
+Ordinal saturation, homogeneous rate & Proven & Appendix~\ref{sec:ordinal} \\
+Heterogeneous-rate order statistics (Plackett--Luce) & Proven & Appendix~\ref{sec:ordinal} \\
 Characterisation survives correlated shocks & Verified conjecture & Sec.~\ref{sec:correlated} \\
 SECI matches/beats greedy under correlation & Empirical finding & Sec.~\ref{sec:correlated} \\
 Tighter ECI bound & Open & Sec.~\ref{sec:eci} \\
-Quantitative policy-improvement rate & Open & Sec.~7.2 \\
-Terminal commitment, optimal allocation & Open & long-form Sec.~14 \\
+Policy-improvement rate: fast in practice, not proven & Empirical finding & Sec.~\ref{sec:rollout} \\
+Terminal commitment: boundary-only expansion optimal & Proven & Appendix~\ref{sec:commitment} \\
+Terminal commitment: optimal direction choice & Open & Appendix~\ref{sec:commitment} \\
 \bottomrule
 \end{tabular}
 \caption{Every theoretical claim in this paper, by status. ``Proven'' means a
@@ -860,6 +874,42 @@ rather than the full episode's reward range, replacing the global constant $R$
 with a trajectory-dependent quantity --- is the natural next step and is left
 open.
 
+\paragraph{Is the bound's order tight anywhere?} A search was carried out for
+an instance where the $T^2$ growth rate is approached, even with a loose
+constant. In two regimes---a fixed instance with $T$ pushed far past the pool
+size, and $n$ scaled together with $T$---the true gap does not sustain $T^2$
+growth in either. In the first, an adversarial instance's gap saturates near
+$T\approx3$--$5\times$ the pool size and then \emph{decays} toward zero, since
+ECI's charge uses the literal $T-t$ horizon rather than the
+exhaustion-capped effective one, overcorrecting once $T$ exceeds what the pool
+can sustain. No instance was found approaching the bound's order in either
+regime. This is reported as a genuine negative result: the bound appears loose
+not only in constant but in asymptotic order too, a more precise
+characterisation than simply ``loose.''
+
+\paragraph{A mechanistic account, though not yet a general theorem.} A
+follow-up attempt at a genuinely tighter bound, adapting a compensated-coupling
+argument, produced one new provable lemma and two verified mechanisms that
+together explain the saturate-then-decay behaviour above, though a fully
+general closed-form bound remains open. Writing $W(S,t):=V(S,t)+B(S)$, which
+satisfies exactly $W(S,t)=\max_a[v_a-\kappa_a+p_aW(S{\setminus}a,t{+}1)+(1{-}p_a)W(S,t{+}1)]$
+with no constant-$\kappa$ assumption needed, a max-is-1-Lipschitz argument
+comparing $W$ to $W_{\mathrm{bar}}$ (the same recursion with every $\kappa_a$
+replaced by the mean $\bar\kappa$) gives
+$|W(S,t)-W_{\mathrm{bar}}(S,t)|\le(T{-}t)\,\delta\max_a|\kappa_a-\bar\kappa|$,
+verified to hold with exact equality in every test. Two further facts,
+verified but not assembled into a general theorem: restricted to rounds
+where ECI's action actually disagrees with the true optimal one, $\mathrm{reg}(S,t)$
+does not grow with the remaining horizon (correlation $-0.04$ across 62
+disagreement points); and the expected number of disagreement rounds along
+ECI's own trajectory saturates near the pool's exhaustion scale and then
+decays, rather than growing with $T$. A rigorous bound on the disagreement
+count itself---the one remaining piece---was not found: two natural
+candidates stayed empirically bounded but neither showed unambiguous general
+structure, and forcing a constant here risked fitting the test set rather
+than proving a real relationship, so it is left open rather than
+manufactured.
+
 \section{Corrections}
 
 \subsection{The externality-corrected index}
@@ -900,6 +950,7 @@ entire dispersion range while greedy's grows five-fold, so ECI's relative
 advantage increases across the tested dispersion range.
 
 \subsection{Rollout}
+\label{sec:rollout}
 
 No closed form exists for the option-loss term ECI omits. One step of policy
 improvement over ECI captures it implicitly, since
@@ -945,6 +996,21 @@ but not a rate, and a matching quantitative bound---closing the empirical
 log-log slopes of $1.11$--$1.25$ observed between base gap and rollout gap---
 remains open. Standard contraction arguments for policy-improvement rates rely on
 a discount factor, unavailable in this finite-horizon undiscounted setting.
+
+\paragraph{How fast, empirically.} Running full policy iteration (repeatedly
+applying the improvement step to exact convergence) from three deliberately
+adversarial starting policies, across $n=3$ to $10$ and $T=4$ to $16$, the
+worst-case number of iterations to \emph{exact} convergence never exceeds $4$,
+far below any generic polynomial-in-problem-size guarantee. The mechanism
+appears to be super-linear shrinkage of the number of states where the
+current policy disagrees with the true optimum: shrinkage factors of
+$3\times$ to $14\times$ per iteration were observed (e.g.\ $333\to42\to2\to0$),
+though a specific quadratic-in-state-count hypothesis tested directly did not
+fit precisely, so this is reported as a qualitative pattern rather than a
+derived rate. A plausible, unformalised intuition: unlike an adjacent-swap
+argument that fixes one disagreement per step, policy improvement re-derives
+the entire policy at once using an accurate continuation value, which
+plausibly explains the speed without yet proving it.
 
 \subsection{An exactly solvable case}
 
@@ -1309,8 +1375,8 @@ direct: for irreversible actions, externality costs must be \emph{specified}, no
 discovered. A crude uniform upper bound outperforms every learned estimator we
 tested.
 
-\paragraph{Code and reproducibility.} The library, released as \textsc{Attrition} (Agent Testbed for Task, Resource and Irreversible-Tradeoff Investigation), all 55 experiments including
-negative and falsified results, and a regression suite of 96 tests --- at least
+\paragraph{Code and reproducibility.} The library, released as \textsc{Attrition} (Agent Testbed for Task, Resource and Irreversible-Tradeoff Investigation), all 60 experiments including
+negative and falsified results, and a regression suite of 107 tests --- at least
 one per theorem, several per result where a claim has multiple independently
 checkable parts --- are released openly. Every figure regenerates from the
 library and the exact-DP reference via a single command, all random seeds are
@@ -1338,12 +1404,17 @@ claim breaks.
   Worst-case equilibria. \emph{STACS}, 1999.
 \bibitem[Levine et~al.(2017)]{levine2017} N.~Levine, K.~Crammer, S.~Mannor.
   Rotting bandits. \emph{NeurIPS}, 2017.
+\bibitem[Luce(1959)]{luce1959} R.~D.~Luce.
+  \emph{Individual Choice Behavior: A Theoretical Analysis}. Wiley, 1959.
 \bibitem[Lovell(1963)]{lovell1963} M.~C.~Lovell.
   Seasonal adjustment of economic time series and multiple regression analysis.
   \emph{Journal of the American Statistical Association}, 1963.
 \bibitem[Nie et~al.(2018)]{nie2018} X.~Nie, X.~Tian, J.~Taylor, J.~Zou.
   Why adaptively collected data have negative bias and how to correct for it.
   \emph{AISTATS}, 2018.
+\bibitem[Plackett(1975)]{plackett1975} R.~L.~Plackett.
+  The analysis of permutations. \emph{Journal of the Royal Statistical
+  Society Series C}, 24(2):193--202, 1975.
 \bibitem[Seznec et~al.(2019)]{seznec2019} J.~Seznec, A.~Locatelli, A.~Carpentier, A.~Lazaric,
   M.~Valko. Rotting bandits are no harder than stochastic ones.
   \emph{AISTATS}, 2019.

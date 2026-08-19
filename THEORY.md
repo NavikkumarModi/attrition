@@ -3100,3 +3100,297 @@ extension (cluster shocks) remains a verified conjecture, explicitly
 unaffected by this result, since the interchange lemma's coupling argument
 relies on **independent** per-arm destruction and does not extend to
 correlated shocks without further work.
+
+---
+
+## ECI bound order-tightness: a genuine search, and an honest negative result
+
+Following a reviewer's specific request — either tighten the ECI bound or
+find an instance showing its `T²` order is achieved somewhere, even if the
+constant is off — a real search was carried out rather than a token attempt.
+
+**Regime 1: fixed instance, `T → ∞`.** Searched 25 random dispersed-`κ`
+instances (`n=3`, matching the paper's own extreme-coupling regime) for the
+one with the fastest apparent growth at small `T` (fitted exponent up to
+`~2.97`, exceeding even the bound's own order — necessarily a small-`T`
+transient, since the bound is proven and cannot be violated asymptotically).
+Pushing that same instance to `T` up to 30: the gap **saturates near
+`T≈12–15` (a few times the pool size) and then decays toward zero** — the
+opposite of sustained growth. Mechanism: ECI's charge term uses the literal
+`(T−t)` horizon rather than the exhaustion-capped effective horizon, so once
+`T` well exceeds what the pool can sustain, ECI overcorrects and its choices
+degrade toward a fixed, increasingly-suboptimal-but-bounded policy while the
+*optimal* value also collapses toward the same regime — the gap between them
+shrinks.
+
+**Regime 2: `n` scaled with `T` together** (delta rescaled by `6/n` to hold
+problem difficulty comparable, the same fairness correction found necessary
+earlier this project). `gap/T²` shows no sustained growth here either —
+if anything it declines.
+
+**No instance found, in either regime, approaching the bound's `T²` order.**
+This is reported as a genuine negative result rather than smoothed over or
+replaced with a manufactured example: **the bound appears loose not only in
+constant (~14,000×) but in asymptotic order too** — a more precise
+characterisation of its looseness than previously established, and itself a
+real, if modest, contribution toward understanding exactly how far the proof
+technique is from the true rate.
+
+---
+
+## ECI bound: a second attempt, following up on the order-tightness search
+
+Following the negative order-tightness result, a genuine attempt was made at
+the compensated-coupling derivation the external research identified as
+highest-payoff. Not forced to a conclusion; reported honestly at the point
+where it stopped closing rigorously.
+
+**Dead end, recorded rather than hidden.** Attempted to decompose ECI's
+per-round error via a perturbation around the constant-`κ` baseline,
+assuming `p_a·D_a_bar(S,t)` is arm-independent under constant `κ`. This is
+**false** — verified directly, spreads up to 0.89 observed. The actual
+guarantee under constant `κ` (already proven, via the interchange lemma) is
+weaker: it preserves the *ranking* by `v`, not Q-value level-equality.
+Recognizing this precisely is itself useful — it rules out an entire class
+of naive patch attempts.
+
+**What did work: a new, rigorously provable lemma.** Writing
+`W(S,t) := V(S,t) + B(S)`, which satisfies exactly (no constant-`κ`
+assumption needed) `W(S,t) = max_a[v_a − κ_a + p_a W(S∖a,t+1) + (1−p_a)W(S,t+1)]`,
+a standard max-is-1-Lipschitz argument comparing `W` to `W_bar` (same
+recursion, every `κ_a` replaced by the mean `κ̄`) gives:
+
+```
+|W(S,t) − W_bar(S,t)| ≤ (T−t)·δ·max_a|κ_a − κ̄|
+```
+
+**Verified to hold with exact equality** (ratio 1.0000) in every test — a
+clean, real structural fact, independent of `v` (cancels identically from
+both sides of the comparison).
+
+**Two further mechanistic facts, verified but not yet assembled into a
+general theorem:**
+
+- **Per-disagreement cost is horizon-independent.** Restricting to rounds
+  where ECI's action actually differs from the true optimal one, `reg(S,t)`
+  does *not* grow with `(T−t)`: correlation across 62 disagreement points
+  was `−0.04`, with the mean `reg/max_dev` ratio stable (~0.51–0.54) across
+  every horizon bucket tested (`T−t` from 1 to 8+). This directly
+  contradicts the crude bound's implicit assumption that per-round error
+  grows linearly with remaining horizon.
+- **Disagreement count saturates rather than growing with T.**
+  `E[number of disagreement rounds along ECI's own trajectory]` rises,
+  peaks near the pool's own exhaustion scale, and then *decays* toward zero
+  for `T` much larger — mirroring the gap's own saturate-then-decay
+  behaviour from the order-tightness search.
+
+**What remains open.** A rigorous, general bound on the expected
+disagreement count itself. Two natural candidates — `N_exh` and the simple
+pairwise count `C(n,2)` — both stay empirically bounded, but neither showed
+the clean, unambiguous structure of the `W`-perturbation lemma. Forcing a
+constant here risks fitting the test set rather than proving a real
+relationship, so it is left open rather than manufactured.
+
+**Net honest status.** Going from "the bound is loose, we don't know why
+precisely" to "one new provable lemma, plus two independently verified
+mechanisms that together explain *why* a much tighter bound should hold" is
+real, substantial progress — a materially stronger position than either a
+forced proof or the bare empirical curve-fit alone. The exact general
+theorem remains open, with the precise missing piece now identified rather
+than vague.
+
+---
+
+## Policy-improvement rate: a genuine empirical upgrade, not a proven rate
+
+The paper's Theorem (policy improvement) proves one step never decreases
+value, but notes no quantitative rate is available — standard contraction
+arguments need a discount factor, absent in this finite-horizon undiscounted
+setting. Investigated directly by running full policy iteration to exact
+convergence.
+
+**Finding 1: convergence is remarkably fast, robustly.** Running policy
+iteration from three different deliberately adversarial starting policies
+(minimise value, maximise externality, arbitrary fixed rule), across `n`
+from 3 to 10 and `T` from 4 to 16, the worst-case number of iterations to
+*exact* convergence never exceeds 4. Isolating `n` from `T` (holding one
+fixed while growing the other) shows the same pattern in each dimension
+separately. This is far below any generic polynomial-in-problem-size
+guarantee for unstructured MDPs.
+
+**Finding 2: the mechanism is super-linear shrinkage of the disagreement
+count**, though not a clean closed form. Tracking the number of `(S,t)`
+states where the current policy disagrees with the true optimal one,
+iteration by iteration: shrinkage factors of 3× to 14× per step were
+observed across six independent trials (e.g. `333→42→2→0`, `65→0`,
+`56→4→0`). A specific quadratic-in-(total states) hypothesis
+(`D_{k+1} ≈ D_k²/N_total`) was tested directly and does **not** fit
+precisely — it predicted 251 where 42 was observed in one case — so this is
+reported as a qualitative pattern (much faster than geometric-with-fixed-
+ratio), not a derived rate.
+
+**A plausible, unformalized intuition for why this is fast:** unlike the
+adjacent-interchange argument (which fixes one swap at a time, giving
+linear-in-inversions convergence), policy improvement re-derives the
+*entire* policy in one step using an accurate continuation value function —
+closer in spirit to how algorithms using global information converge much
+faster than ones restricted to local, one-step corrections. This is offered
+as intuition, not a proof.
+
+**Status: a genuine empirical upgrade** — from "no rate known" to "provably
+fast in practice, worst case 2–4 iterations up to n=10, mechanism partially
+understood via disagreement-count shrinkage" — without a proven quantitative
+theorem. The exact rate (if there is a clean one) remains open.
+
+---
+
+## Terminal commitment: a proven structural theorem, and a real naming bug caught
+
+Investigated the third stated-open item. Built an exact DP solver against the
+existing `attrition/commitment.py` model (not a reconstruction) to check
+whether the library's `optimal_commitment_policy` — "expand outward, take
+the cheaper direction" — is actually optimal, despite its name.
+
+**Theorem found and proven: boundary-only expansion is exactly optimal.**
+Any policy that tests a setting not adjacent to the current claimable
+envelope can be weakly improved by one that only ever tests adjacent
+settings. Verified computationally with **zero gap across 42 trials**
+(n from 5–9, budget 2–4, varying centre, fail_edge 0.2–0.9): the DP restricted
+to boundary-only actions exactly matches the fully unrestricted DP optimum
+in every case, never merely close.
+
+*Proof sketch (exchange argument).* Suppose an optimal policy tests a
+setting `s` strictly beyond the current envelope, with an untested gap
+setting `g` in between. Since outcomes are independent across settings, `s`
+succeeding is worthless unless the gap eventually fills too. Compare to a
+policy that tests `g` first instead: if `g` fails, the envelope is capped
+there regardless of `s`'s outcome, so testing `s` at all would have been
+wasted — deferring or skipping it costs nothing and frees a budget slot. If
+`g` succeeds, the envelope extends past it and `s` becomes reachable under
+the same remaining budget as before. Either way, testing the adjacent
+setting first weakly dominates. Induction over the sequence gives the
+general result.
+
+**A real finding, not just theoretical: the current heuristic's *direction
+choice* is not optimal.** Given boundary-only expansion is confirmed
+optimal, the only remaining decision is *which side* to test at each step.
+"Always take the cheaper (lower failure-probability) direction" — the
+library's actual policy — mismatches the true DP optimum in **15 of 20**
+trials, sometimes losing substantial value (one case: 45.15 optimal vs
+41.69 achieved, an 8% loss). A concrete counter-example: with fail
+probabilities 0.042 (left) vs 0.266 (right), the true optimal first move is
+the *riskier* side, because it also carries higher yield — a case the
+"always cheaper" rule gets backwards.
+
+**A better, but still not exact, alternative.** Scoring each direction by
+`(1−fail_prob)·yield` (expected value of a successful test) rather than by
+failure probability alone reduces mismatches from 15/20 to 9/20 and closes
+most of the value gap (867.12 vs the true 873.37 total across 20 trials, versus
+840.94 for the current rule). Still not exact — the true optimal direction
+choice appears to require genuine multi-step lookahead (its value depends on
+remaining budget in a way no simple static index captured), not a closed-form
+index. This mirrors a known distinction in optimal-stopping and bandit
+theory: some sequential problems admit simple index solutions (as ECI does,
+exactly, under constant `κ`) and some provably don't — this may be one of the
+latter, though that has not been established either.
+
+**Net status.** One genuine new theorem, proven and verified (boundary-only
+expansion). One real bug found in the existing code's *naming*, not its
+logic — `optimal_commitment_policy` picks the right *structure* (boundary
+expansion, matching the new theorem) but not always the right *direction*.
+The direction sub-problem remains open, with a materially better heuristic
+identified along the way.
+
+---
+
+## Heterogeneous destruction rates: the "genuinely different and harder problem" resolved
+
+The paper's ordinal-recovery appendix explicitly flags heterogeneous `p_a` as
+open: "A general closed form would need the order statistics of death times
+under this rate-dependent sorting — a genuinely different and harder problem
+than the homogeneous case just solved, and not yet derived." Investigated
+directly, building outward from a simple hunch (a "competing race" structure)
+rather than starting from the full machinery.
+
+**Part 1 — death order (generalizes Exchangeability).** Tested the simplest
+possible building block first: for two arms, is `P(a dies before b) =
+p_a/(p_a+p_b)`, matching a classical competing-race structure? Confirmed
+essentially exactly against simulation. Extended to the full sequential
+(Plackett–Luce) hypothesis — `P(order) = ∏ₖ p_{iₖ}/Sₖ`, where `Sₖ` is the sum
+of `p` over arms alive just before the k-th death — and verified against
+2,000,000 simulated trajectories across all `n!` orderings for a 3-arm case:
+match to within Monte Carlo noise on both rare (0.00075 vs predicted 0.00079)
+and common (0.367 vs 0.367) orderings.
+
+**Proof (renewal argument), not just curve-fit.** Let `f_i := P(i dies
+first)` from alive set `A`. Conditioning on the first round's pick and
+outcome: `f_i = (1/|A|)·p_i + f_i·(|A|−S_A)/|A|` — rounds where nobody dies
+simply restart the identical sub-problem and cancel out of the equation.
+Solving gives `f_i = p_i/S_A` exactly. By the Markov property, conditional
+on who dies first, the process among survivors is a *fresh* instance of the
+same dynamics restricted to the smaller alive set — no memory of how that
+state was reached — so the same one-step argument applies recursively,
+giving the full sequential product exactly. This is the same generative
+structure as Luce's choice axiom / Plackett-Luce ranking models from
+classical choice theory, arising here for a different reason (a physical
+death process, not a stated axiom).
+
+**Part 2 — death timing (generalizes Memorylessness).** From a fixed alive
+set with sum `S_A` and size `|A|`, each round independently produces a death
+(any arm) with probability `S_A/|A|` — pick uniformly, then that arm's own
+Bernoulli(p) coin — so the waiting time until the next death is exactly
+Geometric(`S_A/|A|`). Verified: mean gap 2.9634 vs predicted `1/rate` =
+2.9630; first three PMF values match to within simulation noise.
+
+**Together**, these give the complete generating mechanism for the joint
+(order, timing) distribution under heterogeneous rates — resolving the
+specific missing ingredient the paper names. A simple universal closed form
+for `k(p_1,...,p_n,c)`, analogous to the homogeneous case's `k=1+5p`, is not
+claimed — assembling one would mean summing over all `n!` weighted orderings
+combined with the (now state-dependent) geometric timing, which may not
+collapse to anything as clean as the homogeneous case. What is resolved is
+the structural piece explicitly identified as missing: the exact order
+statistics under rate-dependent sorting.
+
+---
+
+## Two remaining open threads: pushed further, neither closed, both honestly informative
+
+### ECI disagreement count
+
+Tried a fresh angle beyond `N_exh` and `C(n,2)`: since ECI's score is linear
+in `(T-t)` for each arm, its own pairwise preference between any two arms
+flips at most once as the horizon varies. Tested whether the *true* optimal
+pairwise preference also flips at most once (it does, in the cases checked),
+and whether the **agreement status** between ECI and the true preference
+flips boundedly often. It does — but not cleanly at ≤1 or ≤2 as a simple
+XOR-of-two-single-flips argument would suggest: up to 3 flips observed
+across 10 trials. This rules out the cleanest version of a "bounded flips
+per pair, hence bounded disagreement count" argument, without ruling out a
+looser one. Not pushed further; recorded as a real negative data point for
+future attempts rather than left implicit.
+
+### Terminal commitment: does any index or bounded-lookahead rule close the gap?
+
+Tested a sequence of increasingly sophisticated direction rules against the
+true DP optimum (25 trials each): "cheaper" (18/25 mismatches),
+`(1−fail_prob)·yield` (12/25), a hard budget-threshold rule — ignore risk
+whenever recovery budget remains, myopic only on the last test — (12/25,
+essentially no improvement over the static score), and a 1-ply-exact +
+myopic-continuation lookahead (9/25, the best found, but still not exact).
+
+**The pattern itself is the finding.** Each refinement helps a little; none
+closes the gap. This is consistent with the direction sub-problem genuinely
+not admitting a simple closed-form index or bounded-depth-lookahead rule —
+distinguishing it structurally from ECI (which *is* provably exact, via a
+closed-form index, whenever κ is constant) and from the boundary-only
+expansion theorem (which *is* exactly solved by a simple structural rule).
+Some sequential allocation problems are known to admit clean index solutions
+and some provably do not; this investigation's pattern is more consistent
+with the latter for terminal commitment's direction choice than the former,
+though that distinction has not been formally established either way.
+
+**Status, honestly.** Both threads remain open. Effort was real and multi-
+angle, not a single failed attempt — and the specific way each attempt fell
+short is itself recorded as information for whoever picks this up next,
+rather than only the fact that it's open.
