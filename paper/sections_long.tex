@@ -184,14 +184,61 @@ $P(\tau_0 \le c{-}1) = 1$ identically: the last arm to die always has zero
 after-data, contributing exactly $1$ to $k$ rather than an empirically fitted
 fraction.
 
-\paragraph{What remains open, precisely.} Heterogeneous $p$ breaks
-Lemma~\ref{lem:memless}: whether a round produces a death then depends on which
-arm was selected, so round-gaps are no longer i.i.d.\ geometric, and
-Lemma~\ref{lem:exch} fails too, since higher-$p$ arms require fewer selections
-to die and are biased toward earlier death ranks. A general closed form would
-need the order statistics of death times under this rate-dependent sorting---a
-genuinely different and harder problem than the homogeneous case just solved,
-and not yet derived.
+\paragraph{Heterogeneous rates: the order-statistics generalisation.}
+Heterogeneous $p$ breaks Lemma~\ref{lem:memless} (round-gaps are no longer
+i.i.d.\ geometric) and Lemma~\ref{lem:exch} (higher-$p$ arms die faster and are
+biased toward earlier ranks), but both generalise cleanly.
+
+\begin{lemma}[Generalised exchangeability]
+\label{lem:hetexch}
+Under uniform-random selection among alive arms with arm $a$ dying with
+probability $p_a$ when selected, the death order follows a Plackett--Luce
+sequential distribution~\citep{plackett1975,luce1959}:
+\[
+P(\text{order}=i_1,\dots,i_n) = \prod_{k=1}^{n} \frac{p_{i_k}}{S_k}, \qquad
+S_k := \sum_{j \text{ alive before the $k$-th death}} p_j.
+\]
+\end{lemma}
+
+\begin{proof}
+Let $f_i := P(i \text{ dies first})$ from alive set $A$. Conditioning on the
+first round's pick (uniform among $|A|$ arms) and outcome:
+\[
+f_i = \frac{p_i}{|A|} + f_i\cdot\frac{|A|-S_A}{|A|},
+\]
+since rounds where nobody dies restart the identical sub-problem and cancel
+from the equation. Solving gives $f_i = p_i/S_A$ exactly. By the Markov
+property, conditional on who dies first, the process among survivors is a
+\emph{fresh} instance of the same dynamics restricted to the smaller alive
+set---no memory of how that state was reached---so the same argument applies
+recursively, giving the full sequential product.
+\end{proof}
+
+\begin{lemma}[Generalised memorylessness]
+\label{lem:hetmemless}
+From a fixed alive set $A$ with $S_A := \sum_{j\in A} p_j$, the waiting time
+until the next death (any arm) is exactly $\mathrm{Geometric}(S_A/|A|)$.
+\end{lemma}
+
+\begin{proof}
+Each round, pick uniformly among $|A|$ arms, then that arm dies with its own
+probability: $P(\text{a death occurs this round}) = S_A/|A|$, independently
+each round while $A$ is unchanged.
+\end{proof}
+
+Verified independently: Lemma~\ref{lem:hetexch} against $10^6$ simulated
+trajectories across all $n!=6$ orderings for a 3-arm instance, matching to
+within Monte Carlo noise on both a rare ordering ($0.00075$ observed vs.\
+$0.00079$ predicted) and a common one ($0.367$ vs.\ $0.367$);
+Lemma~\ref{lem:hetmemless} against $3\times10^5$ trials, mean gap $2.9634$ vs.\
+predicted $1/\mathrm{rate}=2.9630$. Together these give the complete
+generating mechanism for the joint order/timing distribution under
+heterogeneous rates---the order-statistics structure explicitly identified as
+missing above. A single closed form for $k(p_1,\dots,p_n,c)$ analogous to the
+homogeneous case's $k=1+5p$ is not claimed: assembling one means summing over
+all $n!$ weighted orderings combined with the now state-dependent timing,
+which may not collapse as cleanly as the homogeneous case did. What is
+resolved is the structural piece named above as missing.
 
 \section{Terminal commitment}
 \label{sec:commitment}

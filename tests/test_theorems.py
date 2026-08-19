@@ -1664,3 +1664,21 @@ def test_expand_outward_beats_old_cheaper_direction_rule():
             env.experiment(int(s))
     v_old, _, _ = evaluate_commitment_policy(old_cheaper_policy, budget=2, seeds=100)
     assert v_new >= v_old - 1e-6, f"new rule ({v_new}) should not be worse than old ({v_old})"
+
+
+def test_heterogeneous_death_order_plackett_luce():
+    """Theorem: death order under heterogeneous destruction rates follows
+    the Plackett-Luce sequential distribution, verified against direct
+    simulation."""
+    from experiments.exp60_heterogeneous_death_order import verify_order_distribution
+    err = verify_order_distribution([0.15, 0.35, 0.55], n_sims=200_000, seed=1)
+    assert err < 0.01, f"order distribution mismatch, max error={err:.4f}"
+
+
+def test_heterogeneous_gap_geometric():
+    """Theorem: waiting time until next death from a fixed alive set is
+    exactly Geometric(S_A/|A|), verified against direct simulation."""
+    from experiments.exp60_heterogeneous_death_order import verify_gap_distribution
+    import numpy as np
+    err = verify_gap_distribution(np.array([0.1, 0.25, 0.4, 0.6]), n_sims=100_000, seed=2)
+    assert err < 0.01, f"gap distribution mismatch, max error={err:.4f}"

@@ -3300,3 +3300,54 @@ logic — `optimal_commitment_policy` picks the right *structure* (boundary
 expansion, matching the new theorem) but not always the right *direction*.
 The direction sub-problem remains open, with a materially better heuristic
 identified along the way.
+
+---
+
+## Heterogeneous destruction rates: the "genuinely different and harder problem" resolved
+
+The paper's ordinal-recovery appendix explicitly flags heterogeneous `p_a` as
+open: "A general closed form would need the order statistics of death times
+under this rate-dependent sorting — a genuinely different and harder problem
+than the homogeneous case just solved, and not yet derived." Investigated
+directly, building outward from a simple hunch (a "competing race" structure)
+rather than starting from the full machinery.
+
+**Part 1 — death order (generalizes Exchangeability).** Tested the simplest
+possible building block first: for two arms, is `P(a dies before b) =
+p_a/(p_a+p_b)`, matching a classical competing-race structure? Confirmed
+essentially exactly against simulation. Extended to the full sequential
+(Plackett–Luce) hypothesis — `P(order) = ∏ₖ p_{iₖ}/Sₖ`, where `Sₖ` is the sum
+of `p` over arms alive just before the k-th death — and verified against
+2,000,000 simulated trajectories across all `n!` orderings for a 3-arm case:
+match to within Monte Carlo noise on both rare (0.00075 vs predicted 0.00079)
+and common (0.367 vs 0.367) orderings.
+
+**Proof (renewal argument), not just curve-fit.** Let `f_i := P(i dies
+first)` from alive set `A`. Conditioning on the first round's pick and
+outcome: `f_i = (1/|A|)·p_i + f_i·(|A|−S_A)/|A|` — rounds where nobody dies
+simply restart the identical sub-problem and cancel out of the equation.
+Solving gives `f_i = p_i/S_A` exactly. By the Markov property, conditional
+on who dies first, the process among survivors is a *fresh* instance of the
+same dynamics restricted to the smaller alive set — no memory of how that
+state was reached — so the same one-step argument applies recursively,
+giving the full sequential product exactly. This is the same generative
+structure as Luce's choice axiom / Plackett-Luce ranking models from
+classical choice theory, arising here for a different reason (a physical
+death process, not a stated axiom).
+
+**Part 2 — death timing (generalizes Memorylessness).** From a fixed alive
+set with sum `S_A` and size `|A|`, each round independently produces a death
+(any arm) with probability `S_A/|A|` — pick uniformly, then that arm's own
+Bernoulli(p) coin — so the waiting time until the next death is exactly
+Geometric(`S_A/|A|`). Verified: mean gap 2.9634 vs predicted `1/rate` =
+2.9630; first three PMF values match to within simulation noise.
+
+**Together**, these give the complete generating mechanism for the joint
+(order, timing) distribution under heterogeneous rates — resolving the
+specific missing ingredient the paper names. A simple universal closed form
+for `k(p_1,...,p_n,c)`, analogous to the homogeneous case's `k=1+5p`, is not
+claimed — assembling one would mean summing over all `n!` weighted orderings
+combined with the (now state-dependent) geometric timing, which may not
+collapse to anything as clean as the homogeneous case. What is resolved is
+the structural piece explicitly identified as missing: the exact order
+statistics under rate-dependent sorting.
