@@ -31,8 +31,8 @@ from .scenarios import SCENARIOS, load, describe
 from .simultaneous import (SimultaneousPool, planner_value_simultaneous,
                            decentralised_value_simultaneous, price_of_anarchy)
 from .commitment import (TerminalCommitment, optimal_commitment_policy,
-                         greedy_commitment_policy, edge_first_policy,
-                         evaluate_commitment_policy)
+                         expand_outward_policy, greedy_commitment_policy,
+                         edge_first_policy, evaluate_commitment_policy)
 from .engines import (LotkaVolterraTumour, derive_arm_parameters,
                       PlatformTrialEngine, derive_trial_parameters,
                       DesignSpaceEngine, derive_design_space_parameters)
@@ -48,6 +48,7 @@ __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
            "ConsumableBanditEnv", "MultiAgentConsumableEnv",
            "SCENARIOS", "load", "describe",
            "TerminalCommitment", "optimal_commitment_policy",
+           "expand_outward_policy",
            "greedy_commitment_policy", "edge_first_policy",
            "evaluate_commitment_policy",
            "SimultaneousPool", "planner_value_simultaneous",
