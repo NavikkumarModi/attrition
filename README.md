@@ -3,8 +3,8 @@
 
 Bandits with Consumable Action Sets
 
-[![tests](https://img.shields.io/badge/tests-67%20passing-brightgreen)](tests/)
-[![theorems](https://img.shields.io/badge/theorems-9%20proven-blue)](THEORY.md)
+[![tests](https://img.shields.io/badge/tests-136%20passing-brightgreen)](tests/)
+[![theorems](https://img.shields.io/badge/theorems-11%20proven-blue)](THEORY.md)
 [![python](https://img.shields.io/badge/python-3.9%E2%80%933.12-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
@@ -66,7 +66,7 @@ result in one step:
 python examples/01_quickstart.py
 ```
 
-Run the full check used in CI (regression tests + all 48 experiments importing
+Run the full check used in CI (regression tests + all 60 experiments importing
 cleanly):
 
 ```bash
