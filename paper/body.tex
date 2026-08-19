@@ -893,28 +893,95 @@ regime. This is reported as a genuine negative result: the bound appears loose
 not only in constant but in asymptotic order too, a more precise
 characterisation than simply ``loose.''
 
-\paragraph{A mechanistic account, though not yet a general theorem.} A
-follow-up attempt at a genuinely tighter bound, adapting a compensated-coupling
-argument, produced one new provable lemma and two verified mechanisms that
-together explain the saturate-then-decay behaviour above, though a fully
-general closed-form bound remains open. Writing $W(S,t):=V(S,t)+B(S)$, which
-satisfies exactly $W(S,t)=\max_a[v_a-\kappa_a+p_aW(S{\setminus}a,t{+}1)+(1{-}p_a)W(S,t{+}1)]$
-with no constant-$\kappa$ assumption needed, a max-is-1-Lipschitz argument
-comparing $W$ to $W_{\mathrm{bar}}$ (the same recursion with every $\kappa_a$
-replaced by the mean $\bar\kappa$) gives
-$|W(S,t)-W_{\mathrm{bar}}(S,t)|\le(T{-}t)\,\delta\max_a|\kappa_a-\bar\kappa|$,
-verified to hold with exact equality in every test. Two further facts,
-verified but not assembled into a general theorem: restricted to rounds
-where ECI's action actually disagrees with the true optimal one, $\mathrm{reg}(S,t)$
-does not grow with the remaining horizon (correlation $-0.04$ across 62
-disagreement points); and the expected number of disagreement rounds along
-ECI's own trajectory saturates near the pool's exhaustion scale and then
-decays, rather than growing with $T$. A rigorous bound on the disagreement
-count itself---the one remaining piece---was not found: two natural
-candidates stayed empirically bounded but neither showed unambiguous general
-structure, and forcing a constant here risked fitting the test set rather
-than proving a real relationship, so it is left open rather than
-manufactured.
+\subsection{A structural decomposition of the gap}
+
+The following isolates why the bound above is loose: one component is proven
+exactly, the remainder is characterised empirically and precisely bounded in
+scope, rather than left as an unstructured residual. Throughout, write
+$\mathrm{dev}(S) := \max_{a\in S}|\kappa_a-\bar\kappa|$ for the maximum
+deviation of $\kappa$ from its mean $\bar\kappa$ over $S$.
+
+\begin{lemma}[Compensated-coupling bound]
+\label{lem:compcoupling}
+Define $W(S,t) := V(S,t) + B(S)$. This satisfies exactly, for any $S\neq\emptyset$
+and with no constant-$\kappa$ assumption needed,
+\[
+W(S,t) = \max_{a\in S}\big[v_a - \kappa_a + p_aW(S{\setminus}\{a\},t{+}1) +
+(1-p_a)W(S,t{+}1)\big], \qquad W(\emptyset,t)=0.
+\]
+Let $\bar\kappa := \frac{1}{|S|}\sum_{a\in S}\kappa_a$ and let $W_{\mathrm{bar}}$
+solve the same recursion with every $\kappa_a$ replaced by $\bar\kappa$. Then
+\[
+|W(S,t) - W_{\mathrm{bar}}(S,t)| \;\le\; (T-t)\,\delta\max_{a\in S}|\kappa_a-\bar\kappa|.
+\]
+\end{lemma}
+
+\begin{proof}
+Write $\Delta(S,t):=W(S,t)-W_{\mathrm{bar}}(S,t)$.
+Base case $T-t=0$: $\Delta(S,T)=0$. Inductive step: since the two recursions
+differ only in the linear coefficient on $a$, and the max operator is
+$1$-Lipschitz with respect to its argument,
+\[
+|\Delta(S,t)| \le \max_{a\in S}\big[\,\delta|\kappa_a-\bar\kappa| +
+p_a|\Delta(S{\setminus}a,t{+}1)| + (1-p_a)|\Delta(S,t{+}1)|\,\big]
+\le \delta\,\mathrm{dev}(S) + \max_{S'}|\Delta(S',t{+}1)|,
+\]
+where the second inequality bounds the convex combination of the two
+continuation terms by their maximum. Unrolling from $t$ to $T$ over $T-t$
+rounds gives the stated bound.
+\end{proof}
+
+This recovers the earlier characterisation as a special case: when $\kappa$ is
+constant, $\mathrm{dev}(S)=0$ and $W$ collapses to $W_{\mathrm{bar}}$ exactly, matching
+Theorem~\ref{thm:char}. It does not by itself bound $\mathrm{Gap}(\mathrm{ECI})$,
+since ECI's approximation also omits a non-linear option-value term; the two
+observations below describe, without yet proving in general, how that
+remaining gap behaves.
+
+\begin{observation}[Horizon-independent per-disagreement cost]
+\label{obs:disagreecost}
+Let $\mathcal{D}_{\mathrm{ECI}} := \{t : \arg\max_a I(a,t) \neq \arg\max_a
+Q^\star(a,S_t,t)\}$, the rounds where ECI's choice disagrees with the true
+optimum. Across $62$ disagreement points found over random instances
+($n\in\{3,4\}$, $T\in[6,12)$, $\delta\in[0.3,2.0]$), $\mathrm{reg}(S,t)$
+conditional on $t\in\mathcal{D}_{\mathrm{ECI}}$ shows essentially no
+dependence on the remaining horizon: correlation with $T-t$ of $-0.0386$,
+with the mean ratio $\mathrm{reg}(S,t)/\mathrm{dev}(S)$ stable across every
+horizon bucket tested ($T-t$ from $1$ to $8$). A single mistake's cost does
+not escalate with time remaining, unlike the crude bound's implicit
+assumption.
+\end{observation}
+
+\begin{observation}[Saturating disagreement count]
+\label{obs:disagreecount}
+Unlike the crude bound's $O(T^2)$ scaling, the expected number of
+disagreements along ECI's own trajectory does not grow with $T$. For a
+representative instance with $N_{\mathrm{exh}}$-scale $\sum_j 1/p_j = 4.888$,
+$\mathbb{E}[|\mathcal{D}_{\mathrm{ECI}}|]$ rises from $1.24$ at $T=5$ to a
+plateau of $1.31$ around $T\in[9,15]$---near the pool's own exhaustion
+scale---and then \emph{decays}: $0.036$ at $T=22$, $0.0001$ at $T=30$. The
+mechanism is the same overcorrection identified above: ECI's charge uses the
+literal $T-t$ horizon rather than an exhaustion-capped effective one.
+\end{observation}
+
+\begin{remark}[Why a general bound remains open]
+\label{rem:openflip}
+A natural route to a general bound on Observation~\ref{obs:disagreecount}
+would show ECI's preference between any two arms flips sign at most a
+constant number of times as $t$ varies, since its score is linear in $T-t$
+per arm. Tested directly: the true optimal preference between a pair also
+flips at most once in the cases checked, but the \emph{agreement} between
+ECI and the true preference---the quantity that would need to be bounded to
+control disagreement count---does not stay at the $\le\!2$ that a
+single-flip-per-side argument would predict; up to $3$ flips were observed
+across ten trials. Two further candidate bounds on the disagreement count
+itself, $N_{\mathrm{exh}}$ and the pairwise count $\binom{n}{2}$, both stay
+empirically bounded but neither shows unambiguous general structure.
+Forcing a constant from either candidate would risk fitting the tested
+instances rather than proving a real relationship, so the general bound is
+left open rather than manufactured, and these negative results are released
+in the open-source testbed as a concrete starting point.
+\end{remark}
 
 \section{Corrections}
 
