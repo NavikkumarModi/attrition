@@ -1,0 +1,2996 @@
+[
+ {
+  "country": "BFA",
+  "region": "Africa",
+  "year": 2020,
+  "resistance_pct": 68.75
+ },
+ {
+  "country": "MDA",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 22.86
+ },
+ {
+  "country": "LKA",
+  "region": "South-East Asia",
+  "year": 2020,
+  "resistance_pct": 53.29
+ },
+ {
+  "country": "ARE",
+  "region": "Eastern Mediterranean",
+  "year": 2023,
+  "resistance_pct": 41.44
+ },
+ {
+  "country": "BHR",
+  "region": "Eastern Mediterranean",
+  "year": 2020,
+  "resistance_pct": 34.39
+ },
+ {
+  "country": "CAN",
+  "region": "Americas",
+  "year": 2022,
+  "resistance_pct": 20.98
+ },
+ {
+  "country": "LVA",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 1.7
+ },
+ {
+  "country": "TUN",
+  "region": "Eastern Mediterranean",
+  "year": 2023,
+  "resistance_pct": 14.79
+ },
+ {
+  "country": "GHA",
+  "region": "Africa",
+  "year": 2022,
+  "resistance_pct": 67.86
+ },
+ {
+  "country": "MDA",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 6.67
+ },
+ {
+  "country": "JOR",
+  "region": "Eastern Mediterranean",
+  "year": 2023,
+  "resistance_pct": 78.9
+ },
+ {
+  "country": "DEU",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 5.32
+ },
+ {
+  "country": "ZMB",
+  "region": "Africa",
+  "year": 2022,
+  "resistance_pct": 90.0
+ },
+ {
+  "country": "LKA",
+  "region": "South-East Asia",
+  "year": 2023,
+  "resistance_pct": 48.63
+ },
+ {
+  "country": "PAK",
+  "region": "Eastern Mediterranean",
+  "year": 2020,
+  "resistance_pct": 69.49
+ },
+ {
+  "country": "FIN",
+  "region": "Europe",
+  "year": 2016,
+  "resistance_pct": 2.2
+ },
+ {
+  "country": "SWE",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 1.2
+ },
+ {
+  "country": "KOR",
+  "region": "Western Pacific",
+  "year": 2022,
+  "resistance_pct": 45.71
+ },
+ {
+  "country": "SAU",
+  "region": "Eastern Mediterranean",
+  "year": 2019,
+  "resistance_pct": 48.94
+ },
+ {
+  "country": "DEU",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 4.43
+ },
+ {
+  "country": "BEL",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 4.56
+ },
+ {
+  "country": "CAN",
+  "region": "Americas",
+  "year": 2023,
+  "resistance_pct": 18.27
+ },
+ {
+  "country": "EST",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 2.27
+ },
+ {
+  "country": "ISL",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 6.25
+ },
+ {
+  "country": "AUS",
+  "region": "Western Pacific",
+  "year": 2020,
+  "resistance_pct": 17.65
+ },
+ {
+  "country": "PHL",
+  "region": "Western Pacific",
+  "year": 2020,
+  "resistance_pct": 45.69
+ },
+ {
+  "country": "LVA",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 5.7
+ },
+ {
+  "country": "TZA",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 68.1
+ },
+ {
+  "country": "IDN",
+  "region": "Western Pacific",
+  "year": 2022,
+  "resistance_pct": 35.18
+ },
+ {
+  "country": "ARG",
+  "region": "Americas",
+  "year": 2017,
+  "resistance_pct": 45.0
+ },
+ {
+  "country": "MUS",
+  "region": "Africa",
+  "year": 2022,
+  "resistance_pct": 39.36
+ },
+ {
+  "country": "BEL",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 4.2
+ },
+ {
+  "country": "LTU",
+  "region": "Europe",
+  "year": 2016,
+  "resistance_pct": 11.6
+ },
+ {
+  "country": "SGP",
+  "region": "Western Pacific",
+  "year": 2022,
+  "resistance_pct": 31.17
+ },
+ {
+  "country": "PHL",
+  "region": "Western Pacific",
+  "year": 2017,
+  "resistance_pct": 58.1
+ },
+ {
+  "country": "THA",
+  "region": "South-East Asia",
+  "year": 2019,
+  "resistance_pct": 12.43
+ },
+ {
+  "country": "TUR",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 30.99
+ },
+ {
+  "country": "LUX",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 7.7
+ },
+ {
+  "country": "DEU",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 4.91
+ },
+ {
+  "country": "DEU",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 9.1
+ },
+ {
+  "country": "LKA",
+  "region": "South-East Asia",
+  "year": 2022,
+  "resistance_pct": 51.31
+ },
+ {
+  "country": "POL",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 15.28
+ },
+ {
+  "country": "IRN",
+  "region": "Eastern Mediterranean",
+  "year": 2019,
+  "resistance_pct": 39.08
+ },
+ {
+  "country": "SAU",
+  "region": "Eastern Mediterranean",
+  "year": 2018,
+  "resistance_pct": 46.5
+ },
+ {
+  "country": "KEN",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 38.1
+ },
+ {
+  "country": "LUX",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 3.08
+ },
+ {
+  "country": "KWT",
+  "region": "Eastern Mediterranean",
+  "year": 2022,
+  "resistance_pct": 59.09
+ },
+ {
+  "country": "IRQ",
+  "region": "Eastern Mediterranean",
+  "year": 2020,
+  "resistance_pct": 86.36
+ },
+ {
+  "country": "LBY",
+  "region": "Eastern Mediterranean",
+  "year": 2020,
+  "resistance_pct": 70.0
+ },
+ {
+  "country": "MKD",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 100.0
+ },
+ {
+  "country": "IRL",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 10.96
+ },
+ {
+  "country": "IDN",
+  "region": "Western Pacific",
+  "year": 2021,
+  "resistance_pct": 37.7
+ },
+ {
+  "country": "THA",
+  "region": "South-East Asia",
+  "year": 2022,
+  "resistance_pct": 7.47
+ },
+ {
+  "country": "IRQ",
+  "region": "Eastern Mediterranean",
+  "year": 2021,
+  "resistance_pct": 84.62
+ },
+ {
+  "country": "LVA",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 4.55
+ },
+ {
+  "country": "FRA",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 12.08
+ },
+ {
+  "country": "HRV",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 53.85
+ },
+ {
+  "country": "SAU",
+  "region": "Eastern Mediterranean",
+  "year": 2023,
+  "resistance_pct": 49.5
+ },
+ {
+  "country": "MLI",
+  "region": "Africa",
+  "year": 2021,
+  "resistance_pct": 2.13
+ },
+ {
+  "country": "MLI",
+  "region": "Africa",
+  "year": 2018,
+  "resistance_pct": 0.0
+ },
+ {
+  "country": "COD",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 90.43
+ },
+ {
+  "country": "IRN",
+  "region": "Eastern Mediterranean",
+  "year": 2023,
+  "resistance_pct": 34.38
+ },
+ {
+  "country": "BRA",
+  "region": "Americas",
+  "year": 2023,
+  "resistance_pct": 27.49
+ },
+ {
+  "country": "IRL",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 10.54
+ },
+ {
+  "country": "NPL",
+  "region": "South-East Asia",
+  "year": 2023,
+  "resistance_pct": 78.38
+ },
+ {
+  "country": "RUS",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 16.5
+ },
+ {
+  "country": "PSE",
+  "region": "Eastern Mediterranean",
+  "year": 2019,
+  "resistance_pct": 81.78
+ },
+ {
+  "country": "PSE",
+  "region": "Eastern Mediterranean",
+  "year": 2023,
+  "resistance_pct": 11.43
+ },
+ {
+  "country": "CMR",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 62.5
+ },
+ {
+  "country": "POL",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 14.7
+ },
+ {
+  "country": "MDG",
+  "region": "Africa",
+  "year": 2018,
+  "resistance_pct": 18.8
+ },
+ {
+  "country": "ARG",
+  "region": "Americas",
+  "year": 2023,
+  "resistance_pct": 35.71
+ },
+ {
+  "country": "COD",
+  "region": "Africa",
+  "year": 2022,
+  "resistance_pct": 88.46
+ },
+ {
+  "country": "IDN",
+  "region": "Western Pacific",
+  "year": 2019,
+  "resistance_pct": 39.85
+ },
+ {
+  "country": "JOR",
+  "region": "Eastern Mediterranean",
+  "year": 2021,
+  "resistance_pct": 70.8
+ },
+ {
+  "country": "CZE",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 28.49
+ },
+ {
+  "country": "ARE",
+  "region": "Eastern Mediterranean",
+  "year": 2020,
+  "resistance_pct": 42.52
+ },
+ {
+  "country": "HKG",
+  "region": null,
+  "year": 2022,
+  "resistance_pct": 45.84
+ },
+ {
+  "country": "CZE",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 12.52
+ },
+ {
+  "country": "CHE",
+  "region": "Europe",
+  "year": 2016,
+  "resistance_pct": 4.9
+ },
+ {
+  "country": "EGY",
+  "region": "Eastern Mediterranean",
+  "year": 2021,
+  "resistance_pct": 92.31
+ },
+ {
+  "country": "FIN",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 1.63
+ },
+ {
+  "country": "BIH",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 23.21
+ },
+ {
+  "country": "EGY",
+  "region": "Eastern Mediterranean",
+  "year": 2019,
+  "resistance_pct": 79.59
+ },
+ {
+  "country": "PAK",
+  "region": "Eastern Mediterranean",
+  "year": 2022,
+  "resistance_pct": 67.06
+ },
+ {
+  "country": "ZAF",
+  "region": "Africa",
+  "year": 2017,
+  "resistance_pct": 23.8
+ },
+ {
+  "country": "IRN",
+  "region": "Eastern Mediterranean",
+  "year": 2020,
+  "resistance_pct": 44.06
+ },
+ {
+  "country": "PHL",
+  "region": "Western Pacific",
+  "year": 2021,
+  "resistance_pct": 44.6
+ },
+ {
+  "country": "ITA",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 29.46
+ },
+ {
+  "country": "NGA",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 68.82
+ },
+ {
+  "country": "ZAF",
+  "region": "Africa",
+  "year": 2019,
+  "resistance_pct": 21.35
+ },
+ {
+  "country": "SDN",
+  "region": "Eastern Mediterranean",
+  "year": 2019,
+  "resistance_pct": 48.39
+ },
+ {
+  "country": "ARG",
+  "region": "Americas",
+  "year": 2022,
+  "resistance_pct": 32.79
+ },
+ {
+  "country": "UKR",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 18.07
+ },
+ {
+  "country": "BIH",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 16.3
+ },
+ {
+  "country": "MYS",
+  "region": "Western Pacific",
+  "year": 2023,
+  "resistance_pct": 19.6
+ },
+ {
+  "country": "ARE",
+  "region": "Eastern Mediterranean",
+  "year": 2022,
+  "resistance_pct": 39.88
+ },
+ {
+  "country": "GRC",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 41.16
+ },
+ {
+  "country": "BGD",
+  "region": "South-East Asia",
+  "year": 2022,
+  "resistance_pct": 88.46
+ },
+ {
+  "country": "RUS",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 17.04
+ },
+ {
+  "country": "MKD",
+  "region": "Europe",
+  "year": 2016,
+  "resistance_pct": 48.5
+ },
+ {
+  "country": "OMN",
+  "region": "Eastern Mediterranean",
+  "year": 2020,
+  "resistance_pct": 31.82
+ },
+ {
+  "country": "BRA",
+  "region": "Americas",
+  "year": 2022,
+  "resistance_pct": 31.58
+ },
+ {
+  "country": "AUS",
+  "region": "Western Pacific",
+  "year": 2021,
+  "resistance_pct": 16.91
+ },
+ {
+  "country": "BEN",
+  "region": "Africa",
+  "year": 2022,
+  "resistance_pct": 52.56
+ },
+ {
+  "country": "LVA",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 13.64
+ },
+ {
+  "country": "PER",
+  "region": "Americas",
+  "year": 2020,
+  "resistance_pct": 47.06
+ },
+ {
+  "country": "THA",
+  "region": "South-East Asia",
+  "year": 2021,
+  "resistance_pct": 7.61
+ },
+ {
+  "country": "BEL",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 6.79
+ },
+ {
+  "country": "TUR",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 31.35
+ },
+ {
+  "country": "NLD",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 1.4
+ },
+ {
+  "country": "JOR",
+  "region": "Eastern Mediterranean",
+  "year": 2018,
+  "resistance_pct": 47.9
+ },
+ {
+  "country": "ZMB",
+  "region": "Africa",
+  "year": 2021,
+  "resistance_pct": 69.35
+ },
+ {
+  "country": "TUN",
+  "region": "Eastern Mediterranean",
+  "year": 2017,
+  "resistance_pct": 21.6
+ },
+ {
+  "country": "GBR",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 6.74
+ },
+ {
+  "country": "MOZ",
+  "region": "Africa",
+  "year": 2019,
+  "resistance_pct": 10.34
+ },
+ {
+  "country": "AUS",
+  "region": "Western Pacific",
+  "year": 2022,
+  "resistance_pct": 14.97
+ },
+ {
+  "country": "AUS",
+  "region": "Western Pacific",
+  "year": 2019,
+  "resistance_pct": 18.47
+ },
+ {
+  "country": "BGD",
+  "region": "South-East Asia",
+  "year": 2023,
+  "resistance_pct": 77.97
+ },
+ {
+  "country": "MMR",
+  "region": "South-East Asia",
+  "year": 2023,
+  "resistance_pct": 40.0
+ },
+ {
+  "country": "CHE",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 4.34
+ },
+ {
+  "country": "MLI",
+  "region": "Africa",
+  "year": 2022,
+  "resistance_pct": 13.64
+ },
+ {
+  "country": "EST",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 3.45
+ },
+ {
+  "country": "OMN",
+  "region": "Eastern Mediterranean",
+  "year": 2022,
+  "resistance_pct": 28.57
+ },
+ {
+  "country": "BIH",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 25.8
+ },
+ {
+  "country": "IDN",
+  "region": "Western Pacific",
+  "year": 2023,
+  "resistance_pct": 40.09
+ },
+ {
+  "country": "MOZ",
+  "region": "Africa",
+  "year": 2020,
+  "resistance_pct": 25.0
+ },
+ {
+  "country": "GBR",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 6.9
+ },
+ {
+  "country": "MKD",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 80.77
+ },
+ {
+  "country": "MUS",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 40.89
+ },
+ {
+  "country": "LVA",
+  "region": "Europe",
+  "year": 2016,
+  "resistance_pct": 2.0
+ },
+ {
+  "country": "QAT",
+  "region": "Eastern Mediterranean",
+  "year": 2020,
+  "resistance_pct": 32.05
+ },
+ {
+  "country": "XKX",
+  "region": null,
+  "year": 2022,
+  "resistance_pct": 59.26
+ },
+ {
+  "country": "LTU",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 8.8
+ },
+ {
+  "country": "NOR",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 0.94
+ },
+ {
+  "country": "CIV",
+  "region": "Africa",
+  "year": 2020,
+  "resistance_pct": 71.53
+ },
+ {
+  "country": "IDN",
+  "region": "Western Pacific",
+  "year": 2018,
+  "resistance_pct": 52.3
+ },
+ {
+  "country": "MOZ",
+  "region": "Africa",
+  "year": 2021,
+  "resistance_pct": 25.0
+ },
+ {
+  "country": "BIH",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 28.45
+ },
+ {
+  "country": "BRA",
+  "region": "Americas",
+  "year": 2020,
+  "resistance_pct": 24.41
+ },
+ {
+  "country": "LBN",
+  "region": "Eastern Mediterranean",
+  "year": 2021,
+  "resistance_pct": 37.21
+ },
+ {
+  "country": "BTN",
+  "region": "South-East Asia",
+  "year": 2023,
+  "resistance_pct": 5.0
+ },
+ {
+  "country": "KOR",
+  "region": "Western Pacific",
+  "year": 2016,
+  "resistance_pct": 53.3
+ },
+ {
+  "country": "MOZ",
+  "region": "Africa",
+  "year": 2018,
+  "resistance_pct": 20.0
+ },
+ {
+  "country": "FIN",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 1.19
+ },
+ {
+  "country": "EGY",
+  "region": "Eastern Mediterranean",
+  "year": 2020,
+  "resistance_pct": 100.0
+ },
+ {
+  "country": "MWI",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 100.0
+ },
+ {
+  "country": "BFA",
+  "region": "Africa",
+  "year": 2022,
+  "resistance_pct": 30.43
+ },
+ {
+  "country": "LTU",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 9.42
+ },
+ {
+  "country": "LBR",
+  "region": "Africa",
+  "year": 2020,
+  "resistance_pct": 12.9
+ },
+ {
+  "country": "LTU",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 8.64
+ },
+ {
+  "country": "TLS",
+  "region": "South-East Asia",
+  "year": 2021,
+  "resistance_pct": 37.5
+ },
+ {
+  "country": "FIN",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 0.4
+ },
+ {
+  "country": "POL",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 14.94
+ },
+ {
+  "country": "CYP",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 40.2
+ },
+ {
+  "country": "CHE",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 4.7
+ },
+ {
+  "country": "ETH",
+  "region": "Africa",
+  "year": 2022,
+  "resistance_pct": 61.82
+ },
+ {
+  "country": "MAR",
+  "region": "Eastern Mediterranean",
+  "year": 2021,
+  "resistance_pct": 25.77
+ },
+ {
+  "country": "CZE",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 7.64
+ },
+ {
+  "country": "GBR",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 7.3
+ },
+ {
+  "country": "CZE",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 13.2
+ },
+ {
+  "country": "PHL",
+  "region": "Western Pacific",
+  "year": 2022,
+  "resistance_pct": 44.43
+ },
+ {
+  "country": "MKD",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 54.4
+ },
+ {
+  "country": "CYP",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 55.93
+ },
+ {
+  "country": "YEM",
+  "region": "Eastern Mediterranean",
+  "year": 2023,
+  "resistance_pct": 79.03
+ },
+ {
+  "country": "IRN",
+  "region": "Eastern Mediterranean",
+  "year": 2021,
+  "resistance_pct": 32.8
+ },
+ {
+  "country": "AUT",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 6.4
+ },
+ {
+  "country": "FRA",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 12.52
+ },
+ {
+  "country": "SGP",
+  "region": "Western Pacific",
+  "year": 2021,
+  "resistance_pct": 32.54
+ },
+ {
+  "country": "AUT",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 3.87
+ },
+ {
+  "country": "ETH",
+  "region": "Africa",
+  "year": 2020,
+  "resistance_pct": 39.29
+ },
+ {
+  "country": "NOR",
+  "region": "Europe",
+  "year": 2016,
+  "resistance_pct": 1.1
+ },
+ {
+  "country": "IRL",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 13.99
+ },
+ {
+  "country": "GEO",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 12.52
+ },
+ {
+  "country": "PHL",
+  "region": "Western Pacific",
+  "year": 2016,
+  "resistance_pct": 66.1
+ },
+ {
+  "country": "KHM",
+  "region": "Western Pacific",
+  "year": 2018,
+  "resistance_pct": 48.8
+ },
+ {
+  "country": "JPN",
+  "region": "Western Pacific",
+  "year": 2021,
+  "resistance_pct": 35.05
+ },
+ {
+  "country": "LBN",
+  "region": "Eastern Mediterranean",
+  "year": 2023,
+  "resistance_pct": 50.0
+ },
+ {
+  "country": "SWE",
+  "region": "Europe",
+  "year": 2016,
+  "resistance_pct": 1.8
+ },
+ {
+  "country": "UGA",
+  "region": "Africa",
+  "year": 2017,
+  "resistance_pct": 13.0
+ },
+ {
+  "country": "IRN",
+  "region": "Eastern Mediterranean",
+  "year": 2018,
+  "resistance_pct": 38.5
+ },
+ {
+  "country": "FIN",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 2.0
+ },
+ {
+  "country": "DNK",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 1.85
+ },
+ {
+  "country": "IND",
+  "region": "South-East Asia",
+  "year": 2020,
+  "resistance_pct": 64.66
+ },
+ {
+  "country": "AUT",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 4.27
+ },
+ {
+  "country": "SAU",
+  "region": "Eastern Mediterranean",
+  "year": 2021,
+  "resistance_pct": 50.38
+ },
+ {
+  "country": "KHM",
+  "region": "Western Pacific",
+  "year": 2023,
+  "resistance_pct": 54.17
+ },
+ {
+  "country": "JPN",
+  "region": "Western Pacific",
+  "year": 2017,
+  "resistance_pct": 41.7
+ },
+ {
+  "country": "MKD",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 53.5
+ },
+ {
+  "country": "MOZ",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 16.67
+ },
+ {
+  "country": "BRN",
+  "region": "Western Pacific",
+  "year": 2022,
+  "resistance_pct": 12.16
+ },
+ {
+  "country": "MWI",
+  "region": "Africa",
+  "year": 2016,
+  "resistance_pct": 82.0
+ },
+ {
+  "country": "LBN",
+  "region": "Eastern Mediterranean",
+  "year": 2019,
+  "resistance_pct": 25.0
+ },
+ {
+  "country": "ITA",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 30.88
+ },
+ {
+  "country": "LBN",
+  "region": "Eastern Mediterranean",
+  "year": 2017,
+  "resistance_pct": 8.3
+ },
+ {
+  "country": "LBR",
+  "region": "Africa",
+  "year": 2021,
+  "resistance_pct": 5.88
+ },
+ {
+  "country": "AUT",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 5.9
+ },
+ {
+  "country": "LBN",
+  "region": "Eastern Mediterranean",
+  "year": 2022,
+  "resistance_pct": 52.5
+ },
+ {
+  "country": "JPN",
+  "region": "Western Pacific",
+  "year": 2023,
+  "resistance_pct": 32.52
+ },
+ {
+  "country": "NPL",
+  "region": "South-East Asia",
+  "year": 2022,
+  "resistance_pct": 83.33
+ },
+ {
+  "country": "KEN",
+  "region": "Africa",
+  "year": 2022,
+  "resistance_pct": 21.43
+ },
+ {
+  "country": "QAT",
+  "region": "Eastern Mediterranean",
+  "year": 2021,
+  "resistance_pct": 31.62
+ },
+ {
+  "country": "OMN",
+  "region": "Eastern Mediterranean",
+  "year": 2021,
+  "resistance_pct": 41.46
+ },
+ {
+  "country": "AUS",
+  "region": "Western Pacific",
+  "year": 2023,
+  "resistance_pct": 15.85
+ },
+ {
+  "country": "HRV",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 26.4
+ },
+ {
+  "country": "MMR",
+  "region": "South-East Asia",
+  "year": 2019,
+  "resistance_pct": 55.61
+ },
+ {
+  "country": "FIN",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 1.9
+ },
+ {
+  "country": "COD",
+  "region": "Africa",
+  "year": 2021,
+  "resistance_pct": 100.0
+ },
+ {
+  "country": "MLI",
+  "region": "Africa",
+  "year": 2019,
+  "resistance_pct": 2.5
+ },
+ {
+  "country": "PER",
+  "region": "Americas",
+  "year": 2022,
+  "resistance_pct": 49.15
+ },
+ {
+  "country": "LBN",
+  "region": "Eastern Mediterranean",
+  "year": 2018,
+  "resistance_pct": 20.0
+ },
+ {
+  "country": "TLS",
+  "region": "South-East Asia",
+  "year": 2020,
+  "resistance_pct": 21.43
+ },
+ {
+  "country": "GRC",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 41.32
+ },
+ {
+  "country": "THA",
+  "region": "South-East Asia",
+  "year": 2017,
+  "resistance_pct": 16.7
+ },
+ {
+  "country": "LUX",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 9.5
+ },
+ {
+  "country": "IRN",
+  "region": "Eastern Mediterranean",
+  "year": 2022,
+  "resistance_pct": 34.71
+ },
+ {
+  "country": "MWI",
+  "region": "Africa",
+  "year": 2021,
+  "resistance_pct": 40.0
+ },
+ {
+  "country": "NPL",
+  "region": "South-East Asia",
+  "year": 2018,
+  "resistance_pct": 55.6
+ },
+ {
+  "country": "MMR",
+  "region": "South-East Asia",
+  "year": 2022,
+  "resistance_pct": 66.67
+ },
+ {
+  "country": "PSE",
+  "region": "Eastern Mediterranean",
+  "year": 2021,
+  "resistance_pct": 73.3
+ },
+ {
+  "country": "PER",
+  "region": "Americas",
+  "year": 2021,
+  "resistance_pct": 81.54
+ },
+ {
+  "country": "GHA",
+  "region": "Africa",
+  "year": 2021,
+  "resistance_pct": 45.45
+ },
+ {
+  "country": "BIH",
+  "region": "Europe",
+  "year": 2016,
+  "resistance_pct": 18.0
+ },
+ {
+  "country": "PHL",
+  "region": "Western Pacific",
+  "year": 2023,
+  "resistance_pct": 40.39
+ },
+ {
+  "country": "IND",
+  "region": "South-East Asia",
+  "year": 2023,
+  "resistance_pct": 53.58
+ },
+ {
+  "country": "BHR",
+  "region": "Eastern Mediterranean",
+  "year": 2019,
+  "resistance_pct": 40.0
+ },
+ {
+  "country": "SWZ",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 30.43
+ },
+ {
+  "country": "LVA",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 2.99
+ },
+ {
+  "country": "XKX",
+  "region": null,
+  "year": 2021,
+  "resistance_pct": 43.75
+ },
+ {
+  "country": "LBN",
+  "region": "Eastern Mediterranean",
+  "year": 2020,
+  "resistance_pct": 35.09
+ },
+ {
+  "country": "LVA",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 3.83
+ },
+ {
+  "country": "MDV",
+  "region": "South-East Asia",
+  "year": 2023,
+  "resistance_pct": 36.67
+ },
+ {
+  "country": "CIV",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 100.0
+ },
+ {
+  "country": "THA",
+  "region": "South-East Asia",
+  "year": 2020,
+  "resistance_pct": 10.63
+ },
+ {
+  "country": "GEO",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 11.6
+ },
+ {
+  "country": "UGA",
+  "region": "Africa",
+  "year": 2020,
+  "resistance_pct": 75.0
+ },
+ {
+  "country": "DZA",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 46.01
+ },
+ {
+  "country": "NPL",
+  "region": "South-East Asia",
+  "year": 2020,
+  "resistance_pct": 79.01
+ },
+ {
+  "country": "HRV",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 66.67
+ },
+ {
+  "country": "NLD",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 1.54
+ },
+ {
+  "country": "SAU",
+  "region": "Eastern Mediterranean",
+  "year": 2020,
+  "resistance_pct": 49.09
+ },
+ {
+  "country": "AUT",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 3.12
+ },
+ {
+  "country": "MDG",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 35.71
+ },
+ {
+  "country": "SWZ",
+  "region": "Africa",
+  "year": 2022,
+  "resistance_pct": 36.36
+ },
+ {
+  "country": "KOR",
+  "region": "Western Pacific",
+  "year": 2018,
+  "resistance_pct": 47.1
+ },
+ {
+  "country": "BEL",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 7.0
+ },
+ {
+  "country": "MDA",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 23.81
+ },
+ {
+  "country": "BTN",
+  "region": "South-East Asia",
+  "year": 2019,
+  "resistance_pct": 20.79
+ },
+ {
+  "country": "LAO",
+  "region": "Western Pacific",
+  "year": 2018,
+  "resistance_pct": 11.4
+ },
+ {
+  "country": "NLD",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 1.5
+ },
+ {
+  "country": "KEN",
+  "region": "Africa",
+  "year": 2021,
+  "resistance_pct": 44.12
+ },
+ {
+  "country": "MDG",
+  "region": "Africa",
+  "year": 2019,
+  "resistance_pct": 33.33
+ },
+ {
+  "country": "HRV",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 28.5
+ },
+ {
+  "country": "MDG",
+  "region": "Africa",
+  "year": 2017,
+  "resistance_pct": 30.0
+ },
+ {
+  "country": "FRA",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 12.9
+ },
+ {
+  "country": "PHL",
+  "region": "Western Pacific",
+  "year": 2018,
+  "resistance_pct": 55.4
+ },
+ {
+  "country": "CHE",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 5.12
+ },
+ {
+  "country": "PAK",
+  "region": "Eastern Mediterranean",
+  "year": 2021,
+  "resistance_pct": 82.56
+ },
+ {
+  "country": "LAO",
+  "region": "Western Pacific",
+  "year": 2021,
+  "resistance_pct": 29.89
+ },
+ {
+  "country": "ITA",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 34.0
+ },
+ {
+  "country": "BRA",
+  "region": "Americas",
+  "year": 2018,
+  "resistance_pct": 11.1
+ },
+ {
+  "country": "GHA",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 48.25
+ },
+ {
+  "country": "DNK",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 1.51
+ },
+ {
+  "country": "LTU",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 8.98
+ },
+ {
+  "country": "YEM",
+  "region": "Eastern Mediterranean",
+  "year": 2022,
+  "resistance_pct": 93.46
+ },
+ {
+  "country": "CHE",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 4.07
+ },
+ {
+  "country": "FRA",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 12.1
+ },
+ {
+  "country": "PAK",
+  "region": "Eastern Mediterranean",
+  "year": 2018,
+  "resistance_pct": 28.6
+ },
+ {
+  "country": "GEO",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 28.32
+ },
+ {
+  "country": "JOR",
+  "region": "Eastern Mediterranean",
+  "year": 2022,
+  "resistance_pct": 76.27
+ },
+ {
+  "country": "ARE",
+  "region": "Eastern Mediterranean",
+  "year": 2018,
+  "resistance_pct": 23.7
+ },
+ {
+  "country": "THA",
+  "region": "South-East Asia",
+  "year": 2023,
+  "resistance_pct": 8.16
+ },
+ {
+  "country": "POL",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 15.2
+ },
+ {
+  "country": "SDN",
+  "region": "Eastern Mediterranean",
+  "year": 2021,
+  "resistance_pct": 35.71
+ },
+ {
+  "country": "KWT",
+  "region": "Eastern Mediterranean",
+  "year": 2023,
+  "resistance_pct": 44.78
+ },
+ {
+  "country": "LAO",
+  "region": "Western Pacific",
+  "year": 2017,
+  "resistance_pct": 9.5
+ },
+ {
+  "country": "PAK",
+  "region": "Eastern Mediterranean",
+  "year": 2017,
+  "resistance_pct": 62.7
+ },
+ {
+  "country": "IRQ",
+  "region": "Eastern Mediterranean",
+  "year": 2023,
+  "resistance_pct": 89.67
+ },
+ {
+  "country": "LUX",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 4.68
+ },
+ {
+  "country": "MOZ",
+  "region": "Africa",
+  "year": 2022,
+  "resistance_pct": 6.67
+ },
+ {
+  "country": "CZE",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 9.43
+ },
+ {
+  "country": "MYS",
+  "region": "Western Pacific",
+  "year": 2020,
+  "resistance_pct": 17.12
+ },
+ {
+  "country": "UKR",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 28.05
+ },
+ {
+  "country": "KOR",
+  "region": "Western Pacific",
+  "year": 2017,
+  "resistance_pct": 53.3
+ },
+ {
+  "country": "TUN",
+  "region": "Eastern Mediterranean",
+  "year": 2018,
+  "resistance_pct": 21.1
+ },
+ {
+  "country": "GEO",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 25.32
+ },
+ {
+  "country": "CYP",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 42.94
+ },
+ {
+  "country": "CMR",
+  "region": "Africa",
+  "year": 2021,
+  "resistance_pct": 45.45
+ },
+ {
+  "country": "LAO",
+  "region": "Western Pacific",
+  "year": 2022,
+  "resistance_pct": 55.88
+ },
+ {
+  "country": "MLT",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 20.39
+ },
+ {
+  "country": "IRL",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 16.3
+ },
+ {
+  "country": "ZAF",
+  "region": "Africa",
+  "year": 2021,
+  "resistance_pct": 16.64
+ },
+ {
+  "country": "ETH",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 50.0
+ },
+ {
+  "country": "GBR",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 7.96
+ },
+ {
+  "country": "UKR",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 13.46
+ },
+ {
+  "country": "ARG",
+  "region": "Americas",
+  "year": 2021,
+  "resistance_pct": 34.33
+ },
+ {
+  "country": "GBR",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 9.86
+ },
+ {
+  "country": "ITA",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 30.6
+ },
+ {
+  "country": "MAR",
+  "region": "Eastern Mediterranean",
+  "year": 2023,
+  "resistance_pct": 21.64
+ },
+ {
+  "country": "FRA",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 11.0
+ },
+ {
+  "country": "EGY",
+  "region": "Eastern Mediterranean",
+  "year": 2023,
+  "resistance_pct": 88.89
+ },
+ {
+  "country": "PSE",
+  "region": "Eastern Mediterranean",
+  "year": 2020,
+  "resistance_pct": 89.49
+ },
+ {
+  "country": "CYP",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 49.52
+ },
+ {
+  "country": "JPN",
+  "region": "Western Pacific",
+  "year": 2020,
+  "resistance_pct": 35.86
+ },
+ {
+  "country": "EST",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 3.09
+ },
+ {
+  "country": "BEN",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 62.84
+ },
+ {
+  "country": "BFA",
+  "region": "Africa",
+  "year": 2021,
+  "resistance_pct": 51.16
+ },
+ {
+  "country": "MWI",
+  "region": "Africa",
+  "year": 2020,
+  "resistance_pct": 61.19
+ },
+ {
+  "country": "KHM",
+  "region": "Western Pacific",
+  "year": 2022,
+  "resistance_pct": 81.25
+ },
+ {
+  "country": "TUN",
+  "region": "Eastern Mediterranean",
+  "year": 2019,
+  "resistance_pct": 17.44
+ },
+ {
+  "country": "HRV",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 50.0
+ },
+ {
+  "country": "TUR",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 32.58
+ },
+ {
+  "country": "ARG",
+  "region": "Americas",
+  "year": 2018,
+  "resistance_pct": 42.5
+ },
+ {
+  "country": "GRC",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 38.4
+ },
+ {
+  "country": "SAU",
+  "region": "Eastern Mediterranean",
+  "year": 2022,
+  "resistance_pct": 52.05
+ },
+ {
+  "country": "COL",
+  "region": "Americas",
+  "year": 2023,
+  "resistance_pct": 47.76
+ },
+ {
+  "country": "CZE",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 13.6
+ },
+ {
+  "country": "MLT",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 36.4
+ },
+ {
+  "country": "JOR",
+  "region": "Eastern Mediterranean",
+  "year": 2020,
+  "resistance_pct": 58.39
+ },
+ {
+  "country": "FRA",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 11.15
+ },
+ {
+  "country": "MMR",
+  "region": "South-East Asia",
+  "year": 2020,
+  "resistance_pct": 50.97
+ },
+ {
+  "country": "THA",
+  "region": "South-East Asia",
+  "year": 2018,
+  "resistance_pct": 11.3
+ },
+ {
+  "country": "OMN",
+  "region": "Eastern Mediterranean",
+  "year": 2023,
+  "resistance_pct": 100.0
+ },
+ {
+  "country": "OMN",
+  "region": "Eastern Mediterranean",
+  "year": 2018,
+  "resistance_pct": 50.0
+ },
+ {
+  "country": "DNK",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 1.94
+ },
+ {
+  "country": "ZAF",
+  "region": "Africa",
+  "year": 2016,
+  "resistance_pct": 24.9
+ },
+ {
+  "country": "JOR",
+  "region": "Eastern Mediterranean",
+  "year": 2019,
+  "resistance_pct": 72.39
+ },
+ {
+  "country": "AUT",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 4.47
+ },
+ {
+  "country": "QAT",
+  "region": "Eastern Mediterranean",
+  "year": 2022,
+  "resistance_pct": 30.06
+ },
+ {
+  "country": "ZAF",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 17.78
+ },
+ {
+  "country": "EGY",
+  "region": "Eastern Mediterranean",
+  "year": 2022,
+  "resistance_pct": 69.44
+ },
+ {
+  "country": "TLS",
+  "region": "South-East Asia",
+  "year": 2023,
+  "resistance_pct": 22.0
+ },
+ {
+  "country": "SGP",
+  "region": "Western Pacific",
+  "year": 2019,
+  "resistance_pct": 28.65
+ },
+ {
+  "country": "EGY",
+  "region": "Eastern Mediterranean",
+  "year": 2018,
+  "resistance_pct": 70.4
+ },
+ {
+  "country": "MAR",
+  "region": "Eastern Mediterranean",
+  "year": 2022,
+  "resistance_pct": 23.58
+ },
+ {
+  "country": "CYP",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 100.0
+ },
+ {
+  "country": "DNK",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 1.55
+ },
+ {
+  "country": "GRC",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 41.08
+ },
+ {
+  "country": "BHR",
+  "region": "Eastern Mediterranean",
+  "year": 2018,
+  "resistance_pct": 35.5
+ },
+ {
+  "country": "GEO",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 26.67
+ },
+ {
+  "country": "GRC",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 36.4
+ },
+ {
+  "country": "AUT",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 5.26
+ },
+ {
+  "country": "PAK",
+  "region": "Eastern Mediterranean",
+  "year": 2023,
+  "resistance_pct": 71.19
+ },
+ {
+  "country": "KOR",
+  "region": "Western Pacific",
+  "year": 2019,
+  "resistance_pct": 48.61
+ },
+ {
+  "country": "NGA",
+  "region": "Africa",
+  "year": 2018,
+  "resistance_pct": 65.8
+ },
+ {
+  "country": "PAK",
+  "region": "Eastern Mediterranean",
+  "year": 2019,
+  "resistance_pct": 64.98
+ },
+ {
+  "country": "SGP",
+  "region": "Western Pacific",
+  "year": 2023,
+  "resistance_pct": 23.64
+ },
+ {
+  "country": "ARG",
+  "region": "Americas",
+  "year": 2019,
+  "resistance_pct": 42.03
+ },
+ {
+  "country": "RUS",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 14.0
+ },
+ {
+  "country": "POL",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 13.66
+ },
+ {
+  "country": "ZAF",
+  "region": "Africa",
+  "year": 2020,
+  "resistance_pct": 19.64
+ },
+ {
+  "country": "IRL",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 12.4
+ },
+ {
+  "country": "LVA",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 12.28
+ },
+ {
+  "country": "LKA",
+  "region": "South-East Asia",
+  "year": 2021,
+  "resistance_pct": 47.21
+ },
+ {
+  "country": "SWE",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 2.12
+ },
+ {
+  "country": "QAT",
+  "region": "Eastern Mediterranean",
+  "year": 2019,
+  "resistance_pct": 33.8
+ },
+ {
+  "country": "BRA",
+  "region": "Americas",
+  "year": 2019,
+  "resistance_pct": 20.56
+ },
+ {
+  "country": "IND",
+  "region": "South-East Asia",
+  "year": 2017,
+  "resistance_pct": 52.5
+ },
+ {
+  "country": "ITA",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 36.55
+ },
+ {
+  "country": "SYR",
+  "region": "Eastern Mediterranean",
+  "year": 2022,
+  "resistance_pct": 29.41
+ },
+ {
+  "country": "HKG",
+  "region": null,
+  "year": 2023,
+  "resistance_pct": 45.7
+ },
+ {
+  "country": "BHR",
+  "region": "Eastern Mediterranean",
+  "year": 2022,
+  "resistance_pct": 42.11
+ },
+ {
+  "country": "JPN",
+  "region": "Western Pacific",
+  "year": 2018,
+  "resistance_pct": 40.6
+ },
+ {
+  "country": "NPL",
+  "region": "South-East Asia",
+  "year": 2021,
+  "resistance_pct": 57.89
+ },
+ {
+  "country": "BRN",
+  "region": "Western Pacific",
+  "year": 2020,
+  "resistance_pct": 12.47
+ },
+ {
+  "country": "MMR",
+  "region": "South-East Asia",
+  "year": 2018,
+  "resistance_pct": 74.1
+ },
+ {
+  "country": "NGA",
+  "region": "Africa",
+  "year": 2021,
+  "resistance_pct": 66.67
+ },
+ {
+  "country": "ZAF",
+  "region": "Africa",
+  "year": 2022,
+  "resistance_pct": 16.48
+ },
+ {
+  "country": "JPN",
+  "region": "Western Pacific",
+  "year": 2019,
+  "resistance_pct": 36.42
+ },
+ {
+  "country": "MLT",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 19.57
+ },
+ {
+  "country": "LUX",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 5.53
+ },
+ {
+  "country": "MKD",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 53.85
+ },
+ {
+  "country": "SWE",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 1.85
+ },
+ {
+  "country": "HRV",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 24.86
+ },
+ {
+  "country": "OMN",
+  "region": "Eastern Mediterranean",
+  "year": 2017,
+  "resistance_pct": 41.1
+ },
+ {
+  "country": "GRC",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 43.18
+ },
+ {
+  "country": "QAT",
+  "region": "Eastern Mediterranean",
+  "year": 2023,
+  "resistance_pct": 40.83
+ },
+ {
+  "country": "POL",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 16.52
+ },
+ {
+  "country": "COL",
+  "region": "Americas",
+  "year": 2022,
+  "resistance_pct": 45.15
+ },
+ {
+  "country": "IRL",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 14.96
+ },
+ {
+  "country": "THA",
+  "region": "South-East Asia",
+  "year": 2016,
+  "resistance_pct": 13.4
+ },
+ {
+  "country": "CZE",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 9.33
+ },
+ {
+  "country": "HRV",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 27.39
+ },
+ {
+  "country": "DEU",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 6.8
+ },
+ {
+  "country": "LAO",
+  "region": "Western Pacific",
+  "year": 2020,
+  "resistance_pct": 22.22
+ },
+ {
+  "country": "XKX",
+  "region": null,
+  "year": 2020,
+  "resistance_pct": 64.29
+ },
+ {
+  "country": "NOR",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 1.27
+ },
+ {
+  "country": "CYP",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 31.2
+ },
+ {
+  "country": "BHR",
+  "region": "Eastern Mediterranean",
+  "year": 2023,
+  "resistance_pct": 53.33
+ },
+ {
+  "country": "IRQ",
+  "region": "Eastern Mediterranean",
+  "year": 2022,
+  "resistance_pct": 87.76
+ },
+ {
+  "country": "FIN",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 2.07
+ },
+ {
+  "country": "MLI",
+  "region": "Africa",
+  "year": 2020,
+  "resistance_pct": 10.42
+ },
+ {
+  "country": "TZA",
+  "region": "Africa",
+  "year": 2020,
+  "resistance_pct": 50.21
+ },
+ {
+  "country": "LTU",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 9.3
+ },
+ {
+  "country": "TZA",
+  "region": "Africa",
+  "year": 2021,
+  "resistance_pct": 64.88
+ },
+ {
+  "country": "SWE",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 2.33
+ },
+ {
+  "country": "LUX",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 6.22
+ },
+ {
+  "country": "ETH",
+  "region": "Africa",
+  "year": 2021,
+  "resistance_pct": 59.23
+ },
+ {
+  "country": "GEO",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 4.2
+ },
+ {
+  "country": "CHE",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 3.91
+ },
+ {
+  "country": "KHM",
+  "region": "Western Pacific",
+  "year": 2020,
+  "resistance_pct": 68.09
+ },
+ {
+  "country": "POL",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 15.9
+ },
+ {
+  "country": "CHE",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 3.96
+ },
+ {
+  "country": "PNG",
+  "region": "Western Pacific",
+  "year": 2023,
+  "resistance_pct": 68.09
+ },
+ {
+  "country": "RUS",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 8.25
+ },
+ {
+  "country": "BRN",
+  "region": "Western Pacific",
+  "year": 2023,
+  "resistance_pct": 5.26
+ },
+ {
+  "country": "NGA",
+  "region": "Africa",
+  "year": 2017,
+  "resistance_pct": 62.8
+ },
+ {
+  "country": "XKX",
+  "region": null,
+  "year": 2023,
+  "resistance_pct": 55.88
+ },
+ {
+  "country": "ZMB",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 58.88
+ },
+ {
+  "country": "TZA",
+  "region": "Africa",
+  "year": 2022,
+  "resistance_pct": 59.49
+ },
+ {
+  "country": "IRL",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 9.61
+ },
+ {
+  "country": "MLT",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 22.08
+ },
+ {
+  "country": "KWT",
+  "region": "Eastern Mediterranean",
+  "year": 2020,
+  "resistance_pct": 43.55
+ },
+ {
+  "country": "IND",
+  "region": "South-East Asia",
+  "year": 2021,
+  "resistance_pct": 55.67
+ },
+ {
+  "country": "BIH",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 10.55
+ },
+ {
+  "country": "IDN",
+  "region": "Western Pacific",
+  "year": 2020,
+  "resistance_pct": 36.24
+ },
+ {
+  "country": "SDN",
+  "region": "Eastern Mediterranean",
+  "year": 2018,
+  "resistance_pct": 52.2
+ },
+ {
+  "country": "TUN",
+  "region": "Eastern Mediterranean",
+  "year": 2020,
+  "resistance_pct": 12.1
+ },
+ {
+  "country": "RUS",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 26.67
+ },
+ {
+  "country": "DEU",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 7.6
+ },
+ {
+  "country": "KOR",
+  "region": "Western Pacific",
+  "year": 2021,
+  "resistance_pct": 45.21
+ },
+ {
+  "country": "TUN",
+  "region": "Eastern Mediterranean",
+  "year": 2022,
+  "resistance_pct": 13.61
+ },
+ {
+  "country": "SWE",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 1.97
+ },
+ {
+  "country": "CHE",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 5.8
+ },
+ {
+  "country": "NOR",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 1.0
+ },
+ {
+  "country": "GRC",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 43.41
+ },
+ {
+  "country": "TUN",
+  "region": "Eastern Mediterranean",
+  "year": 2021,
+  "resistance_pct": 17.24
+ },
+ {
+  "country": "ARG",
+  "region": "Americas",
+  "year": 2020,
+  "resistance_pct": 38.4
+ },
+ {
+  "country": "DEU",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 5.58
+ },
+ {
+  "country": "LTU",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 9.8
+ },
+ {
+  "country": "PNG",
+  "region": "Western Pacific",
+  "year": 2022,
+  "resistance_pct": 65.52
+ },
+ {
+  "country": "GBR",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 10.4
+ },
+ {
+  "country": "MLT",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 15.79
+ },
+ {
+  "country": "NOR",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 2.09
+ },
+ {
+  "country": "BTN",
+  "region": "South-East Asia",
+  "year": 2020,
+  "resistance_pct": 11.67
+ },
+ {
+  "country": "IND",
+  "region": "South-East Asia",
+  "year": 2019,
+  "resistance_pct": 60.61
+ },
+ {
+  "country": "GBR",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 3.89
+ },
+ {
+  "country": "ARE",
+  "region": "Eastern Mediterranean",
+  "year": 2019,
+  "resistance_pct": 36.23
+ },
+ {
+  "country": "MUS",
+  "region": "Africa",
+  "year": 2020,
+  "resistance_pct": 39.62
+ },
+ {
+  "country": "MLI",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 8.0
+ },
+ {
+  "country": "MLT",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 19.85
+ },
+ {
+  "country": "NOR",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 2.01
+ },
+ {
+  "country": "LKA",
+  "region": "South-East Asia",
+  "year": 2019,
+  "resistance_pct": 55.99
+ },
+ {
+  "country": "CMR",
+  "region": "Africa",
+  "year": 2022,
+  "resistance_pct": 76.0
+ },
+ {
+  "country": "GEO",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 20.14
+ },
+ {
+  "country": "MYS",
+  "region": "Western Pacific",
+  "year": 2021,
+  "resistance_pct": 16.45
+ },
+ {
+  "country": "JPN",
+  "region": "Western Pacific",
+  "year": 2022,
+  "resistance_pct": 33.89
+ },
+ {
+  "country": "BRA",
+  "region": "Americas",
+  "year": 2021,
+  "resistance_pct": 7.0
+ },
+ {
+  "country": "MLT",
+  "region": "Europe",
+  "year": 2017,
+  "resistance_pct": 43.3
+ },
+ {
+  "country": "TUN",
+  "region": "Eastern Mediterranean",
+  "year": 2016,
+  "resistance_pct": 24.5
+ },
+ {
+  "country": "BIH",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 20.83
+ },
+ {
+  "country": "ARE",
+  "region": "Eastern Mediterranean",
+  "year": 2017,
+  "resistance_pct": 34.1
+ },
+ {
+  "country": "RUS",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 7.28
+ },
+ {
+  "country": "DEU",
+  "region": "Europe",
+  "year": 2016,
+  "resistance_pct": 10.3
+ },
+ {
+  "country": "LAO",
+  "region": "Western Pacific",
+  "year": 2019,
+  "resistance_pct": 6.06
+ },
+ {
+  "country": "IND",
+  "region": "South-East Asia",
+  "year": 2018,
+  "resistance_pct": 63.1
+ },
+ {
+  "country": "SAU",
+  "region": "Eastern Mediterranean",
+  "year": 2017,
+  "resistance_pct": 33.1
+ },
+ {
+  "country": "NLD",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 1.2
+ },
+ {
+  "country": "NAM",
+  "region": "Africa",
+  "year": 2022,
+  "resistance_pct": 0.0
+ },
+ {
+  "country": "NLD",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 1.65
+ },
+ {
+  "country": "FIN",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 2.31
+ },
+ {
+  "country": "CYP",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 53.01
+ },
+ {
+  "country": "NGA",
+  "region": "Africa",
+  "year": 2020,
+  "resistance_pct": 75.41
+ },
+ {
+  "country": "PER",
+  "region": "Americas",
+  "year": 2023,
+  "resistance_pct": 38.71
+ },
+ {
+  "country": "SWE",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 1.9
+ },
+ {
+  "country": "ISL",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 2.78
+ },
+ {
+  "country": "SWE",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 1.8
+ },
+ {
+  "country": "NGA",
+  "region": "Africa",
+  "year": 2022,
+  "resistance_pct": 65.09
+ },
+ {
+  "country": "NLD",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 2.31
+ },
+ {
+  "country": "ARE",
+  "region": "Eastern Mediterranean",
+  "year": 2021,
+  "resistance_pct": 35.65
+ },
+ {
+  "country": "DJI",
+  "region": "Eastern Mediterranean",
+  "year": 2020,
+  "resistance_pct": 0.0
+ },
+ {
+  "country": "COL",
+  "region": "Americas",
+  "year": 2021,
+  "resistance_pct": 45.24
+ },
+ {
+  "country": "ZMB",
+  "region": "Africa",
+  "year": 2020,
+  "resistance_pct": 55.0
+ },
+ {
+  "country": "ZAF",
+  "region": "Africa",
+  "year": 2018,
+  "resistance_pct": 24.6
+ },
+ {
+  "country": "MWI",
+  "region": "Africa",
+  "year": 2017,
+  "resistance_pct": 19.7
+ },
+ {
+  "country": "MYS",
+  "region": "Western Pacific",
+  "year": 2018,
+  "resistance_pct": 23.1
+ },
+ {
+  "country": "MYS",
+  "region": "Western Pacific",
+  "year": 2017,
+  "resistance_pct": 21.9
+ },
+ {
+  "country": "KOR",
+  "region": "Western Pacific",
+  "year": 2023,
+  "resistance_pct": 45.19
+ },
+ {
+  "country": "MYS",
+  "region": "Western Pacific",
+  "year": 2019,
+  "resistance_pct": 19.53
+ },
+ {
+  "country": "BIH",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 26.51
+ },
+ {
+  "country": "ITA",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 38.75
+ },
+ {
+  "country": "NLD",
+  "region": "Europe",
+  "year": 2021,
+  "resistance_pct": 1.61
+ },
+ {
+  "country": "BFA",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 22.03
+ },
+ {
+  "country": "LAO",
+  "region": "Western Pacific",
+  "year": 2023,
+  "resistance_pct": 77.78
+ },
+ {
+  "country": "BRN",
+  "region": "Western Pacific",
+  "year": 2021,
+  "resistance_pct": 14.62
+ },
+ {
+  "country": "MUS",
+  "region": "Africa",
+  "year": 2021,
+  "resistance_pct": 42.96
+ },
+ {
+  "country": "IND",
+  "region": "South-East Asia",
+  "year": 2022,
+  "resistance_pct": 54.85
+ },
+ {
+  "country": "BRN",
+  "region": "Western Pacific",
+  "year": 2019,
+  "resistance_pct": 12.3
+ },
+ {
+  "country": "LTU",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 8.4
+ },
+ {
+  "country": "RUS",
+  "region": "Europe",
+  "year": 2020,
+  "resistance_pct": 28.89
+ },
+ {
+  "country": "MKD",
+  "region": "Europe",
+  "year": 2023,
+  "resistance_pct": 41.46
+ },
+ {
+  "country": "NOR",
+  "region": "Europe",
+  "year": 2018,
+  "resistance_pct": 0.9
+ },
+ {
+  "country": "UKR",
+  "region": "Europe",
+  "year": 2022,
+  "resistance_pct": 15.28
+ },
+ {
+  "country": "NAM",
+  "region": "Africa",
+  "year": 2023,
+  "resistance_pct": 30.43
+ },
+ {
+  "country": "TLS",
+  "region": "South-East Asia",
+  "year": 2022,
+  "resistance_pct": 38.1
+ },
+ {
+  "country": "MKD",
+  "region": "Europe",
+  "year": 2019,
+  "resistance_pct": 45.0
+ },
+ {
+  "country": "SOM",
+  "region": "Eastern Mediterranean",
+  "year": 2020,
+  "resistance_pct": 46.67
+ },
+ {
+  "country": "PHL",
+  "region": "Western Pacific",
+  "year": 2019,
+  "resistance_pct": 50.88
+ },
+ {
+  "country": "KOR",
+  "region": "Western Pacific",
+  "year": 2020,
+  "resistance_pct": 47.55
+ }
+]

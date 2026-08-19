@@ -41,3 +41,6 @@ Paper = "https://github.com/<user>/attrition/tree/main/paper"
 
 [tool.setuptools.packages.find]
 include = ["attrition*"]
+
+[tool.setuptools.package-data]
+attrition = ["data/*.json"]

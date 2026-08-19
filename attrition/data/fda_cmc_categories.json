@@ -1,0 +1,65 @@
+[
+ {
+  "category": "CGMP",
+  "class_i": 1,
+  "class_ii": 3342,
+  "class_iii": 80,
+  "total": 3423
+ },
+ {
+  "category": "sterility",
+  "class_i": 152,
+  "class_ii": 6108,
+  "class_iii": 6,
+  "total": 6266
+ },
+ {
+  "category": "contamina",
+  "class_i": 786,
+  "class_ii": 1418,
+  "class_iii": 72,
+  "total": 2276
+ },
+ {
+  "category": "particulate",
+  "class_i": 176,
+  "class_ii": 309,
+  "class_iii": 13,
+  "total": 498
+ },
+ {
+  "category": "potency",
+  "class_i": 6,
+  "class_ii": 124,
+  "class_iii": 14,
+  "total": 144
+ },
+ {
+  "category": "dissolution",
+  "class_i": 9,
+  "class_ii": 272,
+  "class_iii": 119,
+  "total": 401
+ },
+ {
+  "category": "stability",
+  "class_i": 8,
+  "class_ii": 729,
+  "class_iii": 308,
+  "total": 1045
+ },
+ {
+  "category": "mislabel",
+  "class_i": 9,
+  "class_ii": 534,
+  "class_iii": 22,
+  "total": 565
+ },
+ {
+  "category": "microbial",
+  "class_i": 617,
+  "class_ii": 318,
+  "class_iii": 3,
+  "total": 938
+ }
+]

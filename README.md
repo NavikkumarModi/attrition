@@ -405,6 +405,38 @@ See `experiments/exp25_domains.py` for all four, and
 router's dashboard shows a flawless zero-regret record while it burns the
 ecosystem to a worse outcome with fewer tools remaining.
 
+### Grounded in real data
+
+A third tier alongside hand-set (above) and mechanistic (`engines.py`):
+`(v, p, e)` derived from actual external measurements, not this repo's own
+simulation. Checked-in snapshots under `attrition/data/`, refreshed by
+`python scripts/fetch_real_data.py` (stdlib only, no new dependency).
+
+| scenario | real source | what's actually measured |
+|---|---|---|
+| `antibiotic-stewardship-real` | [WHO Global Health Observatory](https://ghoapi.azureedge.net/api/) | `p` — real MRSA/E. coli resistance proportion, ~1,005 country/year rows |
+| `design-space-real` | [openFDA drug enforcement](https://api.fda.gov/drug/enforcement.json) | `p` — real fraction of Class I (most severe) recalls per failure category, from 15,556 real records |
+| `agent_tools`/`shared-quota` | Datadog "State of AI Engineering" (2026) | cited as supporting evidence only — see caveat below |
+
+**Only one of `(v, p, e)` is real-measured in each case** — the other two are
+documented proxies, stated as such in `real_data.SOURCES`, not presented as
+equally real. And one honest negative result: the default
+`antibiotic-stewardship-real` proxy (`v = 1-p`, `e = p`) makes
+`kappa = p*e` a deterministic function of `v`, landing it in the *aligned*
+regime (like `platform-trial`) by construction of that formula — greedy and
+ECI coincide there, which is a fact about the proxy, not a discovery about
+real antibiotic resistance. `design-space-real`'s gap is real but small
+(a few percent, checked at 200 seeds, not tuned up by cherry-picking a seed
+count). Neither result was replaced with a formula chosen to look better —
+see `examples/07_real_world_grounded.py` for the full, honestly-reported run.
+
+`agent_tools`/`shared-quota`'s roster numbers are **unchanged** — Datadog's
+published rate-limit figures are real and current (2-5% of LLM call spans
+erroring, majority from exceeded quota) but measure a different quantity
+than this roster's `p` (per-call error rate vs. probability-this-pull-
+exhausts-the-tool), so citing them to recalibrate the numbers would be a
+fake precision upgrade, not a real one. See `DOMAIN_NOTES["agent_tools"]`.
+
 ---
 
 ## Terminal commitment

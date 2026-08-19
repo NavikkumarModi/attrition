@@ -23,6 +23,7 @@ import numpy as np
 from .envs import ConsumableBanditEnv, MultiAgentConsumableEnv
 from .engines import (derive_arm_parameters, derive_trial_parameters,
                       derive_design_space_parameters, derive_antibiotic_parameters)
+from .real_data import derive_real_amr_parameters, derive_real_cmc_parameters
 
 __all__ = ["SCENARIOS", "load", "describe", "ScenarioRegistry", "from_arrays",
            "get_arrays"]
@@ -165,6 +166,61 @@ SCENARIOS = ScenarioRegistry({
                           dict(delta=0.3, horizon=8)),
     },
 })
+
+# ------------------------------------------------ real-data-grounded (Tier 3)
+# Registered via the extension point, not the literal above -- see
+# attrition/real_data.py's SOURCES dict for what's actually measured here vs.
+# a documented proxy. Unlike every scenario above, at least one of (v, p, e)
+# in each of these comes from a real, cited, external dataset, not this repo.
+SCENARIOS.register(
+    "antibiotic-stewardship-real",
+    description=("Real WHO GLASS-fed surveillance data: 1,005 country/year "
+                "MRSA and E. coli resistance measurements, each one arm. "
+                "p is the real reported resistance proportion; v and e are "
+                "documented proxies -- see real_data.SOURCES['who_amr']."),
+    phenomenon="negative control, using real measured resistance rates",
+    expected_behaviour=("kappa = p*e is real-dispersed (std > 0) but, by "
+                        "construction of the v=1-p, e=p proxy, is a "
+                        "deterministic monotone function of v -- corr(v, "
+                        "kappa) approx -0.96, checked not assumed. That is "
+                        "the ALIGNED regime (see platform-trial/"
+                        "aligned-control): greedy and ECI coincide here, "
+                        "not because real antibiotic resistance behaves "
+                        "this way, but as a mechanical consequence of this "
+                        "proxy formula -- see derive_real_amr_parameters's "
+                        "docstring. n defaults to 200 of the ~1,005 "
+                        "available real rows -- a genuinely large-N "
+                        "scenario (this repo's previous largest was n=20), "
+                        "even though the headline effect doesn't appear at "
+                        "these default parameters."),
+    agents=1,
+    build=lambda: (derive_real_amr_parameters(indicator="both", n=200, seed=0)[:3],
+                  dict(delta=0.05, horizon=40)),
+)
+
+SCENARIOS.register(
+    "design-space-real",
+    description=("Real openFDA drug-recall data: 9 manufacturing failure "
+                "categories (CGMP, sterility, contamination, ...) covering "
+                "15,556 real recall records. p is the real fraction of each "
+                "category's recalls classified Class I (most severe); v and "
+                "e are documented proxies -- see real_data.SOURCES['fda_cmc']."),
+    phenomenon="zero-regret ruin, using real FDA severity classifications",
+    expected_behaviour=("kappa is dispersed from ~0 (CGMP, almost never "
+                        "Class I) to >1.5 (microbial contamination, 66% "
+                        "Class I) -- a real, not tuned, spread; corr(v, "
+                        "kappa) approx -0.20, checked not assumed. Unlike "
+                        "the synthetic design-space scenario (whose gap is "
+                        "tuned to 17-107%), this real spread is mild and "
+                        "close to the alignment boundary at n=9, so greedy "
+                        "still records zero private regret but the value "
+                        "gap to ECI is small (a few percent) and comparable "
+                        "to Monte-Carlo noise at moderate seed counts -- "
+                        "reported honestly rather than run until a bigger "
+                        "gap appears by chance."),
+    agents=1,
+    build=lambda: (derive_real_cmc_parameters()[:3], dict(delta=0.6, horizon=8)),
+)
 
 
 def from_arrays(v, p, e, name="custom", agents=1, delta=0.05, horizon=50,

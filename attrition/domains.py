@@ -28,7 +28,17 @@ DOMAIN_NOTES = {
         "revoked; e is how much shared upstream infrastructure the tool sits "
         "on, so burning it throttles the rest. Shared provider quotas, "
         "noisy-neighbour effects on shared tenancy, and reputation-based "
-        "throttling of an IP range all have exactly this structure."),
+        "throttling of an IP range all have exactly this structure. "
+        "Real supporting evidence, not used to set the numbers below: "
+        "Datadog's 'State of AI Engineering' report measured 2-5% of "
+        "production LLM API call spans erroring in Feb-Mar 2026, the "
+        "majority from exceeded rate limits (8.4M rate-limit errors "
+        "observed in March 2026 alone) -- confirming this failure mode is "
+        "real and current, not hypothetical. Not used to recalibrate p/e "
+        "here because Datadog's figure is a per-call error rate, a "
+        "different quantity from this roster's p (probability a pull "
+        "exhausts/revokes the tool for the rest of the session); "
+        "conflating the two would be a fake precision upgrade."),
     "adaptive_therapy": (
         "Strong fit. Arms are dose levels. Pulling a high dose irreversibly "
         "destroys drug-sensitive tumour cells (p rises with dose intensity), "
