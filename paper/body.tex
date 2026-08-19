@@ -128,8 +128,7 @@ order is ascending in $e$; arm values are irrelevant.
 (Proposition~\ref{prop:eciexact}) with a proven general bound
 (Theorem~\ref{thm:ecibound}), and a rollout policy reaching 99.5--99.9\% of
 optimum.
-\item \textbf{A sequential-equivalence theorem} (long-form edition,
-Section~11): multi-agent consumption on a shared pool reduces exactly to a
+\item \textbf{A sequential-equivalence theorem} (Appendix~\ref{sec:multiagent}): multi-agent consumption on a shared pool reduces exactly to a
 single-agent problem over a longer horizon---so no price of anarchy arises from
 consumption externalities alone, and the target for mechanism design is
 free-riding specifically, not coordination.
@@ -145,7 +144,20 @@ central practical recommendation follows directly from this.
 the model has no null action, so having \emph{more} available arms can lower
 achievable value---an intuitively obvious monotonicity property that is false,
 with a concrete counterexample.
-\item An open-source testbed, \textsc{Attrition}, with 55 experiments and 96
+\item \textbf{Two structural results in the appendices resolve stated-open
+questions.} Terminal commitment (Appendix~\ref{sec:commitment}): boundary-only expansion---never
+testing a setting non-adjacent to the current claimable envelope---is exactly
+optimal, proven via an exchange argument. Ordinal recovery (Appendix~\ref{sec:ordinal}):
+under heterogeneous destruction rates, the death order follows a
+Plackett--Luce sequential distribution and inter-death gaps are independent
+geometrics with a state-dependent rate, both proven via short renewal
+arguments, resolving the order-statistics structure a homogeneous-rate-only
+treatment had left open.
+\item Policy improvement converges far faster in practice than any generic
+guarantee: worst case $4$ iterations to exact convergence, tested up to
+$n=10$, from deliberately adversarial starting policies---an empirical
+finding, not a proven rate, but a substantial one.
+\item An open-source testbed, \textsc{Attrition}, with 60 experiments and 107
 regression tests---at least one per theorem, several per result with multiple
 independently checkable parts.
 \end{itemize}
@@ -264,15 +276,15 @@ ECI has a finite worst-case performance gap & Proven (loose) & Sec.~\ref{sec:eci
 ECI exact under constant $\kappa$ & Proven & Prop.~\ref{prop:eciexact} \\
 Policy improvement dominates its base policy & Proven & Thm.~\ref{thm:polimp} \\
 Pure sequencing: order by externality only & Proven & Thm.~\ref{thm:seq} \\
-Sequential multi-agent $\equiv$ single learner & Proven & long-form Sec.~11 \\
-Ordinal saturation, homogeneous rate & Proven & long-form Sec.~13 \\
-Heterogeneous-rate order statistics (Plackett--Luce) & Proven & long-form Sec.~13 \\
+Sequential multi-agent $\equiv$ single learner & Proven & Appendix~\ref{sec:multiagent} \\
+Ordinal saturation, homogeneous rate & Proven & Appendix~\ref{sec:ordinal} \\
+Heterogeneous-rate order statistics (Plackett--Luce) & Proven & Appendix~\ref{sec:ordinal} \\
 Characterisation survives correlated shocks & Verified conjecture & Sec.~\ref{sec:correlated} \\
 SECI matches/beats greedy under correlation & Empirical finding & Sec.~\ref{sec:correlated} \\
 Tighter ECI bound & Open & Sec.~\ref{sec:eci} \\
-Policy-improvement rate: fast in practice, not proven & Empirical finding & Sec.~7.2 \\
-Terminal commitment: boundary-only expansion optimal & Proven & long-form Sec.~14 \\
-Terminal commitment: optimal direction choice & Open & long-form Sec.~14 \\
+Policy-improvement rate: fast in practice, not proven & Empirical finding & Sec.~\ref{sec:rollout} \\
+Terminal commitment: boundary-only expansion optimal & Proven & Appendix~\ref{sec:commitment} \\
+Terminal commitment: optimal direction choice & Open & Appendix~\ref{sec:commitment} \\
 \bottomrule
 \end{tabular}
 \caption{Every theoretical claim in this paper, by status. ``Proven'' means a
@@ -938,6 +950,7 @@ entire dispersion range while greedy's grows five-fold, so ECI's relative
 advantage increases across the tested dispersion range.
 
 \subsection{Rollout}
+\label{sec:rollout}
 
 No closed form exists for the option-loss term ECI omits. One step of policy
 improvement over ECI captures it implicitly, since
@@ -1362,8 +1375,8 @@ direct: for irreversible actions, externality costs must be \emph{specified}, no
 discovered. A crude uniform upper bound outperforms every learned estimator we
 tested.
 
-\paragraph{Code and reproducibility.} The library, released as \textsc{Attrition} (Agent Testbed for Task, Resource and Irreversible-Tradeoff Investigation), all 55 experiments including
-negative and falsified results, and a regression suite of 96 tests --- at least
+\paragraph{Code and reproducibility.} The library, released as \textsc{Attrition} (Agent Testbed for Task, Resource and Irreversible-Tradeoff Investigation), all 60 experiments including
+negative and falsified results, and a regression suite of 107 tests --- at least
 one per theorem, several per result where a claim has multiple independently
 checkable parts --- are released openly. Every figure regenerates from the
 library and the exact-DP reference via a single command, all random seeds are
