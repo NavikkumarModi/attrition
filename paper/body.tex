@@ -489,8 +489,14 @@ one of $a,b$ can actually be pulled), pulling $a$ first weakly dominates.
 \end{lemma}
 
 \begin{proof}
-Couple the two executions on shared independent uniforms $U_a,U_b$, so arm
-$x$ is destroyed iff $U_x \le p_x$ under either ordering. With $\ge2$ rounds
+Couple the two executions on shared independent uniforms $U_a,U_b$: since each
+arm's destruction is a fresh, memoryless Bernoulli event that fires exactly
+when that arm is pulled and depends on nothing else---not on order, not on
+which other arms have been pulled---its outcome may be legitimately
+pre-determined by comparing a fixed uniform to its own destruction
+probability, with the identical outcome revealed whenever in the sequence
+that arm happens to be pulled. So arm $x$ is destroyed iff $U_x \le p_x$
+under either ordering. With $\ge2$ rounds
 remaining and $B:=B(S)$: under $a$-then-$b$, the two-round reward is
 $(v_a-B) + (v_b - B - \delta e_a \mathbf{1}[U_a\le p_a])$, giving expectation
 $v_a+v_b-2B-\delta p_a e_a = v_a+v_b-2B-\delta\kappa$; by symmetry the
