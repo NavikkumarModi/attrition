@@ -35,10 +35,18 @@ class State:
         Policies that do not use these ignore them.
     counts : ndarray of int
         Number of pulls of each arm so far.
+    peer_history : list of dict, or None
+        Optional: what this agent's graph neighbors chose last round (see
+        `population.simulate_population_simultaneous`'s `graph` argument),
+        each `{"agent": id, "arm": int, "destroyed": bool}`. Policies that
+        do not use peer information ignore it -- this is `None` unless a
+        graph was explicitly supplied, so every existing policy and every
+        existing call site is unaffected.
     """
 
     def __init__(self, available, t, horizon, v_hat, p=None, e=None,
-                 delta=0.0, counts=None, sigma=0.1, rng=None):
+                 delta=0.0, counts=None, sigma=0.1, rng=None,
+                 peer_history=None):
         self.available = np.asarray(available, dtype=int)
         self.t, self.horizon = int(t), int(horizon)
         self.v_hat = np.asarray(v_hat, dtype=float)
@@ -49,6 +57,7 @@ class State:
         self.counts = np.zeros(n) if counts is None else np.asarray(counts)
         self.sigma = float(sigma)
         self.rng = np.random.default_rng() if rng is None else rng
+        self.peer_history = peer_history
 
     @property
     def remaining(self):

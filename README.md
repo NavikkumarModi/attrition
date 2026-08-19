@@ -102,10 +102,10 @@ for row in result["log"][:10]:
 ## LLM agent populations
 
 `attrition.population` runs several LLM-driven policies against a shared
-consumable pool — an OASIS-style multi-agent layer built on the primitives
-above, first applied to pharma (an `antibiotic-stewardship` scenario: several
-prescribers whose broad-spectrum choices select for resistance that degrades
-future treatment options for everyone). No API key required: it defaults to a
+consumable pool — a multi-agent layer built on the primitives above, first
+applied to pharma (an `antibiotic-stewardship` scenario: several prescribers
+whose broad-spectrum choices select for resistance that degrades future
+treatment options for everyone). No API key required: it defaults to a
 deterministic offline `MockLLMClient`.
 
 ```python
@@ -179,6 +179,33 @@ df = store.to_dataframe("run-1")   # requires: pip install attrition[analysis]
 
 `attrition.plot_system_value_over_time`/`plot_burden_over_time` take the same
 trace shape directly (`pip install attrition[figures]`).
+
+### Peer visibility
+
+Agents can see what their graph neighbors chose last round — an additional
+observation channel, not a different simulation: value, destruction, and
+externality are still governed entirely by the unchanged `SimultaneousPool`
+mechanism. Pass a `network.AgentGraph` to `simulate_population_simultaneous`:
+
+```python
+from attrition import AgentGraph, simulate_population_simultaneous
+
+graph = AgentGraph.complete(["dr-conservative", "dr-aggressive"])   # or .ring/.star/.random
+result = simulate_population_simultaneous(pool, population, graph=graph)
+```
+
+`MockLLMClient(conformity=0.3)` adds a documented herding term toward
+whatever arm the visible majority of an agent's peers chose — a modeling
+choice for the offline stand-in, not a claim about real models. See
+`examples/06_peer_influence.py` for a full isolated-vs-networked comparison.
+
+### Dashboard
+
+`attrition dashboard <trace.sqlite3> --out dashboard.html` (or
+`render_dashboard(trace, path=..., graph=...)` in Python) renders a single
+self-contained HTML file — cumulative value, burden over time, per-agent
+value, and the agent network when one was used — no server, no CDN, no extra
+dependency, opens straight from `file://`.
 
 ---
 

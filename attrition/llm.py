@@ -52,6 +52,8 @@ class CallableLLMClient(LLMClient):
 
 _ARM_LINE = re.compile(r"arm (\d+): value~([\-0-9.]+) charge~([\-0-9.]+)")
 _RISK = re.compile(r"risk_tolerance: ([0-9.]+)")
+_PEER_ARM = re.compile(r"peer_majority_arm: (\d+)")
+_PEER_SHARE = re.compile(r"peer_majority_share: ([0-9.]+)")
 
 
 class MockLLMClient(LLMClient):
@@ -77,10 +79,19 @@ class MockLLMClient(LLMClient):
     `max_workers` on `simulate_population_simultaneous`) -- a call-counter
     based seed would both race under concurrency and make results depend on
     scheduling order.
+
+    `conformity` (default 0.0, i.e. off) adds `conformity * peer_majority_share`
+    to whichever arm most of the agent's visible peers chose last round, when
+    the prompt carries that information (see `llm_policy.py`). This is a
+    deliberate, documented modeling choice for this offline stand-in -- a
+    simple herding rule to exercise the peer-visibility plumbing end to end
+    -- not a claim about how a real language model would respond to seeing
+    its peers' choices.
     """
 
-    def __init__(self, seed=0):
+    def __init__(self, seed=0, conformity=0.0):
         self._seed = int(seed)
+        self.conformity = float(conformity)
 
     def complete(self, system, user):
         digest = hashlib.sha256(f"{self._seed}\n{system}\n{user}".encode()).digest()
@@ -90,10 +101,15 @@ class MockLLMClient(LLMClient):
             return "CHOICE: 0"
         m = _RISK.search(system)
         risk = float(m.group(1)) if m else 0.5
+        peer_arm_m, peer_share_m = _PEER_ARM.search(user), _PEER_SHARE.search(user)
+        peer_arm = int(peer_arm_m.group(1)) if peer_arm_m else None
+        peer_share = float(peer_share_m.group(1)) if peer_share_m else 0.0
         best_arm, best_score = None, -np.inf
         for arm_s, value_s, charge_s in rows:
             arm, value, charge = int(arm_s), float(value_s), float(charge_s)
             score = value - (1.0 - risk) * charge + rng.normal(0, 0.01)
+            if self.conformity and arm == peer_arm:
+                score += self.conformity * peer_share
             if score > best_score:
                 best_arm, best_score = arm, score
         return f"CHOICE: {best_arm}"

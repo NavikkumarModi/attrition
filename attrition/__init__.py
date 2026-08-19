@@ -47,6 +47,8 @@ from .population import (Population, simulate_population,
 from .trace import TraceStore
 from .viz import plot_system_value_over_time, plot_burden_over_time
 from .config import load_config, build_from_config
+from .network import AgentGraph
+from .dashboard import render_dashboard
 
 __version__ = "0.2.0"
 __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
@@ -72,4 +74,5 @@ __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
            "simulate_population_simultaneous",
            "compare_population_to_baselines", "TraceStore",
            "plot_system_value_over_time", "plot_burden_over_time",
-           "load_config", "build_from_config"]
+           "load_config", "build_from_config",
+           "AgentGraph", "render_dashboard"]

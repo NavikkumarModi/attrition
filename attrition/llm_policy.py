@@ -11,6 +11,12 @@ A malformed or out-of-range response never crashes a run: it falls back to
 `Greedy`, so a population of LLM agents behaves like a population of Greedy
 agents in the worst case, which is itself a meaningful (and cheap-to-produce)
 baseline to compare against.
+
+When `state.peer_history` is set (see `population.simulate_population_simultaneous`'s
+`graph` argument), the prompt also states what graph-neighbor agents chose
+last round, plus a machine-parseable majority summary
+(`peer_majority_arm`/`peer_majority_share`) that `MockLLMClient` reads
+directly rather than parsing prose.
 """
 
 import re
@@ -59,6 +65,18 @@ class LLMPolicy(Policy):
             lines.append("Your recent choices:")
             for row in recent:
                 lines.append(f"  t={row['t']} arm={row['arm']}")
+        if state.peer_history:
+            lines.append("Your peers' choices last round:")
+            counts = {}
+            for peer in state.peer_history:
+                lines.append(f"  peer {peer['agent']} chose arm {peer['arm']} "
+                             f"(destroyed={peer['destroyed']})")
+                counts[peer['arm']] = counts.get(peer['arm'], 0) + 1
+            # ties broken toward the lower arm index
+            majority_arm = max(counts, key=lambda a: (counts[a], -a))
+            majority_share = counts[majority_arm] / len(state.peer_history)
+            lines.append(f"peer_majority_arm: {majority_arm}")
+            lines.append(f"peer_majority_share: {majority_share:.3f}")
         lines.append("Choose the arm index to pull.")
         return system, "\n".join(lines)
 

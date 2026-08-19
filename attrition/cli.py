@@ -12,6 +12,7 @@ import sys
 
 from .config import build_from_config, load_config
 from .consumable import run as run_episode
+from .dashboard import render_dashboard
 from .population import simulate_population, simulate_population_simultaneous
 from .scenarios import describe as describe_scenarios
 from .simultaneous import decentralised_value_simultaneous, planner_value_simultaneous
@@ -76,6 +77,21 @@ def _cmd_run(args):
     return 0
 
 
+def _cmd_dashboard(args):
+    store = TraceStore(args.trace)
+    trace = store.read(args.run_id)
+    store.close()
+    if not trace:
+        print(f"no rows found in {args.trace!r} "
+              f"(run_id={args.run_id!r})" if args.run_id else
+              f"no rows found in {args.trace!r}")
+        return 1
+    path = render_dashboard(trace, path=args.out,
+                            title=args.run_id or "Population run")
+    print(f"dashboard written to {path}")
+    return 0
+
+
 def build_parser():
     parser = argparse.ArgumentParser(
         prog="attrition", description="ATTRITION population simulator CLI")
@@ -98,6 +114,15 @@ def build_parser():
     p_desc = sub.add_parser("describe", help="describe one registered domain")
     p_desc.add_argument("domain")
     p_desc.set_defaults(func=_cmd_describe)
+
+    p_dash = sub.add_parser("dashboard",
+                            help="render a self-contained HTML dashboard from a trace")
+    p_dash.add_argument("trace", help="path to a TraceStore .sqlite3 file")
+    p_dash.add_argument("--run-id", default=None,
+                        help="restrict to one run_id (default: all rows)")
+    p_dash.add_argument("--out", default="dashboard.html",
+                        help="output HTML path (default: dashboard.html)")
+    p_dash.set_defaults(func=_cmd_dashboard)
 
     return parser
 

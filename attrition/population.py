@@ -1,5 +1,5 @@
 """Population simulation: many policies -- LLM-driven or classical -- acting
-in a shared consumable environment. This is the OASIS-style driver for the
+in a shared consumable environment. This is the multi-agent driver for the
 package: a named group of agents, each with its own decision-making, sharing
 one resource pool.
 
@@ -34,6 +34,11 @@ Two loop shapes, matching the two multi-agent models already in this repo:
 Both accept an optional `trace_store` (see `trace.py`) to persist every
 decision as it happens, in addition to the in-memory trace already returned;
 pass `keep_trace=False` on a long run to skip building the in-memory list.
+
+`simulate_population_simultaneous` also accepts an optional `graph`
+(`network.AgentGraph`) so agents can see their graph neighbors' choices from
+the previous round -- an additional observation channel layered on top of
+the unchanged `SimultaneousPool` mechanism, not a different simulation.
 """
 
 from concurrent.futures import ThreadPoolExecutor
@@ -114,7 +119,7 @@ def _select_all(agent_ids, members, states, max_workers):
 
 def simulate_population_simultaneous(pool, population, rounds=None, log=True,
                                      max_workers=None, trace_store=None,
-                                     run_id=None, keep_trace=True):
+                                     run_id=None, keep_trace=True, graph=None):
     """Run a population with every agent committing simultaneously each round
     on a shared `SimultaneousPool`, then resolving together.
 
@@ -123,6 +128,13 @@ def simulate_population_simultaneous(pool, population, rounds=None, log=True,
     time -- safe because every agent reads the same pre-round state snapshot
     and mutates nothing during `select`. Default `None` keeps calls serial and
     output identical to before concurrency support existed.
+
+    `graph`: optional `AgentGraph` (network.py). When given, each agent's
+    `State.peer_history` carries its graph neighbors' choices from the
+    previous round (`None` for round 0, and always `None` when `graph` is
+    omitted -- output is then byte-identical to before this parameter
+    existed). This changes what an agent sees, not the bandit itself: value,
+    destruction, and burden are still governed entirely by `pool.step`.
     """
     pool.reset()
     rounds = pool.T if rounds is None else int(rounds)
@@ -130,17 +142,26 @@ def simulate_population_simultaneous(pool, population, rounds=None, log=True,
     per_agent = {aid: {"value": 0.0, "regret": 0.0, "pulls": 0}
                  for aid in agent_ids}
     trace = []
+    last_round = None
     for r in range(rounds):
         if not pool.alive.any():
             break
         idx = np.flatnonzero(pool.alive)
         b = pool.burden
         best_available = float(np.max(pool.v[idx] - b))
-        states = {aid: State(available=idx, t=pool.t, horizon=rounds,
-                             v_hat=pool.v, p=pool.p, e=pool.e, delta=pool.delta)
-                 for aid in agent_ids}
+        states = {}
+        for aid in agent_ids:
+            peer_history = None
+            if graph is not None and last_round is not None:
+                peer_history = [last_round[n] for n in graph.neighbors(aid)
+                                if n in last_round]
+            states[aid] = State(available=idx, t=pool.t, horizon=rounds,
+                                v_hat=pool.v, p=pool.p, e=pool.e,
+                                delta=pool.delta, peer_history=peer_history)
         actions = _select_all(agent_ids, population.members, states, max_workers)
         rewards, destroyed = pool.step(actions)
+        last_round = {aid: {"agent": aid, "arm": arm, "destroyed": arm in destroyed}
+                      for aid, arm in zip(agent_ids, actions)}
         rows = []
         for aid, arm, reward in zip(agent_ids, actions, rewards):
             regret = best_available - reward
