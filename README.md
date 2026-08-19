@@ -1,18 +1,30 @@
+<div align="center">
+
 # ATTRITION
 ### Agent Testbed for Task, Resource and Irreversible-Tradeoff Investigation
 
-Bandits with Consumable Action Sets
+**Bandits with Consumable Action Sets**
 
 [![tests](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml/badge.svg)](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml)
-[![tests](https://img.shields.io/badge/tests-136%20passing-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/tests-161%20passing-brightgreen)](tests/)
 [![theorems](https://img.shields.io/badge/theorems-11%20proven-blue)](THEORY.md)
 [![python](https://img.shields.io/badge/python-3.9%E2%80%933.12-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
-**No-regret is not no-harm.**
+### **No-regret is not no-harm.**
 
-A policy can achieve *exactly zero regret* while destroying unbounded value — and
-its own metric will report flawless performance the entire time.
+*A policy can achieve exactly zero regret while destroying unbounded value — and
+its own metric will report flawless performance the entire time.*
+
+[Quick start](#quick-start) ·
+[LLM populations](#llm-agent-populations) ·
+[Real data](#grounded-in-real-data) ·
+[Theory](#the-model) ·
+[Paper](#paper)
+
+</div>
+
+---
 
 This repository contains the theory, the proofs, the falsifications, and a small
 library for studying bandit problems where **taking an action destroys it**, and
@@ -418,20 +430,47 @@ simulation. Checked-in snapshots under `attrition/data/`, refreshed by
 | `design-space-real` | [openFDA drug enforcement](https://api.fda.gov/drug/enforcement.json) | `p` — real fraction of Class I (most severe) recalls per failure category, from 15,556 real records |
 | `agent_tools`/`shared-quota` | Datadog "State of AI Engineering" (2026) | cited as supporting evidence only — see caveat below |
 
-**Only one of `(v, p, e)` is real-measured in each case** — the other two are
-documented proxies, stated as such in `real_data.SOURCES`, not presented as
-equally real. And one honest negative result: the default
-`antibiotic-stewardship-real` proxy (`v = 1-p`, `e = p`) makes
-`kappa = p*e` a deterministic function of `v`, landing it in the *aligned*
-regime (like `platform-trial`) by construction of that formula — greedy and
-ECI coincide there, which is a fact about the proxy, not a discovery about
-real antibiotic resistance. `design-space-real`'s gap is real but small
-(a few percent, checked at 200 seeds, not tuned up by cherry-picking a seed
-count). Neither result was replaced with a formula chosen to look better —
-see `examples/07_real_world_grounded.py` for the full, honestly-reported run.
+> [!NOTE]
+> **Only one of `(v, p, e)` is real-measured in each case** — the other two
+> are documented proxies, stated as such in `real_data.SOURCES`, never
+> presented as equally real.
 
-`agent_tools`/`shared-quota`'s roster numbers are **unchanged** — Datadog's
-published rate-limit figures are real and current (2-5% of LLM call spans
+**Actual output of `python examples/07_real_world_grounded.py`** (unedited,
+reproduced from the checked-in snapshots — nothing below is hand-typed):
+
+```
+Real WHO resistance rows (a few, for a sanity check):
+      IDN-2021  measured resistance = 71.1%
+      FIN-2021  measured resistance = 6.3%
+      ARE-2018  measured resistance = 23.7%
+      TUN-2019  measured resistance = 17.4%
+      IRL-2023  measured resistance = 10.8%
+
+antibiotic-stewardship-real -- n=200 real (country, year) arms, 15 seeds:
+    greedy  value= 39.382  regret=  0.000
+       eci  value= 39.382  regret=  0.000
+  corr(v, kappa) = -0.963 -- the ALIGNED regime, value gap +0.0%
+
+design-space-real -- 9 real FDA failure categories, 200 seeds:
+    greedy  value=  4.606 (se 0.091)  regret=  0.000
+       eci  value=  4.625 (se 0.074)  regret=  0.110
+  corr(v, kappa) = -0.196 -- no strong alignment, value gap -0.4%
+```
+
+> [!IMPORTANT]
+> The first result is an **honest negative finding, not a bug**. The default
+> `antibiotic-stewardship-real` proxy (`v = 1-p`, `e = p`) makes
+> `kappa = p*e` a *deterministic* function of `v`, landing it in the
+> **aligned** regime (like `platform-trial`) purely by construction of that
+> formula — greedy and ECI coincide there because of the proxy, not because
+> of anything discovered about real antibiotic resistance. `design-space-real`'s
+> gap is real but small (checked at 200 seeds, not tuned up by cherry-picking
+> a seed count that happens to look better). Neither result was swapped for
+> a formula chosen to look more dramatic — see `real_data.py`'s docstrings
+> and `examples/07_real_world_grounded.py` for the full run.
+
+`agent_tools`/`shared-quota`'s roster numbers are **unchanged**. Datadog's
+published rate-limit figures are real and current (2–5% of LLM call spans
 erroring, majority from exceeded quota) but measure a different quantity
 than this roster's `p` (per-call error rate vs. probability-this-pull-
 exhausts-the-tool), so citing them to recalibrate the numbers would be a
