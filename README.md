@@ -3,6 +3,7 @@
 
 Bandits with Consumable Action Sets
 
+[![tests](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml/badge.svg)](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml)
 [![tests](https://img.shields.io/badge/tests-136%20passing-brightgreen)](tests/)
 [![theorems](https://img.shields.io/badge/theorems-11%20proven-blue)](THEORY.md)
 [![python](https://img.shields.io/badge/python-3.9%E2%80%933.12-blue)](pyproject.toml)
@@ -35,6 +36,8 @@ The regret column and the value column are ordered **backwards** relative to eac
 other. Greedy never once fails to pull the best available arm — and ends 47%
 below the policy that "looks" worst.
 
+![The same five policies, plotted: value climbs left to right while regret climbs with it — the two columns move together, not in opposition to what "low regret" is supposed to mean.](docs/images/headline.png)
+
 ---
 
 ## Why this happens
@@ -48,6 +51,21 @@ already ruined**.
 regret(greedy) = 0            always, by construction
 V_opt - V_greedy = m · δE     unbounded in pool size m and externality δE
 ```
+
+```mermaid
+flowchart LR
+    A["pull arm a"] --> B["reward = v_a − burden"]
+    A --> C{"destroyed?<br/>prob p_a"}
+    C -- yes --> D["burden += δ·e_a<br/>(permanent)"]
+    C -- no --> E["arm stays available"]
+    D --> F["every future pull,<br/>by anyone, pays more"]
+    B -.->|"measured against<br/>best REMAINING arm"| G["regret"]
+    D -.->|"benchmark degrades<br/>in lockstep with the damage"| G
+```
+
+The regret benchmark and the damage share a cause, so a policy that only
+watches regret cannot see the damage it is doing — it is watching a
+scoreboard that updates itself to match whatever the policy just broke.
 
 ---
 
@@ -107,6 +125,20 @@ applied to pharma (an `antibiotic-stewardship` scenario: several prescribers
 whose broad-spectrum choices select for resistance that degrades future
 treatment options for everyone). No API key required: it defaults to a
 deterministic offline `MockLLMClient`.
+
+```mermaid
+flowchart LR
+    subgraph Population
+        P1["persona: dr-conservative"]
+        P2["persona: dr-balanced"]
+        P3["persona: dr-aggressive"]
+    end
+    P1 & P2 & P3 -->|"State + peer_history"| LLM["LLMPolicy<br/>(MockLLMClient or a real model)"]
+    LLM -->|"arm choice"| Pool["SimultaneousPool /<br/>ConsumableBandit"]
+    Pool -->|"value, destruction,<br/>burden"| Trace["TraceStore<br/>(sqlite3)"]
+    Trace --> Dash["render_dashboard()<br/>self-contained HTML"]
+    Pool -.->|"peer visibility,<br/>optional"| P1 & P2 & P3
+```
 
 ```python
 from attrition import (Population, PHARMA_PERSONAS, MockLLMClient,
@@ -206,6 +238,11 @@ choice for the offline stand-in, not a claim about real models. See
 self-contained HTML file — cumulative value, burden over time, per-agent
 value, and the agent network when one was used — no server, no CDN, no extra
 dependency, opens straight from `file://`.
+
+![Rendered dashboard from a real run: cumulative system value, arms-alive-over-time, per-agent value, and the agent network side by side.](docs/images/dashboard.png)
+
+Both images above are generated from live runs, not hand-drawn — regenerate
+them with `PYTHONPATH=. python docs/make_readme_images.py`.
 
 ---
 
