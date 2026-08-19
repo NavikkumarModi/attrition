@@ -3351,3 +3351,46 @@ combined with the (now state-dependent) geometric timing, which may not
 collapse to anything as clean as the homogeneous case. What is resolved is
 the structural piece explicitly identified as missing: the exact order
 statistics under rate-dependent sorting.
+
+---
+
+## Two remaining open threads: pushed further, neither closed, both honestly informative
+
+### ECI disagreement count
+
+Tried a fresh angle beyond `N_exh` and `C(n,2)`: since ECI's score is linear
+in `(T-t)` for each arm, its own pairwise preference between any two arms
+flips at most once as the horizon varies. Tested whether the *true* optimal
+pairwise preference also flips at most once (it does, in the cases checked),
+and whether the **agreement status** between ECI and the true preference
+flips boundedly often. It does — but not cleanly at ≤1 or ≤2 as a simple
+XOR-of-two-single-flips argument would suggest: up to 3 flips observed
+across 10 trials. This rules out the cleanest version of a "bounded flips
+per pair, hence bounded disagreement count" argument, without ruling out a
+looser one. Not pushed further; recorded as a real negative data point for
+future attempts rather than left implicit.
+
+### Terminal commitment: does any index or bounded-lookahead rule close the gap?
+
+Tested a sequence of increasingly sophisticated direction rules against the
+true DP optimum (25 trials each): "cheaper" (18/25 mismatches),
+`(1−fail_prob)·yield` (12/25), a hard budget-threshold rule — ignore risk
+whenever recovery budget remains, myopic only on the last test — (12/25,
+essentially no improvement over the static score), and a 1-ply-exact +
+myopic-continuation lookahead (9/25, the best found, but still not exact).
+
+**The pattern itself is the finding.** Each refinement helps a little; none
+closes the gap. This is consistent with the direction sub-problem genuinely
+not admitting a simple closed-form index or bounded-depth-lookahead rule —
+distinguishing it structurally from ECI (which *is* provably exact, via a
+closed-form index, whenever κ is constant) and from the boundary-only
+expansion theorem (which *is* exactly solved by a simple structural rule).
+Some sequential allocation problems are known to admit clean index solutions
+and some provably do not; this investigation's pattern is more consistent
+with the latter for terminal commitment's direction choice than the former,
+though that distinction has not been formally established either way.
+
+**Status, honestly.** Both threads remain open. Effort was real and multi-
+angle, not a single failed attempt — and the specific way each attempt fell
+short is itself recorded as information for whoever picks this up next,
+rather than only the fact that it's open.
