@@ -182,6 +182,16 @@ function and pass `CallableLLMClient(that_function)` as `client` — see
 `attrition/llm.py`. Full walkthrough, including the genuine-price-of-anarchy
 simultaneous-action version: `examples/04_pharma_population.py`.
 
+> [!NOTE]
+> Every result elsewhere in this README comes from `MockLLMClient`, an
+> offline heuristic, not a real model.
+> [`examples/08_real_llm_run.py`](examples/08_real_llm_run.py) is the one
+> script in the repo that actually asks a real Anthropic model what it would
+> do (`pip install "attrition[llm]"`, needs a separately-billed API key from
+> console.anthropic.com — a claude.ai Pro subscription does not include API
+> access). Defaults to a handful of calls on the cheapest current model and
+> asks for confirmation before spending anything.
+
 ### Define your own domain
 
 Any problem with a consumable-choice structure — inventory allocation, hiring
