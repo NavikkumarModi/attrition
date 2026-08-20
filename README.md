@@ -184,13 +184,15 @@ simultaneous-action version: `examples/04_pharma_population.py`.
 
 > [!NOTE]
 > Every result elsewhere in this README comes from `MockLLMClient`, an
-> offline heuristic, not a real model.
-> [`examples/08_real_llm_run.py`](examples/08_real_llm_run.py) is the one
-> script in the repo that actually asks a real Anthropic model what it would
-> do (`pip install "attrition[llm]"`, needs a separately-billed API key from
+> offline heuristic, not a real model. Two scripts actually ask a real model
+> what it would do:
+> [`examples/08_real_llm_run.py`](examples/08_real_llm_run.py) (Anthropic,
+> `pip install "attrition[llm]"`, needs a separately-billed API key from
 > console.anthropic.com — a claude.ai Pro subscription does not include API
-> access). Defaults to a handful of calls on the cheapest current model and
-> asks for confirmation before spending anything.
+> access; asks for confirmation before spending anything) and
+> [`examples/09_real_llm_run_groq.py`](examples/09_real_llm_run_groq.py)
+> (Groq, `pip install "attrition[groq]"`, free tier, no card needed —
+> get a key at console.groq.com).
 
 ### Define your own domain
 
