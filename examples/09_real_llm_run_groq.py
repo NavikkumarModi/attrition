@@ -28,6 +28,7 @@ from attrition import (CallableLLMClient, ConsumableBandit, ECI, Greedy,
                        MockLLMClient, PHARMA_PERSONAS, Population,
                        compare_population_to_baselines,
                        derive_antibiotic_parameters)
+from attrition.llm_policy import _CHOICE
 
 
 def _build_groq_client(model):
@@ -49,11 +50,22 @@ def _build_groq_client(model):
     sdk_client = groq.Groq(api_key=api_key)
 
     def call(system, user):
+        kwargs = {}
+        if "gpt-oss" in model:
+            # gpt-oss models spend an uncapped number of hidden reasoning
+            # tokens before the visible answer -- at the default effort,
+            # they silently truncated to an EMPTY response (no exception,
+            # so LLMPolicy's fallback swallowed it) on most calls at this
+            # prompt's length. reasoning_effort='low' keeps the visible
+            # answer inside max_tokens reliably; confirmed empirically
+            # (0/80 empty responses with this, vs 47/80 without).
+            kwargs["reasoning_effort"] = "low"
         completion = sdk_client.chat.completions.create(
             model=model,
             messages=[{"role": "system", "content": system},
                      {"role": "user", "content": user}],
-            max_tokens=64,
+            max_tokens=300,
+            **kwargs,
         )
         return completion.choices[0].message.content
 
@@ -63,8 +75,10 @@ def _build_groq_client(model):
 def main():
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--model", default="llama-3.3-70b-versatile",
-                        help="Groq model id (default: llama-3.3-70b-versatile)")
+    parser.add_argument("--model", default="openai/gpt-oss-20b",
+                        help="Groq model id (default: openai/gpt-oss-20b). "
+                             "Groq's free-tier catalog changes over time -- "
+                             "list current ids with groq.Groq().models.list()")
     parser.add_argument("--agents", type=int, default=2, choices=range(1, 5),
                         help="number of prescriber personas, 1-4 (default: 2)")
     parser.add_argument("--rounds", type=int, default=5,
@@ -107,25 +121,34 @@ def main():
 
     # .log accumulates across the whole seed sweep for one representative
     # agent (compare_population_to_baselines reuses policy instances across
-    # seeds). response is None only when the API call itself raised (e.g. a
-    # rate limit) and LLMPolicy fell back to Greedy -- a response that came
-    # back but failed to parse into a valid arm also falls back, but isn't
-    # distinguishable here, so this is a lower bound on the fallback count.
+    # seeds). A row only counts as a genuine decision if the response both
+    # exists (no exception) AND actually contained a parseable "CHOICE: N"
+    # -- an empty or off-format response is a silent Greedy fallback too,
+    # and doesn't raise, so checking `response is not None` alone previously
+    # missed this: 47/80 calls on this same model were empty strings that
+    # counted as "responded" but were fallbacks in disguise.
     log = real_population.members[persona_names[0]].log
-    responded = sum(1 for row in log if row["response"] is not None)
+    genuine = sum(1 for row in log
+                 if row["response"] and _CHOICE.search(row["response"]))
+    exceptions = sum(1 for row in log if row["response"] is None)
+    unparseable = len(log) - genuine - exceptions
     print(f"\n{persona_names[0]}'s log (across all {args.seeds} seeds): "
-          f"{responded}/{len(log)} calls got a response back at all "
-          f"(no rate-limit exception) -- report this number, not just the "
-          f"aggregate value/regret above, since a low ratio means most of "
-          f"this run was Greedy fallback, not the real model.")
-    if responded < len(log):
+          f"{genuine}/{len(log)} calls produced a genuine parseable decision "
+          f"-- report this number, not just the aggregate value/regret "
+          f"above, since a low ratio means most of this run was Greedy "
+          f"fallback in disguise, not the real model.")
+    if exceptions:
         errors = {}
         for row in log:
             if row.get("error"):
                 errors[row["error"]] = errors.get(row["error"], 0) + 1
-        print("Errors seen:")
+        print(f"{exceptions} raised an exception:")
         for msg, count in errors.items():
             print(f"  x{count}  {msg}")
+    if unparseable:
+        print(f"{unparseable} returned a response that didn't parse (e.g. "
+              f"empty -- often hidden reasoning tokens exhausting max_tokens "
+              f"before the visible answer).")
     print("This is a first, small-scale look -- report exactly what "
           "happened here, not what the mock predicted. Re-run with more "
           "--seeds before drawing any real conclusion.")
