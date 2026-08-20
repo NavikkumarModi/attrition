@@ -118,6 +118,14 @@ def main():
           f"(no rate-limit exception) -- report this number, not just the "
           f"aggregate value/regret above, since a low ratio means most of "
           f"this run was Greedy fallback, not the real model.")
+    if responded < len(log):
+        errors = {}
+        for row in log:
+            if row.get("error"):
+                errors[row["error"]] = errors.get(row["error"], 0) + 1
+        print("Errors seen:")
+        for msg, count in errors.items():
+            print(f"  x{count}  {msg}")
     print("This is a first, small-scale look -- report exactly what "
           "happened here, not what the mock predicted. Re-run with more "
           "--seeds before drawing any real conclusion.")

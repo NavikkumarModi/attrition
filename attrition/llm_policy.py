@@ -82,15 +82,17 @@ class LLMPolicy(Policy):
 
     def select(self, state):
         system, user = self._render_prompt(state)
+        error = None
         try:
             response = self.client.complete(system, user)
             m = _CHOICE.search(response)
             arm = int(m.group(1)) if m else None
-        except Exception:
-            arm, response = None, None
+        except Exception as exc:
+            arm, response, error = None, None, f"{type(exc).__name__}: {exc}"
         if arm is None or arm not in set(int(a) for a in state.available):
             arm = self._fallback.select(state)
-        self.log.append({"t": state.t, "arm": arm, "response": response})
+        self.log.append({"t": state.t, "arm": arm, "response": response,
+                         "error": error})
         return arm
 
     def scores(self, state):
