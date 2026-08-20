@@ -20,6 +20,7 @@ jobs:
       - uses: xu-cheng/latex-action@v3
         with:
           root_file: paper/no-regret-is-not-no-harm.tex
+          work_in_root_file_dir: true
       - uses: actions/upload-artifact@v4
         with:
           name: paper
