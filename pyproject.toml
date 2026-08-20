@@ -40,7 +40,7 @@ Repository = "https://github.com/<user>/attrition"
 Paper = "https://github.com/<user>/attrition/tree/main/paper"
 
 [tool.setuptools.packages.find]
-include = ["attrition*"]
+include = ["attrition*", "experiments*"]
 
 [tool.setuptools.package-data]
 attrition = ["data/*.json"]
