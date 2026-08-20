@@ -24,7 +24,7 @@ from .envs import ConsumableBanditEnv, MultiAgentConsumableEnv
 from .engines import (derive_arm_parameters, derive_trial_parameters,
                       derive_design_space_parameters, derive_antibiotic_parameters)
 from .real_data import (derive_real_amr_parameters, derive_real_cmc_parameters,
-                        derive_real_fisheries_parameters)
+                        derive_real_fisheries_parameters, derive_real_cve_parameters)
 
 __all__ = ["SCENARIOS", "load", "describe", "ScenarioRegistry", "from_arrays",
            "get_arrays"]
@@ -246,6 +246,29 @@ SCENARIOS.register(
     agents=1,
     build=lambda: (derive_real_fisheries_parameters()[:3],
                   dict(delta=0.15, horizon=12)),
+)
+
+SCENARIOS.register(
+    "exploit-catalog-real",
+    description=("Real CISA Known Exploited Vulnerabilities catalog joined "
+                "with real FIRST.org EPSS scores: 1,671 real CVEs CISA has "
+                "confirmed are actively exploited in the wild. p is EPSS "
+                "itself -- a real, live exploitation-probability score, not "
+                "a proxy for one; v and e are documented proxies -- see "
+                "real_data.SOURCES['cisa_kev_epss']."),
+    phenomenon="zero-regret ruin, using a live exploitation-probability score as p",
+    expected_behaviour=("corr(v, kappa) is close to the alignment boundary "
+                        "(checked: -0.11 on the full snapshot, not tuned) -- "
+                        "similar in character to design-space-real: a real "
+                        "but mild effect. At delta=0.05, horizon=40 on a "
+                        "200-CVE subsample, greedy records zero private "
+                        "regret with a small (a few percent) value gap to "
+                        "ECI, comparable to Monte-Carlo noise at low seed "
+                        "counts -- reported honestly rather than tuned to "
+                        "look more dramatic."),
+    agents=1,
+    build=lambda: (derive_real_cve_parameters(n=200, seed=0)[:3],
+                  dict(delta=0.05, horizon=40)),
 )
 
 

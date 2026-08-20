@@ -13,13 +13,14 @@ proxies, stated as such, not silently presented as equally real -- the same
 honesty pattern as domains.py's DOMAIN_NOTES.
 """
 
+import datetime
 import json
 import os
 
 import numpy as np
 
 __all__ = ["SOURCES", "derive_real_amr_parameters", "derive_real_cmc_parameters",
-          "derive_real_fisheries_parameters"]
+          "derive_real_fisheries_parameters", "derive_real_cve_parameters"]
 
 _DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
@@ -71,6 +72,32 @@ SOURCES = {
                "that stock collapsed) are documented proxies for what this "
                "bandit's value and externality mean for a real fishery, not "
                "NOAA-provided cost or severity figures."),
+    },
+    "cisa_kev_epss": {
+        "url": "https://www.cisa.gov/sites/default/files/feeds/"
+              "known_exploited_vulnerabilities.json (CISA KEV catalog) "
+              "joined with https://api.first.org/data/v1/epss (FIRST.org "
+              "EPSS scores)",
+        "publisher": "CISA (Cybersecurity and Infrastructure Security "
+                    "Agency) and FIRST.org (Forum of Incident Response and "
+                    "Security Teams)",
+        "license": "U.S. government work, public domain (KEV); FIRST.org "
+                  "EPSS data is public (see https://www.first.org/epss/)",
+        "fetched": "2026-08-20",
+        "fit": ("p_a is REAL and, unlike every other domain in this module, "
+               "not even a computed ratio -- it is EPSS itself: FIRST.org's "
+               "published, live-updated, validated probability that this "
+               "specific CVE will be exploited in the wild in the next 30 "
+               "days. Every one of the 1,671 arms is a real CVE CISA has "
+               "confirmed IS actively exploited (that is what the KEV "
+               "catalog is), not a hypothetical vulnerability. e_a is a "
+               "documented, coarse (two-level) proxy from a real CISA-"
+               "reported fact: 2.5 if the CVE has known ransomware-campaign "
+               "use, 1.0 otherwise. v_a is a documented proxy from a real "
+               "field (days since dateAdded to the KEV catalog): fresher "
+               "entries score higher, on the modeling assumption that a "
+               "more recently catalogued exploit has more unpatched targets "
+               "left -- not a CISA- or FIRST.org-provided value figure."),
     },
 }
 
@@ -188,3 +215,34 @@ def derive_real_fisheries_parameters(min_years=10):
     e_raw = np.array(e_raw)
     e = e_raw / e_raw.mean()
     return np.array(v), np.clip(np.array(p), 1e-6, 1.0), e, labels
+
+
+def derive_real_cve_parameters(n=None, seed=0):
+    """Real (v, p, e) from CISA's Known Exploited Vulnerabilities catalog,
+    joined with FIRST.org's EPSS scores. Each arm is one actively-exploited
+    CVE. `p_a` is EPSS itself -- a real, live exploitation-probability score,
+    not a computed proxy for one (see SOURCES["cisa_kev_epss"]["fit"]).
+    `v_a`/`e_a` are documented proxies.
+
+    corr(v, kappa) comes out close to the alignment boundary (checked: -0.11
+    on the full 1,671-arm snapshot, not tuned) -- similar in character to
+    design-space-real, a real but mild effect, reported as such rather than
+    replaced with a formula chosen to manufacture a bigger one.
+
+    `n`: optional subsample size (seeded); `None` uses all 1,671 real rows.
+    """
+    rows = _load("cisa_kev_epss.json")
+    if n is not None and n < len(rows):
+        rng = np.random.default_rng(seed)
+        idx = rng.choice(len(rows), size=n, replace=False)
+        rows = [rows[i] for i in idx]
+
+    today = datetime.date.today()
+    p = np.array([r["epss"] for r in rows])
+    v = np.array([
+        0.3 + 1.2 * np.exp(
+            -(today - datetime.date.fromisoformat(r["date_added"])).days / 365)
+        for r in rows])
+    e = np.array([2.5 if r["known_ransomware_use"] else 1.0 for r in rows])
+    labels = [r["cve"] for r in rows]
+    return v, np.clip(p, 1e-6, 1.0), e, labels

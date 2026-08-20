@@ -7,11 +7,13 @@ import numpy as np
 
 from attrition import (SCENARIOS, describe, get_arrays, load,
                        derive_real_amr_parameters, derive_real_cmc_parameters,
-                       derive_real_fisheries_parameters, SOURCES)
+                       derive_real_fisheries_parameters, derive_real_cve_parameters,
+                       SOURCES)
 
 
 def test_sources_documents_the_real_vs_proxy_split():
-    assert "who_amr" in SOURCES and "fda_cmc" in SOURCES and "noaa_fisheries" in SOURCES
+    assert ("who_amr" in SOURCES and "fda_cmc" in SOURCES
+           and "noaa_fisheries" in SOURCES and "cisa_kev_epss" in SOURCES)
     for entry in SOURCES.values():
         assert "REAL" in entry["fit"]
         assert entry["url"] and entry["publisher"]
@@ -81,9 +83,31 @@ def test_fisheries_parameters_min_years_filters_short_series():
     assert len(v_filtered) < len(v_all)   # drops Atlantic menhaden (18 years)
 
 
+def test_cve_parameters_p_is_epss_score_in_unit_interval():
+    v, p, e, labels = derive_real_cve_parameters()
+    assert len(v) == len(p) == len(e) == len(labels)
+    assert len(v) > 1600   # 1,671 real CVEs in the current snapshot
+    assert np.all(p >= 0.0) and np.all(p <= 1.0)
+    assert p.std() > 0.0
+
+
+def test_cve_parameters_n_truncation_is_deterministic():
+    v1, p1, e1, l1 = derive_real_cve_parameters(n=50, seed=3)
+    v2, p2, e2, l2 = derive_real_cve_parameters(n=50, seed=3)
+    assert len(v1) == 50
+    assert l1 == l2
+    assert np.array_equal(p1, p2)
+
+
+def test_cve_parameters_e_is_the_documented_two_level_proxy():
+    v, p, e, _ = derive_real_cve_parameters()
+    assert set(np.unique(e).tolist()) <= {1.0, 2.5}
+    assert 1.0 in e and 2.5 in e   # both levels present, not degenerate
+
+
 def test_real_scenarios_registered_and_loadable():
     for name in ("antibiotic-stewardship-real", "design-space-real",
-                "fisheries-commons-real"):
+                "fisheries-commons-real", "exploit-catalog-real"):
         assert name in SCENARIOS
         env = load(name, seed=0)
         obs, info = env.reset(0)

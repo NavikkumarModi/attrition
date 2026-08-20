@@ -10,6 +10,9 @@ two are stated as proxies, not silently presented as equally real).
                                   categories across 15,556 recall records
     fisheries-commons-real        NOAA FOSS commercial landings, 16 real
                                   species across 1,143 species-year rows
+    exploit-catalog-real          CISA KEV catalog joined with FIRST.org
+                                  EPSS scores, 1,671 real actively-exploited
+                                  CVEs
     agent_tools / shared-quota    real 2026 production rate-limit telemetry
                                   (Datadog) cited as supporting evidence for
                                   the mechanism -- NOT used to change any
@@ -25,7 +28,7 @@ from attrition import (ConsumableBandit, Greedy, ECI, DOMAIN_NOTES,
                        PHARMA_PERSONAS, Population, MockLLMClient,
                        SimultaneousPool, SOURCES, compare,
                        derive_real_amr_parameters, derive_real_cmc_parameters,
-                       derive_real_fisheries_parameters,
+                       derive_real_fisheries_parameters, derive_real_cve_parameters,
                        describe, simulate_population_simultaneous)
 
 
@@ -118,6 +121,22 @@ def main():
               f"regret={stats['regret']:7.3f}")
     print(f"  {_describe_gap(v_fish, p_fish * e_fish, result_fish)}")
     print(f"\n{SOURCES['noaa_fisheries']['fit']}\n")
+
+    print("=" * 70)
+    describe("exploit-catalog-real")
+    v_cve, p_cve, e_cve, labels_cve = derive_real_cve_parameters(n=200, seed=0)
+    print("A few real actively-exploited CVEs (n=200 subsample), for a sanity check:")
+    for label, pi in list(zip(labels_cve, p_cve))[:5]:
+        print(f"  {label:>16}  EPSS (30-day exploit probability) = {pi:.1%}")
+    env_cve = lambda seed: ConsumableBandit(
+        v_cve, p_cve, e_cve, delta=0.05, horizon=40, seed=seed)
+    result_cve = compare(env_cve, [Greedy(), ECI()], seeds=200)
+    print("Greedy vs ECI, 200 seeds:")
+    for name, stats in result_cve.items():
+        print(f"  {name:>8}  value={stats['value']:7.3f} (se {stats['value_se']:.3f})  "
+              f"regret={stats['regret']:7.3f}")
+    print(f"  {_describe_gap(v_cve, p_cve * e_cve, result_cve)}")
+    print(f"\n{SOURCES['cisa_kev_epss']['fit']}\n")
 
     print("=" * 70)
     print("agent_tools / shared-quota: no numbers changed here -- see the "

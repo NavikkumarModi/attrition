@@ -460,6 +460,7 @@ simulation. Checked-in snapshots under `attrition/data/`, refreshed by
 | `antibiotic-stewardship-real` | [WHO Global Health Observatory](https://ghoapi.azureedge.net/api/) | `p` — real MRSA/E. coli resistance proportion, ~1,005 country/year rows |
 | `design-space-real` | [openFDA drug enforcement](https://api.fda.gov/drug/enforcement.json) | `p` — real fraction of Class I (most severe) recalls per failure category, from 15,556 real records |
 | `fisheries-commons-real` | [NOAA Fisheries FOSS landings](https://apps-st.fisheries.noaa.gov/ods/foss/landings/) | `p` — real year-over-year landings-decline frequency, 16 species across 1,143 species-year records (most 1950–2024) |
+| `exploit-catalog-real` | [CISA KEV](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) + [FIRST.org EPSS](https://www.first.org/epss/) | `p` — EPSS itself, a real live exploitation-probability score (not a proxy for one), for 1,671 real actively-exploited CVEs |
 | `agent_tools`/`shared-quota` | Datadog "State of AI Engineering" (2026) | cited as supporting evidence only — see caveat below |
 
 > [!NOTE]
@@ -492,6 +493,11 @@ fisheries-commons-real -- 16 real NOAA species, 200 seeds:
     greedy  value= 17.339 (se 0.480)  regret=  0.000
        eci  value= 21.609 (se 0.388)  regret=  7.992
   corr(v, kappa) = +0.738 -- the CONFLICT regime, value gap -19.8%
+
+exploit-catalog-real -- 1,671 real CVEs, n=200 subsample, 200 seeds:
+    greedy  value= 57.480 (se 0.369)  regret=  0.000
+       eci  value= 58.352 (se 0.214)  regret=  0.495
+  corr(v, kappa) = -0.167 -- no strong alignment, value gap -1.5%
 ```
 
 > [!IMPORTANT]
@@ -514,6 +520,14 @@ fisheries-commons-real -- 16 real NOAA species, 200 seeds:
 > with the highest `kappa`. Greedy naturally prefers exactly the arms a real
 > fishery can least afford to over-exploit, and still posts zero private
 > regret while doing it.
+>
+> `exploit-catalog-real` is different in kind, not just topic: `p` here
+> isn't a computed ratio standing in for a probability, it **is** one —
+> FIRST.org's EPSS score, a real, live, independently-validated probability
+> of exploitation, for CVEs CISA has already confirmed are being exploited.
+> The gap it produces is small (comparable to `design-space-real`'s), and
+> that's reported as-is rather than swapped for a bigger one — the point of
+> this domain is the directness of `p`, not the size of the effect.
 
 `agent_tools`/`shared-quota`'s roster numbers are **unchanged**. Datadog's
 published rate-limit figures are real and current (2–5% of LLM call spans

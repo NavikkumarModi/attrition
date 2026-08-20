@@ -145,9 +145,54 @@ def fetch_fisheries_landings():
     return len(species_out)
 
 
+def fetch_cisa_kev_epss():
+    """CISA's KEV feed is one JSON GET, no auth. FIRST.org's EPSS API takes
+    a comma-separated `cve=` batch, but batches above ~100 CVE IDs silently
+    return far fewer matches than requested (a URL-length effect, found by
+    testing -- not documented anywhere) -- keep batches at 50, confirmed to
+    reliably return 100% matches.
+    """
+    with urllib.request.urlopen(
+            "https://www.cisa.gov/sites/default/files/feeds/"
+            "known_exploited_vulnerabilities.json", timeout=30) as resp:
+        kev = json.load(resp)["vulnerabilities"]
+
+    epss = {}
+    batch_size = 50
+    for i in range(0, len(kev), batch_size):
+        batch = [v["cveID"] for v in kev[i:i + batch_size]]
+        q = ",".join(batch)
+        url = (f"https://api.first.org/data/v1/epss?cve={q}"
+              f"&limit={batch_size + 10}")
+        data = _get_json(url)
+        for row in data["data"]:
+            epss[row["cve"]] = float(row["epss"])
+        time.sleep(0.1)
+
+    rows = []
+    for item in kev:
+        cve = item["cveID"]
+        if cve not in epss:
+            continue
+        rows.append({
+            "cve": cve,
+            "vendor_project": item["vendorProject"],
+            "product": item["product"],
+            "date_added": item["dateAdded"],
+            "known_ransomware_use": item["knownRansomwareCampaignUse"] == "Known",
+            "epss": epss[cve],
+        })
+    out = os.path.join(DATA_DIR, "cisa_kev_epss.json")
+    with open(out, "w") as f:
+        json.dump(rows, f, indent=1)
+    print(f"wrote {out}  ({len(rows)} CVEs, {len(kev) - len(rows)} unmatched)")
+    return len(rows)
+
+
 if __name__ == "__main__":
     os.makedirs(DATA_DIR, exist_ok=True)
     for key, code in GHO_INDICATORS.items():
         fetch_who_amr(key, code)
     fetch_fda_cmc_categories()
     fetch_fisheries_landings()
+    fetch_cisa_kev_epss()
