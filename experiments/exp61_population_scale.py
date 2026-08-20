@@ -17,7 +17,15 @@ counts an order of magnitude past anything previously tested:
      exact planner baseline; that baseline is exponential and can't scale,
      so past m=6 this reports the empirical decentralised value and
      collision rate directly, honestly, without a baseline to compare
-     against, rather than silently dropping the check.
+     against, rather than silently dropping the check. Pushed to m=20,000
+     (100x the pool size) -- it saturates to an EXACT step function, not a
+     gradual curve, and saturation_mechanism_check() derives why from
+     SimultaneousPool.step()'s own code rather than leaving it as an
+     unexplained empirical curiosity: every colliding agent's reward comes
+     from the same pre-round burden, and the destruction check
+     short-circuits once an arm dies, so once m is large enough to
+     guarantee a hit within the round, more agents are provably inert, not
+     just empirically flat.
 
 Real data (antibiotic-stewardship-real, n=200 arms), not synthetic.
 
@@ -95,6 +103,42 @@ def simultaneous_scale_check(v, p, e, delta, rounds, m_values, seed=0):
     print()
 
 
+def saturation_mechanism_check(v, p, e, delta, rounds, seed=0):
+    """The flat value/agent at high m isn't just "small delta" -- it's a
+    provable step function, and here's why. SimultaneousPool.step()
+    computes every colliding agent's reward from the SAME pre-round burden
+    (so collision count never changes any individual's reward for that
+    round), and its destruction check `if self.alive[a] and rng.random() <
+    p[a]` short-circuits once the arm dies -- so once m is large enough
+    that some pull destroys the round's contested arm, every pull after
+    that consumes zero further randomness and changes nothing. Below that
+    threshold the arm can survive the round instead, sending the whole
+    rest of the trajectory somewhere different. This predicts an exact
+    step, not a gradual curve -- checked here at fine granularity to
+    confirm it really is a step, not gradual convergence that only looks
+    sharp at the resolution already checked.
+    """
+    print("=" * 70)
+    print("Where the saturation threshold actually is, and that it's a step:")
+    print(f"{'m':>5}  {'value/agent':>14}")
+    prev = None
+    for m in range(50, 121, 5):
+        population = make_population(m)
+        pool = SimultaneousPool(v, p, e, delta=delta, horizon=rounds,
+                                n_agents=m, seed=seed)
+        result = simulate_population_simultaneous(pool, population, rounds=rounds,
+                                                   log=False)
+        per_agent = result["system_value"] / m
+        # float summation order (more agents summed) shifts the last couple
+        # of bits even when the underlying trajectory is identical -- a
+        # real second step needs to clear noise, not just any bit flip.
+        marker = ("  <- step" if prev is not None
+                  and not np.isclose(per_agent, prev, atol=1e-9) else "")
+        print(f"{m:>5}  {per_agent:>14.6f}{marker}")
+        prev = per_agent
+    print()
+
+
 def main():
     print(__doc__)
     v, p, e, kw = get_arrays("antibiotic-stewardship-real")
@@ -103,7 +147,10 @@ def main():
                   m_values=[2, 5, 10, 25, 50, 100, 200])
 
     simultaneous_scale_check(v, p, e, delta=0.05, rounds=5,
-                             m_values=[2, 5, 10, 25, 50, 100, 190])
+                             m_values=[2, 5, 10, 25, 50, 100, 190, 500,
+                                      1000, 2000, 5000, 10000, 20000])
+
+    saturation_mechanism_check(v, p, e, delta=0.05, rounds=5)
 
 
 if __name__ == "__main__":

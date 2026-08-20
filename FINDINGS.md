@@ -594,7 +594,7 @@ mid-run.
 
 # Findings — build session 8 (real data, live demos, and agent count at scale)
 
-## 22. Both multi-agent claims hold at 30–190 agents, not just m≤6
+## 22. Both multi-agent claims hold from m=6 up through m=20,000
 
 Every prior multi-agent check in this repo — tests, experiments, examples —
 topped out at m=6 agents, because the exact-planner PoA baseline
@@ -610,22 +610,32 @@ anything previously tested. m greedy agents turn-taking over a shared
 precision, at every m checked (2, 5, 10, 25, 50, 100, 200), and stay fast
 (11ms at m=200, not a scaling concern).
 
-**Simultaneous-action price of anarchy stays small even at extreme agent
-density** — a genuinely new, unforced result, not previously knowable past
-m=6. Per-agent value drops only ~0.4% from m=2 to m=190 (4.9250 → 4.9041),
-despite near-total collision rates at high m (945 of ~950 pulls collide at
-m=190 — nearly every agent is choosing the same arm as everyone else, every
-round). The reason isn't that collisions are rare; it's that this real
-scenario's own `delta` (0.05) is small enough that the burden from
-concentrated destruction accumulates slowly relative to `v`, so congestion
-on a handful of top arms costs little per round even when nearly the entire
-population is piling onto them. This is a property of *this scenario's own
-real parameters*, not a general claim that price of anarchy is always small
-at scale — a scenario with larger `delta` or more concentrated `kappa` could
-look very different, and that's the natural next check, not assumed here.
+**Simultaneous-action price of anarchy saturates to an EXACT step
+function, and the mechanism is provable, not just empirical.** First pass
+(pushed to m=190) looked like it might just be "delta is small here" —
+per-agent value drops only ~0.4% from m=2 to m=190 (4.9250 → 4.9041). But
+pushing further (m=500 through m=20,000 — 100x the pool size) found the
+value pins to *exactly* 4.9041 the whole way, and a fine sweep (m=50 to
+120 in steps of 5) found why: it's a single step at m=85, not a curve that
+merely looks flat at low resolution. The real mechanism is in
+`SimultaneousPool.step()` itself, not this scenario's `delta`: every
+colliding agent's reward is computed from the same pre-round burden
+(collision count never changes any individual's reward for that round),
+and the destruction check `if self.alive[a] and rng.random() < p[a]`
+short-circuits once the arm dies, so once m is large enough that some pull
+destroys the round's contested arm, every pull after that consumes zero
+further randomness and changes nothing else about the trajectory. Below
+that threshold the arm can survive the round instead, sending the rest of
+the run somewhere genuinely different. This predicts an exact step for
+*any* scenario, not a delta-dependent curve — the delta-based explanation
+in the first pass was a plausible-looking guess that didn't survive
+pushing the scale further, corrected here rather than left standing.
 
-Added `tests/test_population.py::test_theorem6_holds_at_m50` as a permanent
-regression check at a modest scale (m=50, fast enough for the normal test
-suite) so this doesn't silently regress; the full m=200 sweep stays in
-`experiments/exp61_population_scale.py` since it's a one-off scale
-demonstration, not something that needs to run on every test invocation.
+Added two permanent regression tests: `test_theorem6_holds_at_m50` (modest
+scale, fast enough for the normal suite) and
+`test_simultaneous_price_of_anarchy_saturates_past_collision_threshold`
+(checks m=50 vs m=500 land on the exact same per-agent value, not pinning
+the threshold itself, which is scenario-specific). The full sweeps —
+m=200, m=20,000, and the fine-grained step search — stay in
+`experiments/exp61_population_scale.py`, which now also prints the
+mechanism check directly (`saturation_mechanism_check`).

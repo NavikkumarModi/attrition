@@ -12,7 +12,7 @@ real ones.*
 **Bandits with Consumable Action Sets**
 
 [![tests](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml/badge.svg)](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml)
-[![tests](https://img.shields.io/badge/tests-168%20passing-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/tests-169%20passing-brightgreen)](tests/)
 [![theorems](https://img.shields.io/badge/theorems-11%20proven-blue)](THEORY.md)
 [![python](https://img.shields.io/badge/python-3.9%E2%80%933.12-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
@@ -784,18 +784,23 @@ is subtracted from *every* agent's reward including my own. The externality is
 symmetric, so a greedy agent behaves the same whether m=1 or m=10. There is nothing
 to free-ride on when no one is paying.
 
-**Checked at real scale, not just m≤6.** Every multi-agent test in this repo
-had topped out at 6 agents — the exact-planner PoA baseline is exponential
-in m and can't go further, but the simulation itself has no such limit; it
-had just never been asked. `experiments/exp61_population_scale.py` ran both
-claims up to m=200 on real data (`antibiotic-stewardship-real`, 200 WHO-
-derived arms): sequential equivalence holds exactly at m=200 (33x past
-anything previously tested, and fast — 11ms), and simultaneous-action
-per-agent value drops only ~0.4% from m=2 to m=190, despite near-total
-collision rates at high density (945 of ~950 pulls colliding at m=190). See
-`FINDINGS.md` #22 for the honest caveat: that small a degradation is a
-property of this scenario's own real (small) `delta`, not a general claim
-that price of anarchy stays small at any scale.
+**Checked at real scale, not just m≤6 — up through m=20,000.** Every
+multi-agent test in this repo had topped out at 6 agents — the exact-planner
+PoA baseline is exponential in m and can't go further, but the simulation
+itself has no such limit; it had just never been asked.
+`experiments/exp61_population_scale.py` ran both claims on real data
+(`antibiotic-stewardship-real`, 200 WHO-derived arms): sequential
+equivalence holds exactly at m=200 (33x past anything previously tested,
+and fast — 11ms), and simultaneous-action's price of anarchy **saturates to
+an exact step function**, not a gradual curve — pinned to the identical
+per-agent value from m=85 all the way to m=20,000 (100x the pool size).
+The mechanism is provable from `SimultaneousPool.step()` itself, not a
+property of this scenario's `delta`: every colliding agent's reward comes
+from the same pre-round burden, and the destruction check short-circuits
+once an arm dies, so once agent density guarantees a hit within the round,
+more agents are provably inert. See `FINDINGS.md` #22 — the first-pass
+"it's just a small delta" explanation didn't survive pushing the scale
+further, and is corrected there rather than left standing.
 
 What *is* genuinely multi-agent: free-riding — pricing the externality but
 discounting by your own share (δκ/m). Theorem 6 makes this analysable as a

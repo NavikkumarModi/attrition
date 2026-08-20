@@ -168,6 +168,32 @@ def test_theorem6_holds_at_m50():
     assert pop_result["system_regret"] == pytest.approx(solo_regret)
 
 
+def test_simultaneous_price_of_anarchy_saturates_past_collision_threshold():
+    """Regression check for exp61_population_scale.py's sharper finding:
+    once agent count is high enough to make a contested arm's destruction
+    near-certain within a round, per-agent value stops changing entirely --
+    not gradually, an exact step -- because SimultaneousPool.step() gives
+    every colliding agent the same pre-round-burden reward regardless of
+    collision count, and its destruction check short-circuits once the arm
+    dies, so redundant pulls past that point consume no further randomness.
+    Checked at m=50 vs m=500 (10x apart, both comfortably past any
+    reasonable threshold for this pool) rather than pinning the exact
+    threshold itself, which is scenario-specific and not the claim.
+    """
+    seed_env = ConsumableBandit.random(n=30, k_spread=1.0, delta=0.1, seed=0)
+    v, p, e = seed_env.v, seed_env.p, seed_env.e
+
+    values = {}
+    for m in (50, 500):
+        population = Population({f"agent-{i}": Greedy() for i in range(m)})
+        pool = SimultaneousPool(v, p, e, delta=0.1, horizon=5, n_agents=m, seed=0)
+        result = simulate_population_simultaneous(pool, population, rounds=5,
+                                                   log=False)
+        values[m] = result["system_value"] / m
+
+    assert values[50] == pytest.approx(values[500], abs=1e-9)
+
+
 def test_simulate_population_writes_to_trace_store(tmp_path):
     from attrition import TraceStore
 
