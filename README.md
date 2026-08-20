@@ -355,9 +355,19 @@ them with `PYTHONPATH=. python docs/make_readme_images.py`.
 streamlit run app.py`. Pick any built-in scenario (or upload your own
 `v,p,e` CSV), choose which classical policies to compare, and get the same
 dashboard above rendered live in the browser, plus an aggregate value/regret
-comparison across seeds. No LLM calls and no API key needed — this first
-version is deliberately classical-policy-only, so it has no cost surface as
-a public deployment.
+comparison across seeds. No LLM calls and no API key needed for this part —
+it's classical-policy-only, so it has no cost surface as a public
+deployment.
+
+A second, opt-in sidebar section runs a **real LLM-driven population**
+(Anthropic or Groq) on whichever scenario is selected — bring your own API
+key, entered in a password-masked field. The key is used only to make that
+session's requests and is never logged or written to disk; it does still
+pass through the app's own server process to place the call (that's how a
+Streamlit app works, unlike a page that calls the provider directly from
+your browser). Reports the same genuine-vs-fallback response breakdown as
+`examples/09` — free-tier rate limits and occasional empty responses are
+surfaced, not hidden.
 
 ---
 
