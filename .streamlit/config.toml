@@ -1,0 +1,13 @@
+# Matches the dark palette used by attrition/dashboard.py's rendered
+# dashboard (see that module's docstring for the validated color source),
+# so the app chrome and the embedded dashboard read as one surface.
+[theme]
+base = "dark"
+primaryColor = "#3987e5"
+backgroundColor = "#0d0d0d"
+secondaryBackgroundColor = "#1a1a19"
+textColor = "#ffffff"
+font = "sans serif"
+
+[client]
+toolbarMode = "minimal"
