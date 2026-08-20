@@ -1,0 +1,6 @@
+# For Streamlit Community Cloud, which auto-detects this file at the repo
+# root (it does not read pyproject.toml's optional-dependency extras).
+# Editable install of this repo with the [web] extra -- the same install
+# path already used everywhere else (pip install -e ".[web]"), not a
+# separate/different dependency list to keep in sync by hand.
+-e .[web]
