@@ -459,6 +459,7 @@ simulation. Checked-in snapshots under `attrition/data/`, refreshed by
 |---|---|---|
 | `antibiotic-stewardship-real` | [WHO Global Health Observatory](https://ghoapi.azureedge.net/api/) | `p` — real MRSA/E. coli resistance proportion, ~1,005 country/year rows |
 | `design-space-real` | [openFDA drug enforcement](https://api.fda.gov/drug/enforcement.json) | `p` — real fraction of Class I (most severe) recalls per failure category, from 15,556 real records |
+| `fisheries-commons-real` | [NOAA Fisheries FOSS landings](https://apps-st.fisheries.noaa.gov/ods/foss/landings/) | `p` — real year-over-year landings-decline frequency, 16 species across 1,143 species-year records (most 1950–2024) |
 | `agent_tools`/`shared-quota` | Datadog "State of AI Engineering" (2026) | cited as supporting evidence only — see caveat below |
 
 > [!NOTE]
@@ -486,6 +487,11 @@ design-space-real -- 9 real FDA failure categories, 200 seeds:
     greedy  value=  4.606 (se 0.091)  regret=  0.000
        eci  value=  4.625 (se 0.074)  regret=  0.110
   corr(v, kappa) = -0.196 -- no strong alignment, value gap -0.4%
+
+fisheries-commons-real -- 16 real NOAA species, 200 seeds:
+    greedy  value= 17.339 (se 0.480)  regret=  0.000
+       eci  value= 21.609 (se 0.388)  regret=  7.992
+  corr(v, kappa) = +0.738 -- the CONFLICT regime, value gap -19.8%
 ```
 
 > [!IMPORTANT]
@@ -499,6 +505,15 @@ design-space-real -- 9 real FDA failure categories, 200 seeds:
 > a seed count that happens to look better). Neither result was swapped for
 > a formula chosen to look more dramatic — see `real_data.py`'s docstrings
 > and `examples/07_real_world_grounded.py` for the full run.
+>
+> `fisheries-commons-real` is the other side of that same honesty: it's the
+> first real-data scenario in this repo to land in the **conflict** regime by
+> nothing more than what the real landings data says (`corr(v, kappa) =
+> +0.74`, not tuned to get there) — the U.S. species with the highest real
+> per-pound price and total value (lobster, sea scallop) are also the ones
+> with the highest `kappa`. Greedy naturally prefers exactly the arms a real
+> fishery can least afford to over-exploit, and still posts zero private
+> regret while doing it.
 
 `agent_tools`/`shared-quota`'s roster numbers are **unchanged**. Datadog's
 published rate-limit figures are real and current (2–5% of LLM call spans

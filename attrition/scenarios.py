@@ -23,7 +23,8 @@ import numpy as np
 from .envs import ConsumableBanditEnv, MultiAgentConsumableEnv
 from .engines import (derive_arm_parameters, derive_trial_parameters,
                       derive_design_space_parameters, derive_antibiotic_parameters)
-from .real_data import derive_real_amr_parameters, derive_real_cmc_parameters
+from .real_data import (derive_real_amr_parameters, derive_real_cmc_parameters,
+                        derive_real_fisheries_parameters)
 
 __all__ = ["SCENARIOS", "load", "describe", "ScenarioRegistry", "from_arrays",
            "get_arrays"]
@@ -220,6 +221,31 @@ SCENARIOS.register(
                         "gap appears by chance."),
     agents=1,
     build=lambda: (derive_real_cmc_parameters()[:3], dict(delta=0.6, horizon=8)),
+)
+
+SCENARIOS.register(
+    "fisheries-commons-real",
+    description=("Real NOAA commercial landings: 16 U.S. fish and shellfish "
+                "species, most with 75 years of real annual data (1950-2024). "
+                "p is the real year-over-year landings-decline frequency; v "
+                "and e are documented proxies from real price and total-"
+                "value data -- see real_data.SOURCES['noaa_fisheries']."),
+    phenomenon="zero-regret ruin, in the CONFLICT regime, using real landings data",
+    expected_behaviour=("Unlike antibiotic-stewardship-real (mechanically "
+                        "ALIGNED by its proxy formula) and design-space-real "
+                        "(mild, near the alignment boundary), this one lands "
+                        "in the CONFLICT regime from the real data itself: "
+                        "corr(v, kappa) = +0.74, checked not assumed -- the "
+                        "highest-price, highest-total-value species (lobster, "
+                        "sea scallop) also have the highest kappa. At "
+                        "delta=0.15, horizon=12, greedy records zero private "
+                        "regret while losing ~20% of system value versus ECI "
+                        "(checked at 200 seeds); the exact percentage moves "
+                        "with delta/horizon, the sign and the mechanism do "
+                        "not."),
+    agents=1,
+    build=lambda: (derive_real_fisheries_parameters()[:3],
+                  dict(delta=0.15, horizon=12)),
 )
 
 

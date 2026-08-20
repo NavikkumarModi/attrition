@@ -7,11 +7,11 @@ import numpy as np
 
 from attrition import (SCENARIOS, describe, get_arrays, load,
                        derive_real_amr_parameters, derive_real_cmc_parameters,
-                       SOURCES)
+                       derive_real_fisheries_parameters, SOURCES)
 
 
 def test_sources_documents_the_real_vs_proxy_split():
-    assert "who_amr" in SOURCES and "fda_cmc" in SOURCES
+    assert "who_amr" in SOURCES and "fda_cmc" in SOURCES and "noaa_fisheries" in SOURCES
     for entry in SOURCES.values():
         assert "REAL" in entry["fit"]
         assert entry["url"] and entry["publisher"]
@@ -56,8 +56,34 @@ def test_cmc_parameters_one_arm_per_category_with_dispersed_kappa():
     assert kappa.max() > 5 * max(kappa.min(), 1e-6)   # real, not marginal, spread
 
 
+def test_fisheries_parameters_p_is_real_decline_frequency_in_unit_interval():
+    v, p, e, labels = derive_real_fisheries_parameters()
+    assert len(v) == len(p) == len(e) == len(labels) == 16
+    assert np.all(p >= 0.0) and np.all(p <= 1.0)
+    assert p.std() > 0.0
+
+
+def test_fisheries_parameters_conflict_regime_not_assumed():
+    """The headline claim about this domain: unlike antibiotic-stewardship-
+    real (mechanically ALIGNED) this one lands in the CONFLICT regime
+    (corr(v, kappa) > 0) from the real data itself. Checked, not hardcoded --
+    this test would fail if the snapshot or derivation ever changed that.
+    """
+    v, p, e, _ = derive_real_fisheries_parameters()
+    kappa = p * e
+    assert kappa.std() > 0.0
+    assert np.corrcoef(v, kappa)[0, 1] > 0.3
+
+
+def test_fisheries_parameters_min_years_filters_short_series():
+    v_all, *_ = derive_real_fisheries_parameters(min_years=0)
+    v_filtered, *_ = derive_real_fisheries_parameters(min_years=20)
+    assert len(v_filtered) < len(v_all)   # drops Atlantic menhaden (18 years)
+
+
 def test_real_scenarios_registered_and_loadable():
-    for name in ("antibiotic-stewardship-real", "design-space-real"):
+    for name in ("antibiotic-stewardship-real", "design-space-real",
+                "fisheries-commons-real"):
         assert name in SCENARIOS
         env = load(name, seed=0)
         obs, info = env.reset(0)

@@ -6,6 +6,8 @@ Sources (see attrition/real_data.py's SOURCES dict for citations/caveats):
     openFDA drug enforcement API       -- recall classification by failure
                                           category (server-side aggregation,
                                           not raw-row download)
+    NOAA Fisheries FOSS landings API   -- real commercial landings (pounds,
+                                          dollars) per species per year
 
 stdlib `urllib.request` only -- no new dependency, here or anywhere else in
 the package. Same regenerate-from-live-source philosophy as
@@ -18,8 +20,10 @@ Run:  python scripts/fetch_real_data.py
 
 import json
 import os
+import time
 import urllib.parse
 import urllib.request
+from collections import defaultdict
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(HERE, "..", "attrition", "data")
@@ -31,6 +35,15 @@ GHO_INDICATORS = {
 
 FDA_CATEGORIES = ["CGMP", "sterility", "contamina*", "particulate", "potency",
                   "dissolution", "stability", "mislabel*", "microbial"]
+
+# 16 major U.S. commercial species spanning multiple coasts and price points,
+# each confirmed present in NOAA FOSS's LANDINGS table (ts_afs_name values).
+FOSS_SPECIES = [
+    "COD, ATLANTIC", "SALMON, CHINOOK", "MENHADEN, ATLANTIC", "HADDOCK",
+    "LOBSTER, AMERICAN", "CRAB, BLUE", "FLOUNDER, SUMMER", "HERRING, ATLANTIC",
+    "HALIBUT, PACIFIC", "SCALLOP, SEA", "TUNA, ALBACORE", "SWORDFISH",
+    "BASS, STRIPED", "SNAPPER, RED", "MACKEREL, ATLANTIC", "CRAB, DUNGENESS",
+]
 
 
 def _get_json(url):
@@ -83,8 +96,58 @@ def fetch_fda_cmc_categories():
     return len(categories)
 
 
+def _fetch_species_rows(name, limit=1000):
+    rows, offset = [], 0
+    while True:
+        q = json.dumps({"ts_afs_name": name, "collection": "Commercial"})
+        params = urllib.parse.urlencode({"q": q, "limit": limit, "offset": offset})
+        url = f"https://apps-st.fisheries.noaa.gov/ods/foss/landings/?{params}"
+        data = _get_json(url)
+        rows.extend(data["items"])
+        if not data.get("hasMore"):
+            break
+        offset += limit
+    return rows
+
+
+def fetch_fisheries_landings():
+    """NOAA FOSS's LANDINGS table is row-level (per species/state/year), so
+    this aggregates to national per-species-per-year totals before writing
+    the snapshot -- attrition/real_data.py's derive function reads that
+    aggregated shape, not raw rows.
+    """
+    species_out = []
+    for name in FOSS_SPECIES:
+        rows = _fetch_species_rows(name)
+        by_year = defaultdict(lambda: [0.0, 0.0])
+        for r in rows:
+            if r["pounds"] is None or r["year"] is None:
+                continue
+            by_year[r["year"]][0] += r["pounds"]
+            by_year[r["year"]][1] += (r["dollars"] or 0)
+        years = sorted(by_year)
+        species_out.append({
+            "species": name,
+            "scientific_name": next(
+                (r["ts_scientific_name"] for r in rows if r["ts_scientific_name"]),
+                None),
+            "annual": [{"year": y, "pounds": by_year[y][0], "dollars": by_year[y][1]}
+                      for y in years],
+        })
+        print(f"  {name}: {len(years)} years, {len(rows)} raw rows")
+        time.sleep(0.3)   # a light courtesy delay, not a rate-limit workaround
+
+    out = os.path.join(DATA_DIR, "noaa_fisheries_landings.json")
+    with open(out, "w") as f:
+        json.dump(species_out, f, indent=1)
+    total_years = sum(len(s["annual"]) for s in species_out)
+    print(f"wrote {out}  ({len(species_out)} species, {total_years} species-year rows)")
+    return len(species_out)
+
+
 if __name__ == "__main__":
     os.makedirs(DATA_DIR, exist_ok=True)
     for key, code in GHO_INDICATORS.items():
         fetch_who_amr(key, code)
     fetch_fda_cmc_categories()
+    fetch_fisheries_landings()

@@ -8,6 +8,8 @@ two are stated as proxies, not silently presented as equally real).
                                   ~1,005 real country/year rows
     design-space-real             openFDA drug-recall data, 9 real failure
                                   categories across 15,556 recall records
+    fisheries-commons-real        NOAA FOSS commercial landings, 16 real
+                                  species across 1,143 species-year rows
     agent_tools / shared-quota    real 2026 production rate-limit telemetry
                                   (Datadog) cited as supporting evidence for
                                   the mechanism -- NOT used to change any
@@ -23,6 +25,7 @@ from attrition import (ConsumableBandit, Greedy, ECI, DOMAIN_NOTES,
                        PHARMA_PERSONAS, Population, MockLLMClient,
                        SimultaneousPool, SOURCES, compare,
                        derive_real_amr_parameters, derive_real_cmc_parameters,
+                       derive_real_fisheries_parameters,
                        describe, simulate_population_simultaneous)
 
 
@@ -98,6 +101,23 @@ def main():
           "that a low seed count is dominated by Monte-Carlo noise -- see "
           "this scenario's expected_behaviour via describe() above.)")
     print(f"\n{SOURCES['fda_cmc']['fit']}\n")
+
+    print("=" * 70)
+    describe("fisheries-commons-real")
+    v_fish, p_fish, e_fish, labels_fish = derive_real_fisheries_parameters()
+    print("Real NOAA commercial landings, 16 species:")
+    for label, pi, ei in zip(labels_fish, p_fish, e_fish):
+        print(f"  {label:>20}  decline_freq={pi:.2f}  value_scale_e={ei:.2f}  "
+              f"kappa={pi*ei:.3f}")
+    env_fish = lambda seed: ConsumableBandit(
+        v_fish, p_fish, e_fish, delta=0.15, horizon=12, seed=seed)
+    result_fish = compare(env_fish, [Greedy(), ECI()], seeds=200)
+    print("Greedy vs ECI, 200 seeds:")
+    for name, stats in result_fish.items():
+        print(f"  {name:>8}  value={stats['value']:7.3f} (se {stats['value_se']:.3f})  "
+              f"regret={stats['regret']:7.3f}")
+    print(f"  {_describe_gap(v_fish, p_fish * e_fish, result_fish)}")
+    print(f"\n{SOURCES['noaa_fisheries']['fit']}\n")
 
     print("=" * 70)
     print("agent_tools / shared-quota: no numbers changed here -- see the "

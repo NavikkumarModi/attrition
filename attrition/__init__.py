@@ -49,7 +49,8 @@ from .viz import plot_system_value_over_time, plot_burden_over_time
 from .config import load_config, build_from_config
 from .network import AgentGraph
 from .dashboard import render_dashboard
-from .real_data import SOURCES, derive_real_amr_parameters, derive_real_cmc_parameters
+from .real_data import (SOURCES, derive_real_amr_parameters,
+                        derive_real_cmc_parameters, derive_real_fisheries_parameters)
 
 __version__ = "0.2.0"
 __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
@@ -77,4 +78,5 @@ __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
            "plot_system_value_over_time", "plot_burden_over_time",
            "load_config", "build_from_config",
            "AgentGraph", "render_dashboard",
-           "SOURCES", "derive_real_amr_parameters", "derive_real_cmc_parameters"]
+           "SOURCES", "derive_real_amr_parameters", "derive_real_cmc_parameters",
+           "derive_real_fisheries_parameters"]
