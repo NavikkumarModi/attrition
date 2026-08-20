@@ -591,3 +591,41 @@ mid-run.
 
 **Paper structure this suggests:** open with the trace, then the theory
 (T1 → T3 → T4), then the domains. Lead with the thing that makes people feel it.
+
+# Findings — build session 8 (real data, live demos, and agent count at scale)
+
+## 22. Both multi-agent claims hold at 30–190 agents, not just m≤6
+
+Every prior multi-agent check in this repo — tests, experiments, examples —
+topped out at m=6 agents, because the exact-planner PoA baseline
+(`planner_value_simultaneous`) is exponential in m and simply can't go
+further. The simulation machinery itself (`SimultaneousPool.step`,
+`simulate_population_simultaneous`) has no such ceiling; it had just never
+been asked to run past it. `exp61_population_scale.py` did, on real data
+(`antibiotic-stewardship-real`, 200 real WHO-derived arms), not synthetic.
+
+**Theorem 6 (sequential equivalence) holds exactly at m=200** — 33x past
+anything previously tested. m greedy agents turn-taking over a shared
+`m·T`-pull budget match a single learner over the same pulls to float
+precision, at every m checked (2, 5, 10, 25, 50, 100, 200), and stay fast
+(11ms at m=200, not a scaling concern).
+
+**Simultaneous-action price of anarchy stays small even at extreme agent
+density** — a genuinely new, unforced result, not previously knowable past
+m=6. Per-agent value drops only ~0.4% from m=2 to m=190 (4.9250 → 4.9041),
+despite near-total collision rates at high m (945 of ~950 pulls collide at
+m=190 — nearly every agent is choosing the same arm as everyone else, every
+round). The reason isn't that collisions are rare; it's that this real
+scenario's own `delta` (0.05) is small enough that the burden from
+concentrated destruction accumulates slowly relative to `v`, so congestion
+on a handful of top arms costs little per round even when nearly the entire
+population is piling onto them. This is a property of *this scenario's own
+real parameters*, not a general claim that price of anarchy is always small
+at scale — a scenario with larger `delta` or more concentrated `kappa` could
+look very different, and that's the natural next check, not assumed here.
+
+Added `tests/test_population.py::test_theorem6_holds_at_m50` as a permanent
+regression check at a modest scale (m=50, fast enough for the normal test
+suite) so this doesn't silently regress; the full m=200 sweep stays in
+`experiments/exp61_population_scale.py` since it's a one-off scale
+demonstration, not something that needs to run on every test invocation.

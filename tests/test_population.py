@@ -140,6 +140,34 @@ def test_simulate_population_simultaneous_max_workers_matches_serial():
     assert serial["system_regret"] == pytest.approx(parallel["system_regret"])
 
 
+def test_theorem6_holds_at_m50():
+    """Every other multi-agent test in this repo tops out at m=6 agents.
+    Regression check for exp61_population_scale.py's finding: sequential
+    equivalence (m agents turn-taking over a shared m*T-pull budget behaves
+    exactly like one learner over the same pulls) holds at m=50, not just
+    the small counts everything else here uses. Kept modest (m=50, not the
+    m=200 the experiment checked) so this stays fast enough for the normal
+    suite; the full sweep lives in the experiment script.
+    """
+    env = ConsumableBandit.random(n=250, k_spread=1.0, delta=0.05,
+                                  horizon=150, seed=0)
+    population = Population({f"agent-{i}": Greedy() for i in range(50)})
+    pop_result = simulate_population(env, population, log=False)
+
+    solo_env = ConsumableBandit.random(n=250, k_spread=1.0, delta=0.05,
+                                       horizon=150, seed=0)
+    solo = Greedy()
+    solo_value = solo_regret = 0.0
+    while not solo_env.done():
+        arm = solo.select(solo_env.state())
+        _, val, reg, _ = solo_env.step(arm)
+        solo_value += val
+        solo_regret += reg
+
+    assert pop_result["system_value"] == pytest.approx(solo_value)
+    assert pop_result["system_regret"] == pytest.approx(solo_regret)
+
+
 def test_simulate_population_writes_to_trace_store(tmp_path):
     from attrition import TraceStore
 
