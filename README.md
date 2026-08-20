@@ -51,11 +51,23 @@ read at the end — it's something you watch open up as each policy's choices
 accumulate. Works on any registered scenario, including the real-data ones.
 
 ```bash
-python examples/10_live_race.py fisheries-commons-real --speed 0.3
+python examples/10_live_race.py shared-quota --speed 0.06
 python examples/10_live_race.py --list        # see every scenario
 ```
 
 <div align="center">
+
+<img src="docs/images/casts/shared-quota.gif" alt="Live terminal recording: Greedy and ECI racing on the autonomous-agent shared-quota scenario, system value gap widening round by round" width="600">
+
+*The one this framework describes most directly right now: an autonomous
+agent — a coding agent, a browser/computer-use agent, anything making tool
+calls without a human approving each one — can look flawless on every
+individual call while quietly burning a shared API quota or credential pool
+every other agent depends on. Postman's 2025 State of the API Report found
+unauthorized agent access is developers' top-cited security risk (51%), with
+46% specifically worried about agents leaking shared credentials — see
+[`attrition/domains.py`](attrition/domains.py)'s `DOMAIN_NOTES["agent_tools"]`
+for the full citation and what it was (and wasn't) used for.*
 
 <img src="docs/images/casts/fisheries-commons-real.gif" alt="Live terminal recording: Greedy and ECI racing on the real NOAA fisheries scenario, system value gap widening round by round" width="600">
 

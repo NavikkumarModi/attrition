@@ -18,6 +18,7 @@ mkdir -p docs/casts docs/images/casts
 # recording is watchable (fast for the 8-round synthetic one, faster still
 # for the 40-round real-data ones so the GIF doesn't run long).
 PAIRS=(
+  "shared-quota:0.06"
   "adaptive-therapy:0.35"
   "antibiotic-stewardship-real:0.06"
   "fisheries-commons-real:0.3"

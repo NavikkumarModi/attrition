@@ -13,12 +13,13 @@ two are stated as proxies, not silently presented as equally real).
     exploit-catalog-real          CISA KEV catalog joined with FIRST.org
                                   EPSS scores, 1,671 real actively-exploited
                                   CVEs
-    agent_tools / shared-quota    real 2026 production rate-limit telemetry
-                                  (Datadog) cited as supporting evidence for
-                                  the mechanism -- NOT used to change any
-                                  number, since it measures a different
-                                  quantity than this roster's p (see
-                                  domains.DOMAIN_NOTES["agent_tools"])
+    agent_tools / shared-quota    real 2025-2026 agentic-AI survey data
+                                  (Postman) and production rate-limit
+                                  telemetry (Datadog) cited as supporting
+                                  evidence for the mechanism -- NOT used to
+                                  change any number, since both measure a
+                                  different quantity than this roster's p
+                                  (see domains.DOMAIN_NOTES["agent_tools"])
 
 Run:  python examples/07_real_world_grounded.py
 """

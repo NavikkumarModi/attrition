@@ -64,8 +64,10 @@ def _agent_tools():
 SCENARIOS = ScenarioRegistry({
     # ------------------------------------------------------ agent ecosystems
     "shared-quota": {
-        "description": "Orchestrator routing across API tools that share upstream "
-                       "quota. Burning a bulk tool throttles the rest.",
+        "description": "An autonomous agent routing across API tools that "
+                       "share upstream quota -- every call can look "
+                       "flawless on its own while burning a bulk tool "
+                       "throttles the rest for the whole session.",
         "phenomenon": "zero-regret ruin",
         "expected_behaviour": "greedy records zero private regret and loses "
                               "~30% of system value",
@@ -73,9 +75,11 @@ SCENARIOS = ScenarioRegistry({
         "build": lambda: (_agent_tools()[:3], dict(delta=0.06, horizon=40)),
     },
     "shared-quota-competing": {
-        "description": "Two orchestrators drawing on the same quota pool. "
-                       "Note the burden falls on both, including the agent "
-                       "that creates it, so this is not a classical commons.",
+        "description": "Two autonomous agents (e.g. two coding-agent "
+                       "sessions, or an agent and its own sub-agent) "
+                       "drawing on the same quota pool. Note the burden "
+                       "falls on both, including the agent that creates "
+                       "it, so this is not a classical commons.",
         "phenomenon": "free-riding under a shared burden",
         "expected_behaviour": "NO price of anarchy: by Theorem 6 sequential "
                               "agents behave exactly like one learner over m*T "
