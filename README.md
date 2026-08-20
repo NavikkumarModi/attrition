@@ -1,5 +1,11 @@
 <div align="center">
 
+![ATTRITION — No-Regret is Not No-Harm. Stylized banner artwork: a global network with nodes failing under load, alongside illustrative regret and value panels.](docs/images/banner.jpg)
+
+*Banner artwork, not a real run — every chart elsewhere in this README is
+generated from a live simulation; see [Watch it run](#watch-it-run) for the
+real ones.*
+
 # ATTRITION
 ### The simulator for actions that destroy what they touch
 
