@@ -278,6 +278,15 @@ dependency, opens straight from `file://`.
 Both images above are generated from live runs, not hand-drawn — regenerate
 them with `PYTHONPATH=. python docs/make_readme_images.py`.
 
+### Interactive app
+
+`pip install "attrition[web]" && streamlit run app.py` — pick any built-in
+scenario (or upload your own `v,p,e` CSV), choose which classical policies to
+compare, and get the same dashboard above rendered live in the browser, plus
+an aggregate value/regret comparison across seeds. No LLM calls and no API
+key needed — this first version is deliberately classical-policy-only, so it
+has no cost surface if deployed publicly.
+
 ---
 
 ## The model

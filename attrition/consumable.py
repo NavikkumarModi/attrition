@@ -85,7 +85,7 @@ class ConsumableBandit:
         best_available = float(np.max(self.v[idx] - self.burden))
         regret = best_available - realised
 
-        destroyed = self.rng.random() < self.p[arm]
+        destroyed = bool(self.rng.random() < self.p[arm])
         if destroyed:
             self.alive[arm] = False
         if self.mu > 0:
