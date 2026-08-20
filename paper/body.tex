@@ -1303,6 +1303,66 @@ metric staying at exactly zero while the corrected router visibly outperforms
 it, call by call --- makes the mechanism concrete beyond the aggregate view in
 Figure~\ref{fig:domains}; see Appendix~E.}
 
+\subsection{Grounded in real, external data}
+\label{sec:realdata}
+
+The four domains above are each simulated with hand-set or mechanistically
+derived parameters. A separate, fourth tier of scenarios instead derives
+$(v,p,e)$ from real measurements published by external organisations---not
+this project's own simulation---refreshed from the live source by a
+checked-in script. As with the domains above, we state fit honestly: in every
+case exactly one of $(v,p,e)$ is a real measured quantity (or, for the last
+scenario, a ratio computed directly from real counts, the same standard the
+FDA-derived domain above already uses); the other two are documented
+modelling proxies, stated as such rather than presented as equally real.
+
+\begin{center}
+\small
+\begin{tabular}{p{2.6cm}p{4.3cm}p{5.0cm}}
+\toprule
+scenario & real source & what is actually measured \\
+\midrule
+Antibiotic stewardship & WHO Global Health Observatory$^{a}$ &
+$p$ --- real MRSA/E.~coli resistance proportion, $\sim\!1{,}005$
+country/year rows \\[2pt]
+Design space & openFDA drug enforcement$^{b}$ &
+$p$ --- real fraction of Class~I (most severe) recalls per failure category,
+from $15{,}556$ real records \\[2pt]
+Fisheries commons & NOAA Fisheries FOSS landings$^{c}$ &
+$p$ --- real year-over-year landings-decline frequency, 16 species across
+$1{,}143$ species-year records (mostly 1950--2024) \\[2pt]
+Exploit catalog & CISA KEV$^{d}$ joined with FIRST.org EPSS$^{e}$ &
+$p$ is EPSS itself---a real, live exploitation-probability score, not a proxy
+for one---for $1{,}671$ real actively-exploited CVEs \\
+\bottomrule
+\end{tabular}
+
+\vspace{2pt}
+{\footnotesize
+$^{a}$\url{https://ghoapi.azureedge.net/api/}\quad
+$^{b}$\url{https://api.fda.gov/drug/enforcement.json}\\
+$^{c}$\url{https://apps-st.fisheries.noaa.gov/ods/foss/landings/}\quad
+$^{d}$\url{https://www.cisa.gov/known-exploited-vulnerabilities-catalog}\\
+$^{e}$\url{https://www.first.org/epss/}
+\par}
+\end{center}
+
+\paragraph{Two regimes, found rather than chosen.} The antibiotic-stewardship
+proxy ($v=1-p$, $e=p$) makes $\kappa=pe$ a deterministic function of $v$,
+which mechanically forces the \emph{aligned} regime
+(Section~\ref{sec:alignment}): greedy and ECI coincide there
+($\mathrm{corr}(v,\kappa)=-0.963$, value gap $0.0\%$) because of the proxy's
+construction, not because of anything discovered about real antibiotic
+resistance. The fisheries-commons domain is the opposite case, and it was
+not tuned to be one: $\mathrm{corr}(v,\kappa)=+0.74$ from the real landings
+data alone---the species with the highest real per-pound price and total
+value (lobster, sea scallop) are also the species with the highest $\kappa$.
+Greedy prefers exactly the arms a real fishery can least afford to
+over-exploit, losing $19.8\%$ of system value at zero private regret. The
+remaining two domains land closer to the alignment boundary (value gaps of
+$-0.4\%$ and $-1.5\%$), reported as the small, real effects they are rather
+than replaced with parameters chosen to look more dramatic.
+
 \section{Robustness to the coupling form}
 \label{sec:robust}
 
