@@ -449,8 +449,8 @@ the failure.
 \label{sec:appendix-mc}
 
 \paragraph{An unreliable Monte Carlo estimate, excluded rather than reported.}
-A Monte Carlo rollout was tested as an independent large-scale reference. It
-failed a basic sanity check --- policy improvement should never make an
+A Monte Carlo rollout intended as an independent large-scale reference
+fails a basic sanity check --- policy improvement should never make an
 estimate worse with more compute, and increasing rollout depth moved the
 estimate substantially in the wrong direction, the signature of an
 implementation error rather than noise. The cause: planning-phase and
