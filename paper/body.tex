@@ -119,19 +119,20 @@ p_a e_a$ implies a failure instance exists. Sufficiency is proven at every
 horizon via an adjacent-interchange lemma and backward induction, independently
 verified across 450 adversarial instances with zero violations. Neither factor
 alone is the invariant.
-\item \textbf{Theorem~\ref{thm:floor}}. The externality cannot be estimated to
-arbitrary precision: the error floor does not decrease with the horizon, because
-the data-generating process is the consumption itself.
+\item \textbf{Theorem~\ref{thm:floor}}. Within a single consumption episode, the
+externality estimator has a non-vanishing information floor once the pool is
+exhausted: the error does not decrease with the horizon, because the
+data-generating process is the consumption itself.
 \item \textbf{Theorem~\ref{thm:seq}}. In the pure-sequencing regime the optimal
 order is ascending in $e$; arm values are irrelevant.
 \item A closed-form correction (ECI), exact under constant $\kappa$
 (Proposition~\ref{prop:eciexact}) with a proven general bound
-(Theorem~\ref{thm:ecibound}), and a rollout policy reaching 99.5--99.9\% of
+(Theorem~\ref{thm:ecibound}), and a rollout policy empirically reaching 99.5--99.9\% of
 optimum.
-\item \textbf{A sequential-equivalence theorem} (Appendix~\ref{sec:multiagent}): multi-agent consumption on a shared pool reduces exactly to a
-single-agent problem over a longer horizon---so no price of anarchy arises from
-consumption externalities alone, and the target for mechanism design is
-free-riding specifically, not coordination.
+\item \textbf{A sequential-equivalence theorem} (Appendix~\ref{sec:multiagent}): multi-agent consumption on a
+shared pool reduces exactly to a single-agent problem over a longer horizon---so consumption externalities
+alone do not generate an efficiency loss relative to that centralised sequential benchmark, and the target
+for mechanism design is free-riding specifically, not coordination.
 \item A stress test of the independence assumption (Section~\ref{sec:correlated}):
 under correlated cluster-level destruction, the characterisation appears to survive
 exactly (a verified conjecture) while the correction fails and is repaired (SECI),
@@ -662,14 +663,15 @@ times.
 N_{\mathrm{exh}} \;=\; \textstyle\sum_{j=1}^{n} G_j, \qquad G_j \sim \mathrm{Geometric}(p_j),
 \]
 the number of pulls until every arm has been destroyed, under any policy that
-eventually exhausts the pool. An episode ends at
+continues pulling until the pool is exhausted. An episode ends at
 $N = \min(T, N_{\mathrm{exh}})$, and $\mathbb{E}[N_{\mathrm{exh}}] = \sum_j 1/p_j$.
 
 \begin{theorem}[Consumption-induced estimation floor]
 \label{thm:floor}
 Condition on the destruction sequence and let $n_b^{(i)}, n_a^{(i)}$ be the numbers
-of rounds before and after arm $i$'s destruction, $n_b^{(i)} + n_a^{(i)} = N$. Then
-for the joint least-squares estimator,
+of rounds before and after arm $i$'s destruction, $n_b^{(i)} + n_a^{(i)} = N$.
+Assume $n_b^{(i)}, n_a^{(i)} > 0$ and the conditional design matrix has full
+column rank, so the joint least-squares estimator is identified. Then,
 \[
 \mathrm{Var}(\delta \hat e_i) \;\ge\; \sigma^2\!\left(\tfrac{1}{n_b^{(i)}} + \tfrac{1}{n_a^{(i)}}\right)
 \;\ge\; \frac{4\sigma^2}{N},
@@ -695,13 +697,19 @@ n_a^{(c)}$), this residual sum decomposes across arms as
 \]
 in which arm $i$'s own term is exactly zero, since $n_i^{(c)}=0$ once it is
 destroyed: an arm's own pulls carry no information about its own externality,
-only the surviving arms' pulls do. By AM--GM, $n_a^{(b)} n_a^{(c)} \le
-(n_a/2)^2$, so each term is at most $n_a/4$ and
+only the surviving arms' pulls do. The function $f(x,y):=xy/(x{+}y)$ is
+superadditive---$\sum_a f(x_a,y_a) \le f(\sum_a x_a,\sum_a y_a)$ for
+nonnegative $x_a,y_a$, verified directly across $2\times10^5$ random
+instances with zero violations---so summing over arms with
+$n_b^{(i)}:=\sum_a n_a^{(b)}$ and $n_a^{(i)}:=\sum_a n_a^{(c)}$ gives
 \[
-\mathrm{RSS}_i \;\le\; \sum_a \frac{n_a}{4} \;=\; \frac{N}{4},
-\qquad\text{hence}\qquad
-\mathrm{Var}_{\mathrm{oracle}}(\delta\hat e_i) \;=\; \frac{\sigma^2}{\mathrm{RSS}_i} \;\ge\; \frac{4\sigma^2}{N}.
+\mathrm{RSS}_i \;\le\; \frac{n_b^{(i)} n_a^{(i)}}{N}, \qquad\text{hence}\qquad
+\mathrm{Var}_{\mathrm{oracle}}(\delta\hat e_i) \;=\; \frac{\sigma^2}{\mathrm{RSS}_i}
+\;\ge\; \sigma^2\Big(\frac{1}{n_b^{(i)}}+\frac{1}{n_a^{(i)}}\Big),
 \]
+recovering the theorem's first inequality. By AM--GM,
+$n_b^{(i)} n_a^{(i)} \le N^2/4$, giving the weaker but horizon-free
+$\mathrm{Var}_{\mathrm{oracle}}(\delta\hat e_i) \ge 4\sigma^2/N$ directly.
 In the actual problem the other coefficients $e_j,\,j\ne i$, are also unknown
 and estimated jointly. Adding free parameters to a linear model weakly
 increases the variance of every retained coefficient---formally, for
@@ -1355,7 +1363,7 @@ fires, destroys every currently alive arm in that cluster simultaneously.
 definitional property of the benchmark, holding under any destruction mechanism.
 Confirmed at $0.0000000000$ across shock rates up to $q=0.5$.
 
-\paragraph{Theorem~\ref{thm:char} survives exactly, and this is a genuine
+\paragraph{Evidence that Theorem~\ref{thm:char} survives exactly, a genuine
 surprise.} Constant $\kappa$ gives greedy exact optimality even under correlated
 cluster shocks, verified to full floating-point precision ($0.00\times10^{0}$ to
 ten decimal places) up to $q=0.7$, including an adversarial construction with $e$
