@@ -382,12 +382,24 @@ system optimum has private regret at least $M$.
 \end{theorem}
 
 \begin{proof}
-The optimal policy defers $H$ to the final round. At each of the $m$ earlier rounds
-the best available arm is $H$ (value $1$ against $1-\epsilon$), and the policy
-declines it, incurring instantaneous private regret $\epsilon$. Summing over the $m$
-deferrals gives $m\epsilon$. Any policy that instead pulls $H$ early forfeits
-$\delta E$ per remaining round, so for $\epsilon < \delta E$ deferral is necessary
-for near-optimality. Taking $m \to \infty$ gives the second claim.
+Parametrise by the round $j\in\{1,\dots,m{+}1\}$ at which $H$ is pulled; the
+optimal policy is $j=m{+}1$ (defer to the end), since all $m$ safe arms are
+interchangeable and only $H$'s timing matters. At each of the $j-1$ earlier
+rounds the best available arm is $H$ (value $1$ against $1-\epsilon$), and the
+policy declines it, incurring instantaneous private regret $\epsilon$; summing
+gives private regret $(j{-}1)\epsilon$ exactly, and $m\epsilon$ at $j=m{+}1$.
+Deferring $H$ from position $j$ to $m{+}1$ instead forfeits $\delta E$ on each
+of the $m{+}1{-}j$ rounds after $H$ dies that would otherwise have been
+unburdened, so system value at position $j$ is exactly $(m{+}1{-}j)\delta E$
+below the optimum. A policy within $\epsilon m$ of the system optimum
+therefore satisfies $(m{+}1{-}j)\delta E \le \epsilon m$, giving
+$j \ge m{+}1-\epsilon m/(\delta E)$ and hence private regret
+\[
+(j-1)\epsilon \;\ge\; m\epsilon\Big(1-\frac{\epsilon}{\delta E}\Big),
+\]
+which is unbounded in $m$ whenever $\epsilon<\delta E$ is held fixed. Taking
+$m\to\infty$ gives the second claim, for the full family of system-near-optimal
+policies, not only the exactly-optimal one.
 \end{proof}
 
 Exact dynamic programming confirms the closed form at all eight settings tested,
