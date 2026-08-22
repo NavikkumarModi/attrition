@@ -264,6 +264,31 @@ simultaneous-action version: `examples/04_pharma_population.py`.
 > (Groq, `pip install "attrition[groq]"`, free tier, no card needed —
 > get a key at console.groq.com).
 
+**A real model was actually run, twice independently, and it matches neither
+baseline the mock predicts.** Two clean samples (20 and 50 seeds, 600 total
+real calls to `openai/gpt-oss-20b` via Groq, 100% genuine parseable
+responses — no fallback contamination, confirmed both times) replicate the
+same pattern:
+
+```
+                value    regret
+greedy          2.75     0.000
+real model      3.35     0.616
+eci             3.83     0.494
+MockLLMClient   3.81     0.402
+```
+
+The real model lands genuinely *between* Greedy and ECI on value — real
+evidence it isn't simply ignoring the externality the way Greedy does. But
+its regret is **higher than ECI's own regret**, consistently across both
+samples, and its value consistently falls short of what `MockLLMClient`
+predicts (which tracks ECI closely). So neither "real models behave like
+Greedy" nor "the mock is a good stand-in" holds: the model is doing something
+distinctly its own — picking up real value gains inconsistently, at a real
+regret cost neither classical baseline pays. Two runs at modest scale, not
+yet a large-sample claim — see `FINDINGS.md` #23 for the full numbers and
+`examples/09_real_llm_run_groq.py` to reproduce it.
+
 ### Define your own domain
 
 Any problem with a consumable-choice structure — inventory allocation, hiring

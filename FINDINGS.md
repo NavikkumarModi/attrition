@@ -639,3 +639,51 @@ the threshold itself, which is scenario-specific). The full sweeps —
 m=200, m=20,000, and the fine-grained step search — stay in
 `experiments/exp61_population_scale.py`, which now also prints the
 mechanism check directly (`saturation_mechanism_check`).
+
+## 23. The first trustworthy real-LLM validation result — and it matches neither prior guess
+
+Closing a thread that had been open since the first attempt at this: every
+earlier try at running a real model (not `MockLLMClient`) against the pharma
+scenario was contaminated in one way or another — silent empty-response
+fallback (hidden reasoning tokens exhausting the budget with no exception
+raised), then daily quota exhaustion mid-run. Both looked like real findings
+at the time and were reported as such, then walked back once the
+contamination was found. This time: two independent runs (20 seeds, then 50
+seeds, 600 total real calls to `openai/gpt-oss-20b` via Groq's free tier),
+both 100% genuine parseable responses, zero fallback, confirmed by the
+diagnostic built specifically to catch this.
+
+```
+              20 seeds          50 seeds
+              value   regret    value   regret
+greedy        2.606   0.000     2.753   0.000
+real model    3.127   0.595     3.352   0.616
+eci           3.841   0.491     3.833   0.494
+mock          3.606   0.453     3.809   0.402
+```
+
+The pattern replicates across both samples, which is what makes it
+trustworthy rather than a one-off: the real model's value sits genuinely
+between Greedy and ECI (42-55% of the way from Greedy to ECI across the two
+runs) — real evidence it isn't simply Greedy-blind to the externality. But
+its regret is *higher than ECI's own regret* in both runs, and its value
+falls short of what `MockLLMClient` predicts (which tracks ECI closely) in
+both runs. So the two hypotheses floated during the contaminated attempts —
+"real models behave like Greedy" and "the mock is a reasonable stand-in" —
+are both wrong, in a consistent, replicated way, not just once.
+
+The honest reading: the model is doing something distinctly its own, not
+approximating either classical policy. It picks up real value gains from
+apparent externality-awareness, but inconsistently — round-to-round variation
+that a deterministic index policy (ECI) doesn't have, costing it regret ECI
+never pays for the same or better value. That inconsistency is plausibly the
+real mechanism (an LLM's choice isn't a fixed formula the way ECI's is), but
+that is not yet verified directly — a natural next step would be inspecting
+the actual per-round transcripts to check whether disagreement-with-ECI
+rounds are where the regret concentrates, rather than asserting the
+mechanism from the aggregate numbers alone.
+
+Two runs at modest seed count is real progress, not a large-sample claim.
+The next honest step, if this matters more precisely, is more seeds at the
+same clean settings, not a different model or scenario chosen because it
+might look more dramatic.
