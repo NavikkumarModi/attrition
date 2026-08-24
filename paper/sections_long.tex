@@ -22,8 +22,10 @@ creates it as much as on anyone else.
 
 \begin{theorem}[Sequential equivalence]
 \label{thm:seqequiv}
-On a shared consumable pool, if agents act one after another within a round and
-each observes the state left by its predecessors, then $m$ agents over $T$ rounds
+On a shared consumable pool, if agents act one after another within a round,
+each observes the state left by its predecessors, all agents share the same
+reward function and destruction dynamics, and no agent has private state
+affecting transitions, then $m$ agents over $T$ rounds
 is exactly one learner over $mT$ pulls.
 \end{theorem}
 
@@ -155,7 +157,9 @@ against $p=0.3$).
 \begin{theorem}[Exact positional saturation, homogeneous rate]
 \label{thm:exactk}
 Let $\tau_j$ be the sum of $j$ i.i.d.\ $\mathrm{Geometric}(p)$ variables
-(support $\{1,2,3,\dots\}$), $\tau_0 := 0$. Under homogeneous $p$,
+(support $\{1,2,3,\dots\}$), $\tau_0 := 0$. Under homogeneous $p$ and $n\ge2c$
+(so an arm cannot be simultaneously near the start and near the end, and the
+two sums below never double-count the same arm),
 \[
 k(p,c) \;=\; \sum_{k=1}^{c} P(\tau_k \le c) \;+\; \sum_{j=0}^{c-1} P(\tau_j \le c-1),
 \qquad
