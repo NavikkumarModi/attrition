@@ -2012,3 +2012,78 @@ passing (was 244).
 simpler single-file deployment option (see README's "Interactive app"
 section, including the hosted `streamlit.app` link), and nothing about
 unifying the React frontend requires retiring it.
+
+## 47. Granular controls for the election track -- real levers, not invented ones
+
+Asked directly to move "from campaign simulation to society simulation
+with more granular control," including demographic/economic targeting.
+The honest scope check first: the real TCPD source has no per-voter
+demographic or economic microdata at all -- `attrition/election/
+lokdhaba.py`'s own `SOURCE` dict states plainly that "issue priorities,
+persuadability, and any other individual-voter latent attribute" are not
+in the file and must not be invented and attributed to it, and `population
+.py`'s module docstring enforces the same discipline at the code level.
+So demographic/economic *targeting* levers are out of scope here, not
+because they're hard to wire up, but because building them would mean
+fabricating data this project has been careful never to fabricate. What's
+real and causally connected to the model -- incumbency, margin, voter-to-
+voter propagation, and stochastic variation across seeds -- became the
+actual scope.
+
+**A real bug found while wiring the network path into the API.**
+`simulate_level1_contact_with_network` (network.py, built for FINDINGS.md
+#32's voter-to-voter propagation work) predates `REALISTIC_PERSUASION_
+CEILING_PCT` (agents.py, added later in FINDINGS.md#41's calibration
+pass) and was never updated to apply it. The very first live call through
+the new API endpoint returned a 37% switched fraction -- nearly 20x past
+the real field-experiment ceiling the non-network path has respected
+since #41. Fixed at the mechanism (`network.py` now rescales by the same
+ceiling `agents.py` uses), not papered over in the API layer that
+surfaced it; a regression test (`test_simulate_network_stays_within_the_
+realistic_ceiling`) pins the fix. The existing `test_voter_network_adds_a_
+measurable_propagation_effect` (a scale-invariant relative comparison)
+kept passing throughout, which is exactly why the bug went unnoticed
+until a live, calibrated-magnitude context (the API, sitting next to
+every other calibrated number on the same page) exposed it.
+
+**`/api/simulate` (`election_api.py`) gained four real controls**, all
+opt-in and backward compatible (existing calls are unaffected):
+`use_network`/`peer_conversion_prob`/`graph_density` (wires
+`simulate_level1_contact_with_network` in, previously unreachable outside
+`examples/16`); `n_seeds` (>1 runs a flip-probability sweep instead of one
+deterministic draw, reporting `flip_rate` and the switched-fraction range
+across seeds -- the direct answer to "what's the chance this seat
+moves"); `incumbent_override` and `margin_override_pct` (real,
+already-causal seat fields -- `candidate_incumbent[0]` feeds `mean_
+resistance_for`, `vote_share_pct` feeds `persuadable_fraction_from_
+margin` -- offered as counterfactuals via `dataclasses.replace` on a
+`frozen=True` `Constituency`, never mutating the real cached seat).
+Required a new `_seat_summary_live` that recomputes `tipping_point`
+directly from the (possibly overridden) constituency rather than the
+national `_tipping_points()` cache, which is keyed by the real seat's
+identity and would otherwise silently report the real seat's tipping
+point for a hypothetical one.
+
+**`/api/strategist` gained real-covariate targeting**: `constituency_type`
+(GEN/SC/ST), `sub_region`, and `incumbency` (any/incumbent/challenger)
+restrict which real seats are eligible for budget allocation before
+`greedy_allocation`/`even_allocation` run -- both already accepted a
+`constituencies=` subset parameter, so no change to `strategist.py`
+itself was needed, only filtering the pool in the API layer. A new
+`/api/strategist/filters` endpoint reports the real, distinct values for
+each covariate so the frontend never hand-types or guesses options.
+
+**Frontend**: `ConstituencyLab.tsx` gained a "Granular controls" card
+(network toggle + sliders, seed-sweep slider, incumbency/margin
+overrides) and result panels for the network effect and flip probability;
+`Strategist.tsx` gained a covariate-filter row showing live scope size
+("N of 543 real seats match this filter"). Verified live end to end, not
+just compiled: a margin-override run at Ahmedabad East (real margin
+38.9pp, overridden to 5.0pp) correctly recomputed a 1.17pp outcome
+margin; the network panel showed direct-only 1.91% vs. networked 2.00%
+(both correctly capped near the 2% ceiling after the fix); filtering
+Strategist to `incumbency=challenger` correctly dropped scope from 543 to
+317 seats and flips from 50 to 41, matching the API's own numbers exactly.
+
+25 new/extended backend tests (`tests/test_election_api.py`). 267/267
+tests passing (was 255).

@@ -23,7 +23,7 @@ FINDINGS.md's election-track sections.
 import numpy as np
 
 from ..network import AgentGraph
-from .agents import BehaviouralVoter
+from .agents import BehaviouralVoter, REALISTIC_PERSUASION_CEILING_PCT
 from .persuasion import persuadable_fraction_from_margin
 from .population import build_constituency
 
@@ -48,6 +48,14 @@ def simulate_level1_contact_with_network(constituency, intensity_sequence,
     contact sequence with propagation disabled, so the network's marginal
     contribution is directly readable, not left to be inferred by
     comparing two separate calls with different RNG draws.
+
+    Rescaled by the same `REALISTIC_PERSUASION_CEILING_PCT` (agents.py) the
+    non-network path uses -- added in FINDINGS.md#47 after wiring this
+    into the API surfaced raw switched fractions above 30%, an order of
+    magnitude past the real field-experiment ceiling `simulate_level1_
+    contact` already respects. This module predates that calibration
+    (FINDINGS.md#41) and was never updated to match; fixed at the
+    mechanism, not papered over in the API layer that found it.
     """
     if isinstance(constituency, str):
         constituency = build_constituency(constituency)
@@ -91,7 +99,8 @@ def simulate_level1_contact_with_network(constituency, intensity_sequence,
                             peer_converted.add(neighbor)
             for vid in peer_converted:
                 voters[vid].switched = True
-            fractions.append(sum(v.switched for v in voters.values()) / n_voters)
+            raw_fraction = sum(v.switched for v in voters.values()) / n_voters
+            fractions.append(raw_fraction * REALISTIC_PERSUASION_CEILING_PCT / 100.0)
         return fractions
 
     with_network = _run(with_propagation=True)

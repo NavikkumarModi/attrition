@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { fetchStrategist, type StrategistResult } from "./api";
+import {
+  fetchStrategist, fetchStrategistFilters,
+  type StrategistResult, type StrategistFacets, type StrategistFilters as Filters,
+} from "./api";
 
 export default function Strategist({
   onSelect,
@@ -10,9 +13,22 @@ export default function Strategist({
   const [result, setResult] = useState<StrategistResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [facets, setFacets] = useState<StrategistFacets | null>(null);
+  const [constituencyType, setConstituencyType] = useState("");
+  const [subRegion, setSubRegion] = useState("");
+  const [incumbency, setIncumbency] = useState<Filters["incumbency"]>("any");
+
   useEffect(() => {
-    fetchStrategist(budget).then(setResult).catch((e) => setError(String(e)));
-  }, [budget]);
+    fetchStrategistFilters().then(setFacets).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetchStrategist(budget, 20, {
+      constituency_type: constituencyType || undefined,
+      sub_region: subRegion || undefined,
+      incumbency,
+    }).then(setResult).catch((e) => setError(String(e)));
+  }, [budget, constituencyType, subRegion, incumbency]);
 
   return (
     <>
@@ -33,6 +49,35 @@ export default function Strategist({
         <input type="range" min={2} max={100} step={1} value={budget}
               onChange={(e) => setBudget(Number(e.target.value))} />
         {error && <p className="error-box" style={{ marginTop: 12 }}>{error}</p>}
+      </div>
+
+      <div className="card">
+        <h2>Target by real seat covariates</h2>
+        <p className="muted" style={{ fontSize: 12, marginBottom: 12 }}>
+          Real, published per-seat facts only — reservation category, sub-region, and whether the real 2019
+          winner was an incumbent. No per-voter demographic or economic data exists in the source (see
+          FINDINGS.md #47), so targeting stops at what's real.
+        </p>
+        <div className="search-row">
+          <select value={constituencyType} onChange={(e) => setConstituencyType(e.target.value)}>
+            <option value="">All reservation categories</option>
+            {facets?.constituency_type.map((t) => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <select value={subRegion} onChange={(e) => setSubRegion(e.target.value)}>
+            <option value="">All sub-regions</option>
+            {facets?.sub_region.map((r) => <option key={r} value={r}>{r}</option>)}
+          </select>
+          <select value={incumbency} onChange={(e) => setIncumbency(e.target.value as Filters["incumbency"])}>
+            <option value="any">Any incumbency</option>
+            <option value="incumbent">Real winner was incumbent</option>
+            <option value="challenger">Real winner was a challenger</option>
+          </select>
+        </div>
+        {result && (
+          <p className="muted" style={{ fontSize: 12 }}>
+            {result.n_seats_in_scope} of 543 real seats match this filter.
+          </p>
+        )}
       </div>
 
       {result && (

@@ -18,6 +18,14 @@ export default function ConstituencyLab({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [useNetwork, setUseNetwork] = useState(false);
+  const [peerConversionProb, setPeerConversionProb] = useState(0.05);
+  const [graphDensity, setGraphDensity] = useState(0.02);
+  const [nSeeds, setNSeeds] = useState(1);
+  const [incumbentOverride, setIncumbentOverride] = useState<"real" | "yes" | "no">("real");
+  const [marginOverrideOn, setMarginOverrideOn] = useState(false);
+  const [marginOverride, setMarginOverride] = useState(5);
+
   useEffect(() => { fetchConstituencies().then(setSeats).catch(() => {}); }, []);
 
   useEffect(() => {
@@ -30,7 +38,16 @@ export default function ConstituencyLab({
     setLoading(true);
     setError(null);
     try {
-      setResult(await simulate(state, name, sequence, nVoters));
+      setResult(
+        await simulate(state, name, sequence, nVoters, {
+          n_seeds: nSeeds,
+          use_network: useNetwork,
+          peer_conversion_prob: peerConversionProb,
+          graph_density: graphDensity,
+          incumbent_override: incumbentOverride === "real" ? null : incumbentOverride === "yes",
+          margin_override_pct: marginOverrideOn ? marginOverride : null,
+        }),
+      );
     } catch (e) {
       setError(String(e));
     } finally {
@@ -106,6 +123,74 @@ export default function ConstituencyLab({
         {error && <p className="error-box" style={{ marginTop: 12 }}>{error}</p>}
       </div>
 
+      <div className="card">
+        <h2>Granular controls — real, already-causal factors only</h2>
+        <p className="muted" style={{ fontSize: 12, marginBottom: 12, maxWidth: 760 }}>
+          No per-voter demographic or economic data exists in the real TCPD source, so none is invented here (see
+          FINDINGS.md #47). Every control below is either a mechanism already wired into the model (voter-to-voter
+          propagation, seed variation) or a real, already-causal seat covariate (incumbency, margin) offered as a
+          counterfactual.
+        </p>
+        <div className="grid cols-2">
+          <div>
+            <label className="muted" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+              <input type="checkbox" checked={useNetwork} onChange={(e) => setUseNetwork(e.target.checked)} />
+              Voter-to-voter network propagation
+            </label>
+            {useNetwork && (
+              <>
+                <div className="round-slider-row">
+                  <span>peer conversion prob</span>
+                  <input type="range" min={0} max={0.3} step={0.01} value={peerConversionProb}
+                        onChange={(e) => setPeerConversionProb(Number(e.target.value))} />
+                  <span className="v">{peerConversionProb.toFixed(2)}</span>
+                </div>
+                <div className="round-slider-row">
+                  <span>graph density</span>
+                  <input type="range" min={0.005} max={0.1} step={0.005} value={graphDensity}
+                        onChange={(e) => setGraphDensity(Number(e.target.value))} />
+                  <span className="v">{graphDensity.toFixed(3)}</span>
+                </div>
+              </>
+            )}
+
+            <label className="muted" style={{ fontSize: 12, display: "block", marginTop: 14 }}>
+              Flip-probability sweep (seeds: {nSeeds})
+            </label>
+            <input type="range" min={1} max={50} value={nSeeds}
+                  onChange={(e) => setNSeeds(Number(e.target.value))} />
+            <p className="muted" style={{ fontSize: 11 }}>
+              {nSeeds === 1
+                ? "one deterministic run"
+                : `${nSeeds} seeds — reports what fraction actually flip, not one draw`}
+            </p>
+          </div>
+
+          <div>
+            <label className="muted" style={{ fontSize: 12 }}>Incumbency (real for this seat: shown in the card above)</label>
+            <select style={{ width: "100%", marginTop: 6 }} value={incumbentOverride}
+                   onChange={(e) => setIncumbentOverride(e.target.value as any)}>
+              <option value="real">Use real 2019 incumbency</option>
+              <option value="yes">Counterfactual: winner IS incumbent</option>
+              <option value="no">Counterfactual: winner is NOT incumbent</option>
+            </select>
+
+            <label className="muted" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, marginTop: 14 }}>
+              <input type="checkbox" checked={marginOverrideOn} onChange={(e) => setMarginOverrideOn(e.target.checked)} />
+              Override real margin (counterfactual: closer/safer seat)
+            </label>
+            {marginOverrideOn && (
+              <div className="round-slider-row">
+                <span>margin</span>
+                <input type="range" min={0.1} max={40} step={0.1} value={marginOverride}
+                      onChange={(e) => setMarginOverride(Number(e.target.value))} />
+                <span className="v">{marginOverride.toFixed(1)}pp</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {result && (
         <div className="grid cols-2">
           <div className="card">
@@ -145,6 +230,39 @@ export default function ConstituencyLab({
               Final switched fraction {(result.level1_final_switched_fraction * 100).toFixed(1)}% vs.
               a tipping point of {result.seat.tipping_point_pct?.toFixed(1)}%.
             </p>
+
+            {result.network && (
+              <>
+                <h2 style={{ marginTop: 18 }}>Voter-to-voter network effect</h2>
+                <p className="muted" style={{ fontSize: 13 }}>
+                  Direct contact alone: {(result.network.direct_only_final_switched_fraction * 100).toFixed(2)}% ·
+                  with peer propagation: {(result.network.final_switched_fraction * 100).toFixed(2)}% — the
+                  network added{" "}
+                  {((result.network.final_switched_fraction - result.network.direct_only_final_switched_fraction) * 100).toFixed(2)}
+                  pp on top of direct contact, at peer_conversion_prob={result.network.peer_conversion_prob},
+                  graph_density={result.network.graph_density}.
+                </p>
+              </>
+            )}
+
+            {result.flip_probability && (
+              <>
+                <h2 style={{ marginTop: 18 }}>Flip probability ({result.flip_probability.n_seeds} seeds)</h2>
+                <div className="grid cols-2">
+                  <div className="card stat">
+                    <div className="value">{(result.flip_probability.flip_rate * 100).toFixed(0)}%</div>
+                    <div className="label">of seeds this seat actually flips</div>
+                  </div>
+                  <div className="card stat">
+                    <div className="value">
+                      {(result.flip_probability.final_switched_fraction_min * 100).toFixed(2)}–
+                      {(result.flip_probability.final_switched_fraction_max * 100).toFixed(2)}%
+                    </div>
+                    <div className="label">switched-fraction range across seeds</div>
+                  </div>
+                </div>
+              </>
+            )}
 
             {result.level2_decisions && (
               <>

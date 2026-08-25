@@ -123,3 +123,111 @@ def test_amr_reference_table_endpoint_matches_exp65():
     data = client.get("/api/amr/reference-table").json()
     assert data["in_repo"]["eci"] == data["in_repo"]["lambda_weighted(lam=1)"]
     assert data["external_siloed"]["final_amr_a"] == pytest.approx(0.7461)
+
+
+# ------------------------------------------------- granular /api/simulate
+_SEAT = {"state": "Gujarat", "name": "AHMEDABAD EAST"}
+
+
+def test_simulate_basic_still_works():
+    resp = client.post("/api/simulate", json=_SEAT)
+    assert resp.status_code == 200
+    assert "outcome" in resp.json()
+
+
+def test_simulate_network_stays_within_the_realistic_ceiling():
+    """Regression test for FINDINGS.md#47: simulate_level1_contact_with_
+    network predates REALISTIC_PERSUASION_CEILING_PCT (agents.py) and was
+    never updated to respect it -- wiring it into the API surfaced raw
+    switched fractions above 30%, an order of magnitude past the real
+    field-experiment ceiling the non-network path already respects. Fixed
+    in attrition/election/network.py; this pins the fix at the API layer
+    too so it can't silently regress."""
+    resp = client.post("/api/simulate", json={**_SEAT, "use_network": True, "n_voters": 500})
+    assert resp.status_code == 200
+    net = resp.json()["network"]
+    assert net["final_switched_fraction"] <= 0.02
+    assert net["direct_only_final_switched_fraction"] <= 0.02
+    assert net["final_switched_fraction"] >= net["direct_only_final_switched_fraction"]
+
+
+def test_simulate_flip_probability_sweep():
+    resp = client.post("/api/simulate", json={**_SEAT, "n_seeds": 10, "n_voters": 500})
+    assert resp.status_code == 200
+    fp = resp.json()["flip_probability"]
+    assert fp["n_seeds"] == 10
+    assert 0.0 <= fp["flip_rate"] <= 1.0
+    assert fp["final_switched_fraction_min"] <= fp["final_switched_fraction_mean"]
+    assert fp["final_switched_fraction_mean"] <= fp["final_switched_fraction_max"]
+
+
+def test_simulate_without_n_seeds_omits_flip_probability():
+    resp = client.post("/api/simulate", json=_SEAT)
+    assert "flip_probability" not in resp.json()
+
+
+def test_simulate_incumbent_override_changes_reported_seat_and_outcome():
+    real = client.post("/api/simulate", json=_SEAT).json()
+    overridden = client.post(
+        "/api/simulate", json={**_SEAT, "incumbent_override": not real["seat"]["winner_incumbent"]}
+    ).json()
+    assert overridden["seat"]["winner_incumbent"] != real["seat"]["winner_incumbent"]
+
+
+def test_simulate_margin_override_changes_reported_margin_and_tipping_point():
+    resp = client.post("/api/simulate", json={**_SEAT, "margin_override_pct": 1.0}).json()
+    assert resp["seat"]["real_margin_pct"] == pytest.approx(1.0)
+    # a 1pp margin must produce a small, non-None tipping point -- close
+    # seats are cheaper to flip than the unmodified real seat.
+    assert resp["seat"]["tipping_point_pct"] is not None
+
+
+def test_simulate_seat_summary_reflects_override_not_the_cached_real_seat():
+    """Regression check: _seat_summary_live must recompute tipping_point
+    from the (possibly overridden) constituency directly, not look it up
+    from the national _tipping_points() cache keyed by the real seat's
+    identity, which would silently report the REAL seat's tipping point
+    for a hypothetical one."""
+    real_tp = client.post("/api/simulate", json=_SEAT).json()["seat"]["tipping_point_pct"]
+    landslide_tp = client.post(
+        "/api/simulate", json={**_SEAT, "margin_override_pct": 40.0}).json()["seat"]["tipping_point_pct"]
+    assert landslide_tp != real_tp
+
+
+def test_simulate_n_seeds_and_n_voters_are_capped():
+    resp = client.post("/api/simulate", json={**_SEAT, "n_seeds": 500, "n_voters": 999999})
+    assert resp.status_code == 200
+    assert resp.json()["flip_probability"]["n_seeds"] == 50
+
+
+# ---------------------------------------------- granular /api/strategist
+def test_strategist_filters_endpoint_lists_real_facets():
+    data = client.get("/api/strategist/filters").json()
+    assert set(data["constituency_type"]) <= {"GEN", "SC", "ST"}
+    assert len(data["sub_region"]) > 0
+
+
+def test_strategist_incumbency_filter_restricts_scope():
+    unfiltered = client.get("/api/strategist", params={"budget_pct": 30}).json()
+    incumbent_only = client.get(
+        "/api/strategist", params={"budget_pct": 30, "incumbency": "incumbent"}).json()
+    challenger_only = client.get(
+        "/api/strategist", params={"budget_pct": 30, "incumbency": "challenger"}).json()
+    assert incumbent_only["n_seats_in_scope"] < unfiltered["n_seats_in_scope"]
+    assert challenger_only["n_seats_in_scope"] < unfiltered["n_seats_in_scope"]
+    assert (incumbent_only["n_seats_in_scope"] + challenger_only["n_seats_in_scope"]
+           == unfiltered["n_seats_in_scope"])
+
+
+def test_strategist_constituency_type_filter_only_returns_matching_seats():
+    resp = client.get("/api/strategist",
+                      params={"budget_pct": 50, "constituency_type": "SC"})
+    assert resp.status_code == 200
+    data = resp.json()
+    for seat in data["greedy"]["flipped"]:
+        assert seat["constituency_type"] == "SC"
+
+
+def test_strategist_invalid_incumbency_400s():
+    resp = client.get("/api/strategist", params={"incumbency": "not-a-value"})
+    assert resp.status_code == 400

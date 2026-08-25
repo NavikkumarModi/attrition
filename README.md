@@ -497,6 +497,21 @@ personas) and the AMR reference table for the other worlds. `election_api
 .py` backs all of it now, not just the election track. See `FINDINGS.md`
 #46.
 
+Constituency lab and Strategist gained granular, real-data-only controls
+(`FINDINGS.md` #47): voter-to-voter network propagation (`peer_conversion
+_prob`/`graph_density`, previously only reachable via `examples/16`), a
+flip-probability sweep across seeds instead of one deterministic draw,
+counterfactual incumbency/margin overrides on real seats, and Strategist
+targeting by real seat covariates (reservation category, sub-region,
+incumbency) — deliberately stopping short of demographic/economic
+targeting, since no per-voter data of that kind exists in the real source
+(see `attrition/election/lokdhaba.py`'s `SOURCE` and `#47` for why
+inventing it isn't on the table). Wiring the network path into the API
+also caught a real, unrelated bug: `simulate_level1_contact_with_network`
+had never been updated to respect `REALISTIC_PERSUASION_CEILING_PCT`
+(added later, in #41) and was returning switched fractions ~20x past the
+real calibration ceiling — fixed at the mechanism, in `network.py`.
+
 ### Scale with concurrent calls
 
 `simulate_population_simultaneous` and `compare_population_to_baselines` take

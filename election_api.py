@@ -12,6 +12,7 @@ single-file deployment option -- see README's "Interactive app" section)
 don't need a web server to run the simulator itself; this is an
 additional, optional surface.)
 """
+import dataclasses
 import json
 import os
 from functools import lru_cache
@@ -27,11 +28,12 @@ from attrition import (ConsumableBandit, Greedy, ECI, SECI, UCB, ThompsonSamplin
                        planner_value_simultaneous, decentralised_value_simultaneous,
                        derive_campaign_parameters, SCENARIOS, get_arrays, worlds,
                        WORLDS, PHARMA_PERSONAS, CAMPAIGN_PERSONAS, AGENT_PERSONAS,
-                       CallableLLMClient)
+                       CallableLLMClient, AgentGraph)
 from attrition.llm_policy import _CHOICE
 from attrition.election import (ALL_PHASE1_CONSTITUENCIES, build_constituency,
                                 real_margin_pct, tipping_point, recompute_outcome,
                                 simulate_level1_contact, simulate_level2_contact,
+                                simulate_level1_contact_with_network,
                                 get_constituency, geojson_feature_collection,
                                 greedy_allocation, even_allocation,
                                 leave_one_state_out_backtest, train_gradient_bandit)
@@ -125,19 +127,97 @@ class SimulateRequest(BaseModel):
     n_voters: int = 3000
     seed: int = 0
     include_level2: bool = True
+    # -- granular controls added for FINDINGS.md#47; see that section and
+    # this file's module docstring for what's real vs. what would require
+    # inventing data the source doesn't have.
+    n_seeds: int = 1                          # >1 -> flip-probability sweep
+    use_network: bool = False                 # voter-to-voter peer propagation
+    peer_conversion_prob: float = 0.05
+    graph_density: float = 0.02
+    incumbent_override: Optional[bool] = None  # counterfactual: real real seat's
+                                               # actual incumbency status overridden
+    margin_override_pct: Optional[float] = None  # counterfactual real margin
+
+
+def _with_overrides(c, incumbent_override, margin_override_pct):
+    """Build a counterfactual `Constituency` (a real seat with one or two
+    real, already-causally-wired fields overridden) via `dataclasses.
+    replace` -- never inventing a field the real data doesn't have, only
+    hypothesising a different value for one that's already real and already
+    used by `mean_resistance_for`/`persuadable_fraction_from_margin`.
+    `Constituency` is `@dataclass(frozen=True)`, so this never mutates the
+    real, cached `ALL_PHASE1_CONSTITUENCIES` entries."""
+    if incumbent_override is not None:
+        ci = list(c.candidate_incumbent)
+        ci[0] = bool(incumbent_override)
+        c = dataclasses.replace(c, candidate_incumbent=tuple(ci))
+    if margin_override_pct is not None:
+        # Symmetric reallocation between the real winner and real runner-up
+        # only -- every other real candidate's share is left untouched, and
+        # winner+runner_up's combined share is preserved. Stated as the
+        # deliberate reallocation rule it is, the same discipline
+        # outcome.py's own reallocation rule documents for itself.
+        shares = list(c.vote_share_pct)
+        current_margin = shares[0] - shares[1]
+        delta = float(margin_override_pct) - current_margin
+        shares[0] = max(0.0, shares[0] + delta / 2.0)
+        shares[1] = max(0.0, shares[1] - delta / 2.0)
+        c = dataclasses.replace(c, vote_share_pct=tuple(shares))
+    return c
+
+
+def _seat_summary_live(c):
+    """Like `_summary`, but recomputes `tipping_point` directly from `c`
+    instead of the national `_tipping_points()` cache -- required whenever
+    `c` might be a counterfactual copy (overridden margin/incumbency), since
+    the cache is keyed by the real seat's identity and would silently
+    return the REAL seat's tipping point for a hypothetical one otherwise.
+    Cheap enough for a single seat (~10-20ms) to always do live here."""
+    tp = tipping_point(c)
+    return {
+        "id": _seat_id(c), "state": c.state, "name": c.name, "note": c.note,
+        "constituency_type": c.constituency_type, "sub_region": c.sub_region,
+        "electors": c.electors, "turnout_pct": c.turnout_pct,
+        "real_margin_pct": real_margin_pct(c),
+        "tipping_point_pct": tp * 100 if tp is not None else None,
+        "winner_party": c.parties[0], "winner_share_pct": c.vote_share_pct[0],
+        "runner_up_party": c.parties[1], "runner_up_share_pct": c.vote_share_pct[1],
+        "winner_incumbent": c.candidate_incumbent[0],
+    }
 
 
 @app.post("/api/simulate")
 def simulate(req: SimulateRequest):
     """Level 1 (always) + Level 2 (optional) campaign simulation over one
     real constituency, plus the recomputed outcome -- the same three
-    functions `examples/17_election_outcome.py` chains by hand."""
+    functions `examples/17_election_outcome.py` chains by hand, now with
+    granular controls: voter-to-voter network propagation
+    (`attrition.election.simulate_level1_contact_with_network`), a
+    flip-probability sweep across `n_seeds` seeds instead of one
+    deterministic run, and two real counterfactual overrides (incumbency,
+    margin) -- see `_with_overrides`'s docstring for exactly what these do
+    and don't claim."""
     c = _resolve(req.state, req.name)
-    fractions, final = simulate_level1_contact(
-        c, req.intensity_sequence, n_voters=req.n_voters, seed=req.seed)
+    c = _with_overrides(c, req.incumbent_override, req.margin_override_pct)
+    n_voters = max(50, min(req.n_voters, 10000))
+    n_seeds = max(1, min(req.n_seeds, 50))
+
+    def run_once(seed):
+        if req.use_network:
+            voter_ids = [f"v{i}" for i in range(n_voters)]
+            graph = AgentGraph.random(voter_ids, p=req.graph_density, seed=seed)
+            fractions, final, direct_only = simulate_level1_contact_with_network(
+                c, req.intensity_sequence, n_voters=n_voters, graph=graph,
+                peer_conversion_prob=req.peer_conversion_prob, seed=seed)
+            return fractions, final, direct_only
+        fractions, final = simulate_level1_contact(
+            c, req.intensity_sequence, n_voters=n_voters, seed=seed)
+        return fractions, final, None
+
+    fractions, final, direct_only = run_once(req.seed)
     outcome = recompute_outcome(c, final)
     result = {
-        "seat": _summary(c),
+        "seat": _seat_summary_live(c),
         "level1_switched_fraction_by_round": fractions,
         "level1_final_switched_fraction": final,
         "outcome": {
@@ -146,8 +226,28 @@ def simulate(req: SimulateRequest):
             "margin_pct": outcome.margin_pct, "flipped": outcome.flipped,
         },
     }
+    if direct_only is not None:
+        result["network"] = {"final_switched_fraction": final,
+                             "direct_only_final_switched_fraction": direct_only,
+                             "peer_conversion_prob": req.peer_conversion_prob,
+                             "graph_density": req.graph_density}
     if req.include_level2:
         result["level2_decisions"] = simulate_level2_contact(c, req.intensity_sequence)
+
+    if n_seeds > 1:
+        flips = 0
+        finals = []
+        for s in range(n_seeds):
+            _, final_s, _ = run_once(s)
+            outcome_s = recompute_outcome(c, final_s)
+            flips += int(outcome_s.flipped)
+            finals.append(final_s)
+        result["flip_probability"] = {
+            "n_seeds": n_seeds, "flip_rate": flips / n_seeds,
+            "final_switched_fraction_mean": sum(finals) / n_seeds,
+            "final_switched_fraction_min": min(finals),
+            "final_switched_fraction_max": max(finals),
+        }
     return result
 
 
@@ -201,8 +301,48 @@ def _allocation_response(result):
     }
 
 
+@lru_cache(maxsize=1)
+def _filter_facets():
+    """Real, distinct values for every filterable seat covariate -- for the
+    frontend's filter dropdowns, so options are never hand-typed/guessed."""
+    return {
+        "constituency_type": sorted({c.constituency_type for c in ALL_PHASE1_CONSTITUENCIES}),
+        "sub_region": sorted({c.sub_region for c in ALL_PHASE1_CONSTITUENCIES
+                             if c.sub_region}),
+    }
+
+
+@app.get("/api/strategist/filters")
+def strategist_filters():
+    """Real, distinct values this seat is filterable by -- see
+    `_filter_facets`."""
+    return _filter_facets()
+
+
+def _filtered_constituencies(constituency_type, sub_region, incumbency):
+    """Restrict the real 543-seat pool to those matching every given real
+    covariate, before handing the subset to `greedy_allocation`/
+    `even_allocation` (both already accept a `constituencies=` subset --
+    no change to that module was needed). `incumbency`: "any" (default),
+    "incumbent" (real 2019 winner was a real incumbent), or "challenger"
+    (was not) -- real, per-seat `candidate_incumbent[0]`, not invented."""
+    cs = ALL_PHASE1_CONSTITUENCIES
+    if constituency_type:
+        cs = [c for c in cs if c.constituency_type == constituency_type]
+    if sub_region:
+        cs = [c for c in cs if c.sub_region == sub_region]
+    if incumbency == "incumbent":
+        cs = [c for c in cs if c.candidate_incumbent[0]]
+    elif incumbency == "challenger":
+        cs = [c for c in cs if not c.candidate_incumbent[0]]
+    return cs
+
+
 @app.get("/api/strategist")
-def strategist(budget_pct: float = 20.0, scope_max_tipping_pct: float = 20.0):
+def strategist(budget_pct: float = 20.0, scope_max_tipping_pct: float = 20.0,
+              constituency_type: Optional[str] = None,
+              sub_region: Optional[str] = None,
+              incumbency: str = "any"):
     """The national campaign-strategist agent (`attrition.election.
     strategist`): given one total budget, expressed in percent-of-
     electorate units (the same unit `tipping_point` already uses
@@ -210,10 +350,26 @@ def strategist(budget_pct: float = 20.0, scope_max_tipping_pct: float = 20.0):
     (`greedy`) against spreading the identical budget evenly across every
     seat within `scope_max_tipping_pct` (`even`). A new resource-
     ALLOCATION decision layered on Level 0/1/2, not a re-application of
-    Theorems 1-6 -- see strategist.py's module docstring."""
-    greedy = greedy_allocation(budget_pct)
-    even = even_allocation(budget_pct, scope_max_tipping_pct=scope_max_tipping_pct)
+    Theorems 1-6 -- see strategist.py's module docstring.
+
+    Optionally restricted to real seats matching `constituency_type`
+    (GEN/SC/ST), `sub_region`, and/or `incumbency` ("any"/"incumbent"/
+    "challenger") before allocating -- targeting by real, published
+    covariates, not invented demographic/economic data (see this file's
+    module docstring and FINDINGS.md#47 for why the latter isn't offered).
+    """
+    if incumbency not in ("any", "incumbent", "challenger"):
+        raise HTTPException(status_code=400,
+                            detail="incumbency must be 'any', 'incumbent', "
+                                   "or 'challenger'")
+    cs = _filtered_constituencies(constituency_type, sub_region, incumbency)
+    greedy = greedy_allocation(budget_pct, constituencies=cs)
+    even = even_allocation(budget_pct, scope_max_tipping_pct=scope_max_tipping_pct,
+                           constituencies=cs)
     return {"budget_pct": budget_pct, "scope_max_tipping_pct": scope_max_tipping_pct,
+           "n_seats_in_scope": len(cs),
+           "filters": {"constituency_type": constituency_type,
+                      "sub_region": sub_region, "incumbency": incumbency},
            "greedy": _allocation_response(greedy), "even": _allocation_response(even)}
 
 

@@ -43,8 +43,38 @@ export interface Calibration {
   tipping_point_required_pct: { median: number; p90: number };
 }
 
+export interface SimulateSeatSummary {
+  id: string;
+  state: string;
+  name: string;
+  note: string;
+  constituency_type: "GEN" | "SC" | "ST";
+  sub_region: string | null;
+  electors: number;
+  turnout_pct: number;
+  real_margin_pct: number;
+  tipping_point_pct: number | null;
+  winner_party: string;
+  winner_share_pct: number;
+  runner_up_party: string;
+  runner_up_share_pct: number;
+  winner_incumbent: boolean | null;
+}
+export interface FlipProbability {
+  n_seeds: number;
+  flip_rate: number;
+  final_switched_fraction_mean: number;
+  final_switched_fraction_min: number;
+  final_switched_fraction_max: number;
+}
+export interface NetworkEffect {
+  final_switched_fraction: number;
+  direct_only_final_switched_fraction: number;
+  peer_conversion_prob: number;
+  graph_density: number;
+}
 export interface SimulateResult {
-  seat: SeatSummary;
+  seat: SimulateSeatSummary;
   level1_switched_fraction_by_round: number[];
   level1_final_switched_fraction: number;
   outcome: {
@@ -56,6 +86,17 @@ export interface SimulateResult {
     flipped: boolean;
   };
   level2_decisions?: Record<string, boolean[]>;
+  network?: NetworkEffect;
+  flip_probability?: FlipProbability;
+}
+export interface SimulateOptions {
+  seed?: number;
+  n_seeds?: number;
+  use_network?: boolean;
+  peer_conversion_prob?: number;
+  graph_density?: number;
+  incumbent_override?: boolean | null;
+  margin_override_pct?: number | null;
 }
 
 async function getJSON<T>(path: string): Promise<T> {
@@ -84,14 +125,39 @@ export interface AllocationSide {
   budget_remaining: number;
   flipped: SeatSummary[];
 }
+export interface StrategistFilters {
+  constituency_type?: string;
+  sub_region?: string;
+  incumbency?: "any" | "incumbent" | "challenger";
+}
 export interface StrategistResult {
   budget_pct: number;
   scope_max_tipping_pct: number;
+  n_seats_in_scope: number;
+  filters: StrategistFilters;
   greedy: AllocationSide;
   even: AllocationSide;
 }
-export const fetchStrategist = (budgetPct: number, scopeMaxTippingPct = 20) =>
-  getJSON<StrategistResult>(`/api/strategist?budget_pct=${budgetPct}&scope_max_tipping_pct=${scopeMaxTippingPct}`);
+export const fetchStrategist = (
+  budgetPct: number,
+  scopeMaxTippingPct = 20,
+  filters: StrategistFilters = {},
+) => {
+  const params = new URLSearchParams({
+    budget_pct: String(budgetPct),
+    scope_max_tipping_pct: String(scopeMaxTippingPct),
+  });
+  if (filters.constituency_type) params.set("constituency_type", filters.constituency_type);
+  if (filters.sub_region) params.set("sub_region", filters.sub_region);
+  if (filters.incumbency && filters.incumbency !== "any") params.set("incumbency", filters.incumbency);
+  return getJSON<StrategistResult>(`/api/strategist?${params.toString()}`);
+};
+
+export interface StrategistFacets {
+  constituency_type: string[];
+  sub_region: string[];
+}
+export const fetchStrategistFilters = () => getJSON<StrategistFacets>("/api/strategist/filters");
 
 export interface ForecastResult {
   n_seats: number;
@@ -211,11 +277,14 @@ export async function simulate(
   name: string,
   intensity_sequence: number[],
   n_voters: number,
+  options: SimulateOptions = {},
 ): Promise<SimulateResult> {
   const res = await fetch(`${API_BASE}/api/simulate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ state, name, intensity_sequence, n_voters, include_level2: true }),
+    body: JSON.stringify({
+      state, name, intensity_sequence, n_voters, include_level2: true, ...options,
+    }),
   });
   if (!res.ok) throw new Error(`simulate: ${res.status} ${await res.text()}`);
   return res.json();
