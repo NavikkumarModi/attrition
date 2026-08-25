@@ -1827,3 +1827,26 @@ def test_campaign_persuasion_lambda_weighted_gap_shrinks_under_decentralisation(
     assert gaps[0] > gaps[1] > gaps[2] >= 0.0, (
         f"gap must shrink monotonically as reward-shaping strengthens, "
         f"got {gaps}")
+
+
+def test_derive_campaign_parameters_isomorphism_claim():
+    """Direct test of the claim stated in engines.py's docstring and
+    FINDINGS.md#28/examples/11: with identical default engine_kwargs,
+    derive_campaign_parameters and derive_antibiotic_parameters must
+    produce numerically identical (v, p, e) -- the same simulation,
+    relabelled, not independently confirming anything. And with different
+    parameters, they must diverge, proving the function is genuinely
+    parameterised and not silently hardcoded to the antibiotic case."""
+    import numpy as np
+    from attrition import derive_campaign_parameters, derive_antibiotic_parameters
+
+    v1, p1, e1, _ = derive_campaign_parameters()
+    v2, p2, e2, _ = derive_antibiotic_parameters()
+    assert np.allclose(v1, v2) and np.allclose(p1, p2) and np.allclose(e1, e2), (
+        "default-parameter campaign and antibiotic derivations must match "
+        "exactly -- they are the same underlying simulation")
+
+    v3, p3, e3, _ = derive_campaign_parameters(intensity=np.linspace(0.3, 0.9, 5))
+    assert not np.allclose(v1, v3), (
+        "a different intensity grid must actually change v -- the function "
+        "must be genuinely parameterised, not hardcoded")

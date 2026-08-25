@@ -278,3 +278,30 @@ def test_voter_network_adds_a_measurable_propagation_effect():
         "direct contact alone -- it can only add conversions")
     assert final_networked > final_direct, (
         "propagation must add a strictly measurable effect on this seeded run")
+
+
+# ------------------------------------------------------- coverage gaps
+def test_source_provenance_has_required_fields():
+    """SOURCE is what makes the data's provenance checkable -- a missing
+    key here would silently break that claim for anyone auditing it."""
+    from attrition.election.lokdhaba import SOURCE
+    for key in ("publisher", "url", "license", "fetched", "note"):
+        assert key in SOURCE and SOURCE[key], f"SOURCE missing or empty: {key}"
+    assert "Trivedi" in SOURCE["publisher"]
+
+
+def test_constituency_dataclass_shape():
+    from attrition.election import build_constituency, Constituency
+    c = build_constituency("Ahmedabad East")
+    assert isinstance(c, Constituency)
+    assert isinstance(c.parties, tuple) and isinstance(c.vote_share_pct, tuple)
+    assert len(c.parties) == len(c.vote_share_pct)
+    assert c.constituency_type in ("GEN", "SC", "ST")
+
+
+def test_behavioural_voter_direct_construction():
+    from attrition.election.agents import BehaviouralVoter
+    v = BehaviouralVoter(switch_resistance=0.4)
+    assert v.switch_resistance == 0.4
+    assert v.pressure == 0.0
+    assert v.switched is False
