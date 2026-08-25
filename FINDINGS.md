@@ -987,3 +987,61 @@ validation ladder exists to catch, and it did.
 social network layer, no LLM calls, and -- unlike the AMR extension -- no
 regret-harm claim of any kind yet. This section documents infrastructure
 being validated, not a result.
+
+## 28. Election track, Phase 1 (theory): persuasion commons is a free consequence of the existing engine, not a new proof
+
+Where §27 built the real-data population layer, this is the abstract,
+no-India theorem step the plan called for first ("Phase 1: abstract
+election environment... prove the theorem holds," see the domain-extension
+discussion) -- built second here because the population layer turned out to
+be the faster concrete step, not because the order was reversed in
+principle. The two are deliberately not connected yet (see below).
+
+**The isomorphism, not a new mechanism.** `derive_campaign_parameters()`
+(`attrition/engines.py`) reuses `LotkaVolterraTumour` completely unchanged
+-- the same two-compartment competitive-release engine already relabelled
+once for antibiotics (`derive_antibiotic_parameters`). A persuadable/
+undecided voter segment plays the drug-sensitive compartment's role; a
+saturated/unreachable segment (message fatigue or backfire, not persuasion
+to the contacting campaign's side) plays the resistant compartment's role.
+Once a segment saturates, no campaign -- not only the one that caused it --
+can draw persuadable voters from it again. That is the same shared,
+irreversible externality structure as antibiotic resistance, stated as an
+isomorphism claim in the docstring and checked, not just asserted:
+`test_campaign_persuasion_reproduces_zero_regret_ruin` runs it through the
+same `compare`/`Greedy`/`ECI` machinery every other domain in this repo
+uses.
+
+**Result.** Registered as `campaign-persuasion` in `SCENARIOS`. Turn-taking,
+one campaign: greedy is exactly zero-regret and clears 27% less real
+persuasion value than ECI (`examples/11_campaign_persuasion.py`). Multi-
+agent, simultaneous: the `lambda_weighted` rule built for the AMR extension
+(FINDINGS.md#24) applies here with **zero new code** -- it was built
+against the generic simultaneous-action machinery, not anything
+AMR-specific, and `test_campaign_persuasion_lambda_weighted_gap_shrinks_
+under_decentralisation` confirms the same shrinking-but-not-closing gap
+pattern transfers.
+
+**Stated plainly, not glossed over:** with default parameters, the
+simultaneous-mode numbers here are numerically identical to exp62's
+antibiotic ones (planner=12.899, decentralised eci=12.092, ...). That is
+not a second independent confirmation of anything -- `derive_campaign_
+parameters()` reuses the same default `engine_kwargs` unchanged, so the
+underlying simulation IS the antibiotic one, only relabelled. The
+isomorphism claim is that the *mechanism* transfers (a two-compartment
+competitive-release engine describes both domains); it is not a claim that
+campaigns and antibiotics produce independently-arrived-at matching
+numbers, and the identical figures should not be read as more than what
+they are: the same math wearing different labels until the parameters are
+actually varied to reflect real campaign dynamics.
+
+**Why this is not yet connected to the real Phase-1 population (§27).**
+`derive_campaign_parameters()`'s `(v, p, e)` are not derived from anything
+in `attrition/data/tcpd_lokdhaba_ge.json` -- they come from the same
+synthetic engine as every other mechanistic domain in this repo. Per the
+agreed build order (abstract theorem first, synthetic heterogeneous second,
+India case study third), that connection is Phase 2/3 work: deriving
+persuadability, contact-response, and saturation parameters from real
+constituency data (turnout, margin, ENOP) instead of the engine's default
+dynamics, the same step `docs/amr-stewardship-extension.md#5` took for
+`rho` via the real `leak` parameter. Not attempted in this pass.

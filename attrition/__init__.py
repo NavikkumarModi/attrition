@@ -38,7 +38,7 @@ from .commitment import (TerminalCommitment, optimal_commitment_policy,
 from .engines import (LotkaVolterraTumour, derive_arm_parameters,
                       PlatformTrialEngine, derive_trial_parameters,
                       DesignSpaceEngine, derive_design_space_parameters,
-                      derive_antibiotic_parameters)
+                      derive_antibiotic_parameters, derive_campaign_parameters)
 from .llm import LLMClient, MockLLMClient, CallableLLMClient
 from .persona import Persona, PHARMA_PERSONAS
 from .llm_policy import LLMPolicy
@@ -62,7 +62,7 @@ __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
            "LotkaVolterraTumour", "derive_arm_parameters",
            "PlatformTrialEngine", "derive_trial_parameters",
            "DesignSpaceEngine", "derive_design_space_parameters",
-           "derive_antibiotic_parameters",
+           "derive_antibiotic_parameters", "derive_campaign_parameters",
            "ConsumableBanditEnv", "MultiAgentConsumableEnv",
            "SCENARIOS", "load", "describe", "ScenarioRegistry", "from_arrays",
            "get_arrays",

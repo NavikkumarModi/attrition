@@ -22,7 +22,8 @@ import numpy as np
 
 from .envs import ConsumableBanditEnv, MultiAgentConsumableEnv
 from .engines import (derive_arm_parameters, derive_trial_parameters,
-                      derive_design_space_parameters, derive_antibiotic_parameters)
+                      derive_design_space_parameters, derive_antibiotic_parameters,
+                      derive_campaign_parameters)
 from .real_data import (derive_real_amr_parameters, derive_real_cmc_parameters,
                         derive_real_fisheries_parameters, derive_real_cve_parameters)
 
@@ -144,6 +145,35 @@ SCENARIOS = ScenarioRegistry({
                               "simultaneous-action version where one exists.",
         "agents": 3,
         "build": lambda: (derive_antibiotic_parameters()[:3],
+                          dict(delta=0.35, horizon=9)),
+    },
+
+    # ---------------------------------------------------------- election pop
+    "campaign-persuasion": {
+        "description": "Several campaigns contacting one shared, finite "
+                       "voter segment. Heavier contact intensity sways "
+                       "more of today's persuadable voters but saturates "
+                       "them -- once a segment's persuadable compartment "
+                       "is exhausted it stops replenishing, degrading "
+                       "future persuasion yield for every campaign that "
+                       "contacts it afterward, not only the one that "
+                       "caused it. Abstract, no real constituency data "
+                       "attached yet -- see attrition.election for the "
+                       "separate, real-data population layer this has not "
+                       "yet been connected to.",
+        "phenomenon": "zero-regret ruin under a shared persuadable-voter pool",
+        "expected_behaviour": "each campaign's greedy (max-contact) choice "
+                              "is privately zero-regret, with kappa "
+                              "dispersed across contact-intensity choices "
+                              "exactly as in adaptive-therapy and "
+                              "antibiotic-stewardship -- the same "
+                              "competitive-release isomorphism, relabelled. "
+                              "Turn-taking here (Theorem 6) has no genuine "
+                              "price of anarchy; see the simultaneous-"
+                              "action machinery in attrition.simultaneous "
+                              "for the setting where one exists.",
+        "agents": 3,
+        "build": lambda: (derive_campaign_parameters()[:3],
                           dict(delta=0.35, horizon=9)),
     },
 

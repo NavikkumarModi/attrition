@@ -1780,3 +1780,50 @@ def test_eci_style_pricing_overcharges_under_partial_recovery():
                                            rule="lambda_weighted", lam=0.0,
                                            seeds=500, return_details=True)
         assert d0["gap"] > 0.0, f"rho={rho}: expected positive gap, got {d0['gap']}"
+
+
+# --------------------------------------------------- campaign persuasion
+def test_campaign_persuasion_scenario_registered_and_shaped():
+    from attrition.scenarios import get_arrays, SCENARIOS
+    assert "campaign-persuasion" in SCENARIOS
+    assert SCENARIOS["campaign-persuasion"]["agents"] == 3
+    v, p, e, kw = get_arrays("campaign-persuasion")
+    assert len(v) == len(p) == len(e)
+    assert "delta" in kw and "horizon" in kw
+
+
+def test_campaign_persuasion_reproduces_zero_regret_ruin():
+    """Election track Phase 1 (abstract): the same no-regret-is-not-no-harm
+    pattern already proven for oncology/antibiotics must reproduce here,
+    since derive_campaign_parameters() reuses the identical engine -- this
+    is the isomorphism claim in engines.py's docstring, checked rather than
+    asserted."""
+    from attrition import ConsumableBandit, Greedy, ECI, compare
+    from attrition.scenarios import get_arrays
+    v, p, e, kw = get_arrays("campaign-persuasion")
+    result = compare(lambda s: ConsumableBandit(v, p, e, seed=s, **kw),
+                     [Greedy(), ECI()], seeds=300)
+    assert result["greedy"]["regret"] == 0.0, (
+        "greedy must be exactly zero-regret by construction")
+    assert result["eci"]["value"] > result["greedy"]["value"], (
+        "ECI must clear more real value despite greedy's zero regret -- "
+        "this is the ruin the scenario is registered to demonstrate")
+
+
+def test_campaign_persuasion_lambda_weighted_gap_shrinks_under_decentralisation():
+    """The lambda_weighted rule built for the AMR extension applies to this
+    new domain for free, because it was built against the generic
+    simultaneous-action machinery, not anything AMR-specific -- checked
+    here, not just claimed in the example script's comments."""
+    from attrition import decentralised_value_simultaneous
+    from attrition.scenarios import get_arrays
+    v, p, e, kw = get_arrays("campaign-persuasion")
+    gaps = []
+    for lam in [0.0, 0.5, 1.0]:
+        d = decentralised_value_simultaneous(
+            v, p, e, kw["delta"], kw["horizon"], 3, rule="lambda_weighted",
+            lam=lam, obs_noise=0.0, seeds=400, return_details=True)
+        gaps.append(d["gap"])
+    assert gaps[0] > gaps[1] > gaps[2] >= 0.0, (
+        f"gap must shrink monotonically as reward-shaping strengthens, "
+        f"got {gaps}")

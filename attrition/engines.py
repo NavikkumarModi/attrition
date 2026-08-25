@@ -22,10 +22,19 @@ Implemented:
                              resistant bacterial competition under antibiotic
                              selection pressure, a standard isomorphism in the
                              antimicrobial-resistance literature.
+    derive_campaign_parameters -- persuadable/saturated voter competition under
+                             campaign contact intensity. Reuses
+                             `LotkaVolterraTumour` unchanged again: a third
+                             instance of the same two-compartment structure --
+                             see that function's docstring for why persuasion
+                             is a genuine member of this isomorphism class, not
+                             a forced analogy.
 
-Not a clinical model. It is the standard two-compartment competition system used
-in the adaptive-therapy literature, reduced to the minimum that exhibits
-competitive release. No clinical conclusion should be drawn from it.
+Not a clinical model (and, for the campaign case, not a real persuasion-
+dynamics model either). It is the standard two-compartment competition system
+used in the adaptive-therapy literature, reduced to the minimum that exhibits
+competitive release. No clinical or campaign-strategy conclusion should be
+drawn from it.
 """
 
 import numpy as np
@@ -33,7 +42,7 @@ import numpy as np
 __all__ = ["LotkaVolterraTumour", "derive_arm_parameters",
            "PlatformTrialEngine", "derive_trial_parameters",
            "DesignSpaceEngine", "derive_design_space_parameters",
-           "derive_antibiotic_parameters"]
+           "derive_antibiotic_parameters", "derive_campaign_parameters"]
 
 
 class LotkaVolterraTumour:
@@ -190,6 +199,64 @@ def derive_antibiotic_parameters(spectrum=None, engine_kwargs=None, horizon=20,
                                        horizon=horizon, sensitive_floor=susceptible_floor,
                                        s0_sd=s0_sd, verbose=verbose)
     return v, p, e, spectrum
+
+
+def derive_campaign_parameters(intensity=None, engine_kwargs=None, horizon=20,
+                               persuadable_floor=0.02, s0_sd=0.26, verbose=False):
+    """Derive (v, p, e) for campaign-contact intensity choices from
+    persuadable/saturated voter competition -- the abstract, no-real-data
+    version of the election track's "persuasion commons" (see FINDINGS.md's
+    election-track sections and docs/amr-stewardship-extension.md for the
+    sibling AMR writeup this mirrors: theorem first, in the abstract, before
+    any real constituency data is attached).
+
+    Reuses `LotkaVolterraTumour` unchanged: this is the third instance of
+    the same two-compartment competitive-release structure already used for
+    tumour dose selection and antibiotic choice. The isomorphism is not
+    forced -- a persuadable/undecided voter segment plays exactly the role
+    of the drug-sensitive compartment (contactable, convertible, and it is
+    what keeps the "saturated" compartment in check by being the pool new
+    persuasion draws from); a saturated segment -- voters who have become
+    unreachable, through message fatigue or backfire, not persuaded to the
+    contacting campaign's side -- plays the resistant compartment's role:
+    once dominant, it can no longer be displaced by more contact, and it
+    suppresses the segment's overall remaining persuadability. `intensity`
+    indexes campaign contact from light-touch (low saturation pressure) to
+    saturation-heavy mass messaging (high saturation pressure), standing in
+    for `derive_arm_parameters`'s dose.
+
+    For each choice:
+
+      v_a  immediate persuasion yield (voters swayed) this contact round
+           achieves
+      p_a  probability this contact intensity drives the persuadable
+           segment below `persuadable_floor` -- the irreversible event,
+           since once the persuadable segment is exhausted it can no
+           longer be replenished and no longer holds the saturated segment
+           in check (the campaign-persuasion analogue of competitive
+           release)
+      e_a  permanent loss of future persuasion yield once that happens: the
+           difference in achievable persuasion, over the remaining horizon,
+           between a voter segment that retains its persuadable compartment
+           and one that has lost it -- borne by every campaign contacting
+           that segment afterward, not only the one that saturated it,
+           which is exactly the shared-externality structure the rest of
+           this repo studies elsewhere
+
+    Not a real persuasion-dynamics model, fit to no survey or field-
+    experiment data -- the standard mechanism, reduced to the minimum that
+    exhibits the effect. No campaign-strategy conclusion should be drawn
+    from it. Real constituency data (`attrition.election`) is a separate,
+    Level-0 population layer this has not yet been connected to -- see
+    FINDINGS.md's election-track sections for the explicit reasoning on why
+    that connection is deliberately not made yet.
+    """
+    intensity = np.linspace(0.15, 1.0, 5) if intensity is None else np.asarray(intensity)
+    engine_kwargs = {"dt": 5.0} if engine_kwargs is None else engine_kwargs
+    v, p, e, _ = derive_arm_parameters(doses=intensity, engine_kwargs=engine_kwargs,
+                                       horizon=horizon, sensitive_floor=persuadable_floor,
+                                       s0_sd=s0_sd, verbose=verbose)
+    return v, p, e, intensity
 
 
 # ============================================================ platform trials
