@@ -25,6 +25,7 @@ from .population import (SyntheticVoter, Constituency, build_constituency,
 from .persuasion import (real_margin_pct, persuadable_fraction_from_margin,
                          derive_persuasion_parameters_from_constituency,
                          PHASE1_PERSUADABLE_FRACTIONS)
+from .identification import identification_floor, PHASE1_IDENTIFICATION_FLOORS
 
 __all__ = ["SOURCE", "load_constituencies", "get_constituency",
           "SyntheticVoter", "Constituency", "build_constituency",
@@ -32,4 +33,5 @@ __all__ = ["SOURCE", "load_constituencies", "get_constituency",
           "ALL_PHASE1_CONSTITUENCIES",
           "real_margin_pct", "persuadable_fraction_from_margin",
           "derive_persuasion_parameters_from_constituency",
-          "PHASE1_PERSUADABLE_FRACTIONS"]
+          "PHASE1_PERSUADABLE_FRACTIONS",
+          "identification_floor", "PHASE1_IDENTIFICATION_FLOORS"]

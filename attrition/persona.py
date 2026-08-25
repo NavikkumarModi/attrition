@@ -10,7 +10,7 @@ system prompt text and is free to act on it or not, which is the point --
 
 from dataclasses import dataclass
 
-__all__ = ["Persona", "PHARMA_PERSONAS"]
+__all__ = ["Persona", "PHARMA_PERSONAS", "CAMPAIGN_PERSONAS"]
 
 
 @dataclass
@@ -80,5 +80,41 @@ PHARMA_PERSONAS = {
             "whichever option offers the best immediate expected benefit, "
             "and discounts longer-term or population-level consequences."),
         risk_tolerance=0.85,
+    ),
+}
+
+
+CAMPAIGN_PERSONAS = {
+    "campaign-disciplined": Persona(
+        name="campaign-disciplined",
+        role="campaign strategist",
+        description=(
+            "A campaign strategist who rations contact intensity, "
+            "targeting only the voters most likely to be genuinely "
+            "persuadable this cycle, because you are weighing the risk "
+            "that over-contacting a segment saturates it -- burning out "
+            "persuadable voters into permanently unreachable ones -- and "
+            "that cost lands on every campaign that contacts this segment "
+            "afterward, including your own next cycle."),
+        risk_tolerance=0.15,
+    ),
+    "campaign-maximalist": Persona(
+        name="campaign-maximalist",
+        role="campaign strategist",
+        description=(
+            "A campaign strategist who contacts every reachable voter as "
+            "hard as the budget allows, this election. Whether a segment "
+            "is still persuadable next cycle is someone else's problem."),
+        risk_tolerance=0.9,
+    ),
+    "campaign-balanced": Persona(
+        name="campaign-balanced",
+        role="campaign strategist",
+        description=(
+            "A campaign strategist who follows conventional field-"
+            "operation guidance, weighing this cycle's persuasion yield "
+            "against the chance that heavy contact saturates the segment "
+            "for future cycles."),
+        risk_tolerance=0.5,
     ),
 }

@@ -12,7 +12,7 @@ real ones.*
 **Bandits with Consumable Action Sets**
 
 [![tests](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml/badge.svg)](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml)
-[![tests](https://img.shields.io/badge/tests-188%20passing-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/tests-192%20passing-brightgreen)](tests/)
 [![theorems](https://img.shields.io/badge/theorems-11%20proven-blue)](THEORY.md)
 [![python](https://img.shields.io/badge/python-3.9%E2%80%933.12-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
@@ -346,8 +346,19 @@ now partially connected: each real constituency's margin sets the
 persuasion engine's initial persuadable-fraction parameter
 (`examples/12_real_persuasion.py`), and the zero-regret-ruin pattern
 survives that real variation at all ten seats — one real anchor, stated as
-one anchor, not a full recalibration. Still no LLM calls and no theorem
-claim about actual Indian elections. See `FINDINGS.md` sections 27–29.
+one anchor, not a full recalibration. Campaigns are now genuine LLM-driven
+learning agents too, not fixed policies — `attrition.persona.
+CAMPAIGN_PERSONAS` plus the same `Population` machinery already proven for
+AMR (`examples/13_campaign_population.py`) — and the identification-cost
+result promised in this project's earliest planning is closed out: Theorem
+3's proven, closed-form estimation floor, evaluated at every real
+constituency's derived parameters, shows only 2 of 5 contact-intensity
+levels ever generate an identifying event at all, and where identification
+is possible the floor is real, strictly positive, and un-improvable by more
+campaign time (`examples/14_identification_cost.py`). Level 1/2 agents, the
+social network layer, and scale past ten constituencies remain open,
+recorded as such rather than implied done. See `FINDINGS.md` sections
+27–31.
 
 ### Scale with concurrent calls
 

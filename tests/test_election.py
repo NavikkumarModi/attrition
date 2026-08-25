@@ -120,3 +120,73 @@ def test_zero_regret_ruin_survives_real_margin_variation():
         assert result["eci"]["value"] > result["greedy"]["value"], (
             f"{c.name}: ECI must beat greedy despite greedy's zero regret "
             f"(S0={s0:.3f})")
+
+
+# ------------------------------------ campaign-persuasion population agents
+def test_campaign_population_runs_end_to_end_on_real_constituency():
+    """Genuine learning agents (Population, not fixed Greedy/ECI policies)
+    over a real, margin-anchored persuadable pool -- closes the loop
+    between attrition.election (real data), derive_campaign_parameters
+    (the theorem), and the existing LLM-population machinery already
+    proven for AMR (examples/04). No new mechanism, only new wiring."""
+    from attrition import CAMPAIGN_PERSONAS, Population, MockLLMClient
+    from attrition.population import (simulate_population,
+                                      compare_population_to_baselines)
+    from attrition import ConsumableBandit, Greedy, ECI
+    from attrition.election import derive_persuasion_parameters_from_constituency
+
+    v, p, e, intensity, s0 = derive_persuasion_parameters_from_constituency(
+        "Ahmedabad East")
+    campaigns = [CAMPAIGN_PERSONAS["campaign-disciplined"],
+                CAMPAIGN_PERSONAS["campaign-balanced"],
+                CAMPAIGN_PERSONAS["campaign-maximalist"]]
+    population = Population.from_personas(campaigns, client=MockLLMClient(seed=0))
+    result = compare_population_to_baselines(
+        lambda s: ConsumableBandit(v, p, e, delta=0.35, horizon=9, seed=s),
+        population, [Greedy(), ECI()], seeds=10)
+    assert set(result) == {"population", "greedy", "eci"}
+    assert result["greedy"]["regret"] == 0.0
+    for stats in result.values():
+        assert stats["value"] > 0.0
+
+
+# ---------------------------------------------- identification-cost floor
+def test_identification_floor_matches_theorem3_closed_form():
+    """Theorem 3's floor, SE >= 2*sigma/sqrt(E[N]), E[N] = sum 1/p_i over
+    identifiable arms -- recomputed independently here and checked against
+    the module's own output, not just trusted."""
+    import numpy as np
+    from attrition.election import identification_floor
+    from attrition.election.persuasion import derive_persuasion_parameters_from_constituency
+    v, p, e, intensity, s0 = derive_persuasion_parameters_from_constituency(
+        "Ahmedabad East")
+    identifiable = p > 1e-6
+    expected_N = float(np.sum(1.0 / p[identifiable]))
+    sigma = 0.05
+    expected_floor = 2 * sigma / np.sqrt(expected_N)
+
+    result = identification_floor("Ahmedabad East", sigma=sigma)
+    assert result["n_identifiable"] == int(identifiable.sum())
+    assert abs(result["expected_N"] - expected_N) < 1e-9
+    assert abs(result["se_floor"] - expected_floor) < 1e-9
+
+
+def test_identification_floor_flags_unidentifiable_intensity_levels():
+    """Fewer than all five intensity levels ever generate a saturation
+    event within the derivation horizon -- for those, e_a is not just hard
+    to estimate, it is not identifiable at any horizon. This must be
+    reported, not hidden inside an average."""
+    from attrition.election import PHASE1_IDENTIFICATION_FLOORS
+    for name, r in PHASE1_IDENTIFICATION_FLOORS.items():
+        assert r["n_identifiable"] < r["n_intensity_levels"], (
+            f"{name}: expected at least one unidentifiable intensity level")
+        assert r["n_identifiable"] > 0, f"{name}: expected at least one identifiable level"
+
+
+def test_identification_floor_is_strictly_positive_where_defined():
+    """Theorem 3's whole point: this floor cannot be driven to zero by
+    collecting more data -- it must be strictly positive wherever an
+    identifying event can occur at all."""
+    from attrition.election import PHASE1_IDENTIFICATION_FLOORS
+    for name, r in PHASE1_IDENTIFICATION_FLOORS.items():
+        assert r["se_floor"] > 0.0, f"{name}: floor must be strictly positive"

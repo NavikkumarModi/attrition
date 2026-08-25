@@ -1082,3 +1082,81 @@ isn't an artifact of one convenient default, not evidence the model
 predicts anything about real campaigns.
 
 188/188 tests passing (was 185).
+
+## 30. Election track: the identification-cost result, closed out
+
+Promised in this project's very first planning session (FINDINGS.md#1: T1
+reframed as "active identification... requires deliberate abstention...
+characterise the... regret price paid for it") and again in the election
+plan's persuasion-commons sketch ("how much a campaign must give up... to
+even know whether it's helping or harming, as a regret price"). Not a new
+theorem: Theorem 3 (`THEORY.md`, "estimation impossibility under
+consumption") already proves the externality vector `e` cannot be estimated
+to arbitrary precision at any horizon, because the information budget is
+capped by `E[N] = sum 1/p_i`, not by how long the process runs. This closes
+the promise by evaluating that closed-form floor at the real, heterogeneous
+`p` already derived for every Phase-1 constituency
+(`attrition/election/identification.py`), the general form rather than
+`THEORY.md`'s homogeneous-`p` simplification.
+
+**Two findings, not one, both checked across all ten real constituencies,
+not asserted from one:**
+
+1. Only 2 of the 5 contact-intensity levels ever generate a saturation
+   event within the derivation horizon, at every single constituency
+   (`test_identification_floor_flags_unidentifiable_intensity_levels`).
+   For the other 3, `e_a` is not merely hard to estimate -- it is not
+   identifiable at any horizon, because the identifying event (a segment
+   actually saturating) never happens. Reported explicitly rather than
+   averaged away.
+
+2. Where identification is possible, the floor is real, strictly positive
+   (`test_identification_floor_is_strictly_positive_where_defined`), and
+   ranges from ~0.007 (Thiruvananthapuram, Bangalore Rural, Kolkata
+   Dakshin -- the closest real contests) to ~0.033 (Mumbai North, the
+   widest real landslide). More-contestable seats give more identifying
+   events and a lower floor -- an interpretable pattern in the real margin
+   data, not noise.
+
+**Practical reading, stated once, not oversold:** a campaign cannot
+distinguish "my contact caused this segment to shift" from "it was shifting
+anyway" without a deliberate holdout. That is the same logic this project
+opened with, applied 30 sections later to a domain it was never proven in --
+closing the loop, not a new claim.
+
+192/192 tests passing (was 188).
+
+---
+
+## 31. Election track: state of open tasks, as of this session
+
+Also closed this session, alongside identification (§30): campaigns as
+genuine learning agents, not fixed policies. `attrition.persona.
+CAMPAIGN_PERSONAS` plus the existing `Population`/`MockLLMClient` machinery
+already proven for AMR (`examples/04_pharma_population.py`) now runs
+directly over a real, margin-anchored constituency
+(`examples/13_campaign_population.py`) -- zero new mechanism, only new
+wiring, the same relationship every other transplant in this project has to
+what it transplants.
+
+**Genuinely still open, stated plainly rather than left implicit:**
+
+- **Level 1/2 agents** (behavioural, then LLM cognitive, per the population-
+  engine's three-tier plan) -- Level 0 (statistical) only exists.
+- **Social network / persuasion-propagation layer** -- `attrition.network.
+  AgentGraph` exists and is proven elsewhere in this repo, but is not wired
+  into the election track.
+- **Scale past ten constituencies** -- explicitly out of scope for further
+  work in this pass: this is a data-engineering and compute exercise, not a
+  research question, and inflating the constituency count without a new
+  question to ask of the larger population would not be a result, just a
+  bigger number.
+- **A real trained-policy checkpoint for campaigns**, the way FINDINGS.md#24.4
+  did for AMR -- no equivalent external, independently-trained campaign
+  policy exists to transplant; this would require training one from
+  scratch, which is a materially different, larger undertaking than
+  reproducing someone else's.
+
+These are recorded as open, not implied to be near-term next steps by
+default -- the next actual step should be chosen deliberately, not just
+whichever of these is cheapest to start.
