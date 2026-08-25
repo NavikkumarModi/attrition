@@ -34,6 +34,7 @@ llm = ["anthropic>=0.40"]
 groq = ["groq>=1.0"]
 web = ["streamlit>=1.30"]
 api = ["fastapi>=0.110", "uvicorn[standard]>=0.29", "pydantic>=2"]
+census = ["openpyxl>=3.0"]
 
 [project.scripts]
 attrition = "attrition.cli:main"

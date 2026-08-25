@@ -295,3 +295,24 @@ def test_assembly_rollup_coverage_endpoint():
     assert "Karnataka" in data["year_by_state"]
     assert data["year_by_state"]["Karnataka"]["gap_from_2019"] == \
         data["year_by_state"]["Karnataka"]["year"] - 2019
+
+
+# ------------------------------------------------------ census rollup
+def test_census_rollup_endpoint_returns_real_shape():
+    resp = client.get("/api/constituencies/Gujarat/AHMEDABAD EAST/census-rollup")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["seat"] == {"state": "Gujarat", "name": "AHMEDABAD EAST"}
+    assert data["rollup"]["n_constituent_districts"] >= 1
+
+
+def test_census_rollup_endpoint_404s_on_unknown_seat():
+    resp = client.get("/api/constituencies/Nowhere/Nothing/census-rollup")
+    assert resp.status_code == 404
+
+
+def test_census_rollup_coverage_endpoint():
+    resp = client.get("/api/census-rollup/coverage")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["n_districts_total"] == 640

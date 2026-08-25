@@ -1,3 +1,4 @@
+.DS_Store
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -14,3 +15,10 @@ dist/
 # frontend/ (Vite + React election dashboard)
 frontend/node_modules/
 frontend/dist/
+
+# repo-root data/: raw, manually-downloaded source files (e.g. Census 2011
+# tables with no stable scriptable URL -- see scripts/process_census_data.py)
+# consumed by a processing script, same as this project's other raw fetches
+# never check in -- only the small, processed attrition/data/*.json snapshot
+# a script produces from them is checked in.
+/data/

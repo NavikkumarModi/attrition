@@ -2220,3 +2220,76 @@ file, no stated primary source for its hand-maintained Excel data -- it
 does not clear the provenance bar every other real source in this
 project meets (see `real_data.py`'s `SOURCES`, `lokdhaba.py`'s `SOURCE`),
 regardless of its data being publicly browsable.
+
+## 50. A third real data source: Census 2011 district demographics, manually downloaded and honestly joined
+
+`data.gov.in`'s Primary Census Abstract 2011 catalog entry says plainly
+its files are "hosted and maintained by the respective Ministry" and not
+proxied through their API without a registered key; censusindia.gov.in's
+own portal has no stable, scriptable bulk-download URL. Real, openly
+licensed (National Data Sharing and Accessibility Policy) data, genuinely
+blocked from automated fetching -- reported as such in the previous
+session. Resolved the only honest way available: the real files,
+downloaded by hand from censusindia.gov.in's Population Finder, placed at
+repo-root `data/` (five real Census 2011 tables: A-1, A-3, B-1, C-3
+Appendix, C-8 Appendix).
+
+**Only one of the five was actually usable, and that's stated plainly,
+not glossed over.** Inspecting all five before writing anything: A-1
+(villages/towns/households/population/area) and A-3 (village-size
+distribution) are genuine district-level tables with real Total/Rural/
+Urban rows for the whole country. B-1 (worker classification) and C-8
+(education level) in these specific downloads are TOWN-level cuts --
+urban areas only, no rural rows -- so treating them as district totals
+would silently undercount every district's real population. C-3
+Appendix (marital status by religion) in this download is STATE-level
+only (District Code is `'000'` throughout). Only A-1 was processed
+(`scripts/process_census_data.py`, `pip install attrition[census]` for
+openpyxl -- a NEW kind of script in this repo, explicitly not a `fetch_*`
+script, since there is no URL to fetch from; the docstring says so). A-3
+is real and structurally identical to A-1 but not yet processed --
+recorded as available future work, not silently ignored.
+
+**The join, and a second real limitation stated up front rather than
+discovered by a reader.** `attrition/election/census.py` reuses the same
+DataMeet AC-to-PC crosswalk `assembly.py` already established, this time
+reading its `district` field. But a Parliamentary Constituency routinely
+spans PARTS of more than one district (real, checked: median 2, up to 8
+per seat in this crosswalk) and a district routinely spans more than one
+PC -- so this module does NOT report a single "this seat's population is
+N" figure. Summing whole-district populations across a multi-district
+seat would double-count every person in a district shared with another
+PC, a fabricated precision this project does not manufacture anywhere
+else and wasn't going to start here. Instead: the real, unmodified
+per-district figures for every constituent district, plus a MEAN (never
+a sum) of rate-like fields such as density -- checked never to exceed
+the real max across constituent districts
+(`test_mean_density_is_never_a_disguised_sum`).
+
+**Coverage, compounding two real joins, reported exactly as computed.**
+The crosswalk's own PC-name match (~89.5% of real seats) composed with
+the district-name match between DataMeet's `DIST_NAME` and the Census
+file's own district names (86.7% after the same Odisha/Orissa and
+Uttarakhand/Uttarkhand aliases `assembly.py` already carries) leaves
+443 of 543 real seats (81.6%) with at least one matched constituent
+district -- lower than `assembly.py`'s 90.8% precisely because this is
+two real joins stacked, not one, and that compounding is reported as
+what it is, not smoothed into a single misleadingly-clean number.
+
+**A real end-to-end sanity check, not just a shape check**: summing
+every extracted district's population gives exactly 1,210,854,977 --
+the real, published 2011 Census total -- confirming the extraction
+pulled the right rows, not a subset or a double-counted one
+(`test_total_district_population_matches_real_2011_census_figure`).
+
+Exposed via `GET /api/constituencies/{state}/{name}/census-rollup` and
+`GET /api/census-rollup/coverage`, and a new card in `ConstituencyLab
+.tsx` listing each constituent district's real, unaggregated figures --
+verified live against the API's own numbers (Ahmedabad East: Gandhinagar
+1,391,753 / Ahmadabad 7,214,225, neither summed). 9 new tests
+(`tests/test_census.py`, `tests/test_election_api.py`). 289/289 tests
+passing (was 280).
+
+No per-voter demographic or economic data is introduced -- every number
+is a real, published district aggregate, the same discipline every real
+data source in this project already follows.

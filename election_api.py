@@ -39,7 +39,8 @@ from attrition.election import (ALL_PHASE1_CONSTITUENCIES, build_constituency,
                                 greedy_allocation, even_allocation,
                                 leave_one_state_out_backtest, train_gradient_bandit,
                                 assembly_rollup_for_seat, assembly_rollup_coverage,
-                                ASSEMBLY_YEAR_BY_STATE)
+                                ASSEMBLY_YEAR_BY_STATE,
+                                census_rollup_for_seat, census_rollup_coverage)
 from experiments.exp65_amr_five_policy_reference_table import (
     in_repo_half, EXTERNAL_SILOED, EXTERNAL_SHARED)
 
@@ -150,6 +151,29 @@ def assembly_rollup_coverage_endpoint():
         for state, (year, gap) in ASSEMBLY_YEAR_BY_STATE().items()
     }
     return coverage
+
+
+@app.get("/api/constituencies/{state}/{name}/census-rollup")
+def constituency_census_rollup(state: str, name: str):
+    """Real Census 2011 district-level demographics (population,
+    households, area, density -- table A-1) for this real seat's
+    constituent district(s), via the same real DataMeet AC-to-PC
+    crosswalk `assembly-rollup` uses, this time joined on its `district`
+    field (`attrition.election.census`). A seat spanning more than one
+    district reports each district's real, UNMODIFIED figures plus a
+    mean (never a sum -- see that module's docstring for why summing
+    would double-count) -- `null` for the ~19% of real seats with no
+    matched constituent district."""
+    _resolve(state, name)
+    rollup = census_rollup_for_seat(state, name)
+    return {"seat": {"state": state, "name": name}, "rollup": rollup}
+
+
+@lru_cache(maxsize=1)
+@app.get("/api/census-rollup/coverage")
+def census_rollup_coverage_endpoint():
+    """Real, checked coverage numbers for the district-to-PC join."""
+    return census_rollup_coverage()
 
 
 class SimulateRequest(BaseModel):

@@ -312,6 +312,42 @@ export interface AssemblyRollupCoverage {
 export const fetchAssemblyRollupCoverage = () =>
   getJSON<AssemblyRollupCoverage>("/api/assembly-rollup/coverage");
 
+export interface CensusDistrict {
+  state: string;
+  district: string;
+  n_villages_inhabited: number;
+  n_villages_uninhabited: number;
+  n_towns: number;
+  n_households: number;
+  population_total: number;
+  population_male: number;
+  population_female: number;
+  area_sq_km: number;
+  population_density_per_sq_km: number;
+}
+export interface CensusRollup {
+  n_constituent_districts: number;
+  constituent_districts: CensusDistrict[];
+  mean_population_density_per_sq_km: number;
+  mean_households_per_district: number;
+}
+export interface CensusRollupResponse {
+  seat: { state: string; name: string };
+  rollup: CensusRollup | null;
+}
+export const fetchCensusRollup = (state: string, name: string) =>
+  getJSON<CensusRollupResponse>(
+    `/api/constituencies/${encodeURIComponent(state)}/${encodeURIComponent(name)}/census-rollup`,
+  );
+
+export interface CensusRollupCoverage {
+  n_districts_total: number;
+  n_real_seats_total: number;
+  n_real_seats_with_rollup: number;
+}
+export const fetchCensusRollupCoverage = () =>
+  getJSON<CensusRollupCoverage>("/api/census-rollup/coverage");
+
 export async function simulate(
   state: string,
   name: string,

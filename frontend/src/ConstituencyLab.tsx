@@ -4,7 +4,9 @@ import {
 } from "recharts";
 import {
   fetchConstituencies, simulate, fetchAssemblyRollup, fetchAssemblyRollupCoverage,
+  fetchCensusRollup, fetchCensusRollupCoverage,
   type SeatSummary, type SimulateResult, type AssemblyRollupResponse, type AssemblyRollupCoverage,
+  type CensusRollupResponse, type CensusRollupCoverage,
 } from "./api";
 
 const DEFAULT_SEQUENCE = [0.15, 0.2, 0.25, 0.3, 0.35];
@@ -31,9 +33,12 @@ export default function ConstituencyLab({
 
   const [assemblyRollup, setAssemblyRollup] = useState<AssemblyRollupResponse | null>(null);
   const [assemblyCoverage, setAssemblyCoverage] = useState<AssemblyRollupCoverage | null>(null);
+  const [censusRollup, setCensusRollup] = useState<CensusRollupResponse | null>(null);
+  const [censusCoverage, setCensusCoverage] = useState<CensusRollupCoverage | null>(null);
 
   useEffect(() => { fetchConstituencies().then(setSeats).catch(() => {}); }, []);
   useEffect(() => { fetchAssemblyRollupCoverage().then(setAssemblyCoverage).catch(() => {}); }, []);
+  useEffect(() => { fetchCensusRollupCoverage().then(setCensusCoverage).catch(() => {}); }, []);
 
   useEffect(() => {
     if (initialState && initialName) { setState(initialState); setName(initialName); }
@@ -42,6 +47,8 @@ export default function ConstituencyLab({
   useEffect(() => {
     setAssemblyRollup(null);
     fetchAssemblyRollup(state, name).then(setAssemblyRollup).catch(() => {});
+    setCensusRollup(null);
+    fetchCensusRollup(state, name).then(setCensusRollup).catch(() => {});
   }, [state, name]);
 
   const seat = seats.find((s) => s.state === state && s.name === name);
@@ -181,6 +188,54 @@ export default function ConstituencyLab({
               ? `${assemblyCoverage.n_real_seats_with_rollup} of ${assemblyCoverage.n_real_seats_total} real seats have rollup data`
               : "loading coverage…"}
             ), not a claim that this seat has no Assembly Constituencies.
+          </p>
+        )}
+      </div>
+
+      <div className="card">
+        <h2>Real Census 2011 district demographics for this seat</h2>
+        <p className="muted" style={{ fontSize: 12, marginBottom: 12, maxWidth: 760 }}>
+          Real district-level population, households, and density (Census of India 2011, table A-1), joined via the
+          same real AC-to-PC crosswalk. A seat spanning more than one district shows each district's real,
+          unmodified figures — never summed into one population number, which would double-count people in a
+          district shared with another seat. See FINDINGS.md #50.
+        </p>
+        {censusRollup?.rollup ? (
+          <>
+            <div className="grid cols-2">
+              <div className="stat">
+                <div className="value">{censusRollup.rollup.n_constituent_districts}</div>
+                <div className="label">constituent real district(s)</div>
+              </div>
+              <div className="stat">
+                <div className="value">{censusRollup.rollup.mean_population_density_per_sq_km.toFixed(0)}/km²</div>
+                <div className="label">mean population density across constituent districts</div>
+              </div>
+            </div>
+            <table className="seat-table" style={{ marginTop: 12 }}>
+              <thead>
+                <tr><th>District</th><th>Population (2011)</th><th>Households</th><th>Area (km²)</th><th>Density/km²</th></tr>
+              </thead>
+              <tbody>
+                {censusRollup.rollup.constituent_districts.map((d) => (
+                  <tr key={d.district}>
+                    <td>{d.district}</td>
+                    <td>{d.population_total.toLocaleString()}</td>
+                    <td>{d.n_households.toLocaleString()}</td>
+                    <td>{d.area_sq_km.toLocaleString()}</td>
+                    <td>{d.population_density_per_sq_km.toFixed(0)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        ) : (
+          <p className="muted" style={{ fontSize: 13 }}>
+            No constituent district matched for this seat — a real, disclosed gap in the district-to-PC join (
+            {censusCoverage
+              ? `${censusCoverage.n_real_seats_with_rollup} of ${censusCoverage.n_real_seats_total} real seats have rollup data`
+              : "loading coverage…"}
+            ).
           </p>
         )}
       </div>

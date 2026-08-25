@@ -539,6 +539,21 @@ the real Assembly-election year used (state elections don't share the
 Lok Sabha's national date, so the year gap from 2019 is always surfaced,
 never hidden). `Constituency lab`'s new card shows it per seat.
 
+A third real data source followed the same session: Census 2011 district
+demographics (`FINDINGS.md` #50) — population, households, area, density
+— manually downloaded (censusindia.gov.in has no stable scriptable bulk
+URL; genuinely blocked from automation, not skipped by choice) and
+joined via the same DataMeet crosswalk's `district` field. Of five real
+Census tables downloaded, only one (A-1) was actually district-level for
+the whole country and gets used — the other four are disclosed as
+town-level or state-level cuts that would misrepresent coverage if
+treated as district totals, not silently processed anyway. A seat
+spanning multiple districts reports each district's real figures
+separately, never summed into a fabricated population total (that would
+double-count people in a district shared with another seat) — 81.6% of
+real seats get at least one matched district, honestly lower than the
+Assembly rollup's rate because this compounds two real joins, not one.
+
 ### Scale with concurrent calls
 
 `simulate_population_simultaneous` and `compare_population_to_baselines` take
