@@ -67,21 +67,30 @@ def simulate_level1_contact_with_network(constituency, intensity_sequence,
         resistances = rng_local.beta(a, b, size=n_voters)
         voters = {vid: BehaviouralVoter(r)
                  for vid, r in zip(voter_ids, resistances)}
+        # Peer conversion is tracked separately from direct-contact
+        # pressure, not folded into the same boolean: direct contact is
+        # deterministic threshold-crossing (agents.py's fix -- reverts
+        # cleanly if pressure decays), while a peer conversion represents
+        # a lasting belief change and should not silently un-convert just
+        # because the voter's own pressure later dips. `switched` each
+        # round is the OR of both.
+        peer_converted = set()
         fractions = []
         for intensity in intensity_sequence:
-            for vid, v in voters.items():
+            for v in voters.values():
                 v.pressure = rho * v.pressure + (1.0 - rho) * float(intensity)
-                if rng_local.random() < v.pressure * (1.0 - v.switch_resistance):
-                    v.switched = True
-                elif rng_local.random() < 0.02:
-                    v.switched = False
+                v.switched = v.pressure > v.switch_resistance
             if with_propagation:
-                just_switched = [vid for vid, v in voters.items() if v.switched]
+                just_switched = [vid for vid, v in voters.items()
+                                 if v.switched or vid in peer_converted]
                 for vid in just_switched:
                     for neighbor in graph.neighbors(vid):
-                        if not voters[neighbor].switched and \
+                        if neighbor not in peer_converted and \
+                           not voters[neighbor].switched and \
                            rng_local.random() < peer_conversion_prob:
-                            voters[neighbor].switched = True
+                            peer_converted.add(neighbor)
+            for vid in peer_converted:
+                voters[vid].switched = True
             fractions.append(sum(v.switched for v in voters.values()) / n_voters)
         return fractions
 

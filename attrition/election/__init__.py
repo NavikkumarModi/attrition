@@ -29,6 +29,7 @@ from .identification import identification_floor, PHASE1_IDENTIFICATION_FLOORS
 from .agents import (BehaviouralVoter, simulate_level1_contact,
                      simulate_level2_contact)
 from .network import simulate_level1_contact_with_network
+from .outcome import Outcome, recompute_outcome, tipping_point
 
 __all__ = ["SOURCE", "load_constituencies", "get_constituency",
           "SyntheticVoter", "Constituency", "build_constituency",
@@ -39,4 +40,5 @@ __all__ = ["SOURCE", "load_constituencies", "get_constituency",
           "PHASE1_PERSUADABLE_FRACTIONS",
           "identification_floor", "PHASE1_IDENTIFICATION_FLOORS",
           "BehaviouralVoter", "simulate_level1_contact", "simulate_level2_contact",
-          "simulate_level1_contact_with_network"]
+          "simulate_level1_contact_with_network",
+          "Outcome", "recompute_outcome", "tipping_point"]

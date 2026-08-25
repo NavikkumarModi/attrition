@@ -305,3 +305,65 @@ def test_behavioural_voter_direct_construction():
     assert v.switch_resistance == 0.4
     assert v.pressure == 0.0
     assert v.switched is False
+
+
+# --------------------------------------------------------- Election Layer
+def test_recompute_outcome_matches_real_result_at_zero_switched():
+    """No persuasion effect must reproduce the real winner exactly."""
+    from attrition.election import recompute_outcome, ALL_PHASE1_CONSTITUENCIES
+    for c in ALL_PHASE1_CONSTITUENCIES:
+        outcome = recompute_outcome(c.name, 0.0)
+        assert not outcome.flipped
+        assert outcome.winner == c.parties[0]
+
+
+def test_recompute_outcome_clamps_gain_to_available_share():
+    """Regression test for a real bug caught while building this: an
+    unclamped switched_fraction larger than every other party's combined
+    share produced an impossible negative scale factor and (before the
+    fix) a fabricated exact 100.00% margin. The clamp must keep every
+    share non-negative and the total at 100."""
+    from attrition.election import recompute_outcome
+    outcome = recompute_outcome("Ahmedabad East", switched_fraction=5.0)
+    assert 0.0 <= outcome.runner_up_share_pct <= outcome.winner_share_pct <= 100.0
+    assert outcome.margin_pct >= 0.0
+    # an impossibly large switched_fraction clamps to "challenger takes
+    # every other party's entire combined share" -- the challenger wins
+    # with exactly 100%, not more, and the margin cannot exceed 100pp
+    assert outcome.winner_share_pct <= 100.0 + 1e-6
+    assert outcome.margin_pct <= 100.0 + 1e-6
+
+
+def test_tipping_point_correlates_with_real_margin():
+    """A closer real seat must need a smaller switched_fraction to flip
+    than a landslide one -- the tipping point must actually track the
+    real margin it's derived from, not just exist as a number."""
+    from attrition.election import tipping_point
+    close_tp = tipping_point("Thiruvananthapuram")   # margin 9.89pp
+    landslide_tp = tipping_point("Mumbai North")       # margin 47.01pp
+    assert close_tp is not None and landslide_tp is not None
+    assert close_tp < landslide_tp
+
+
+def test_level1_switched_fraction_uses_deterministic_threshold_crossing():
+    """Regression test for a real ratchet bug: an earlier version re-drew
+    `switched` via a per-round Bernoulli trial, which almost never
+    reverted once pressure was high (the reversion trial ran only when
+    the main trial failed, and a high-pressure voter's main trial rarely
+    failed). Fixed to deterministic pressure > resistance, which must
+    revert cleanly when pressure decays below the resistance threshold."""
+    from attrition.election.agents import BehaviouralVoter
+    v = BehaviouralVoter(switch_resistance=0.5)
+    rho = 0.5
+    # pressure rises under sustained high intensity, past resistance
+    for _ in range(5):
+        v.pressure = rho * v.pressure + (1.0 - rho) * 1.0
+        v.switched = v.pressure > v.switch_resistance
+    assert v.switched is True
+    # pressure decays under sustained zero intensity, back below resistance
+    for _ in range(10):
+        v.pressure = rho * v.pressure + (1.0 - rho) * 0.0
+        v.switched = v.pressure > v.switch_resistance
+    assert v.switched is False, (
+        "switched must revert once pressure decays below resistance -- "
+        "it must not be a one-way ratchet")

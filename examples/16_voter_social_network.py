@@ -21,6 +21,14 @@ campaign contact alone? Scoped precisely against
 examples/15_campaign_peer_influence.py's campaign-to-campaign network --
 this is a different causal channel, not a bigger version of that one.
 
+This script deliberately runs the sequence all the way to maximum
+intensity, to show the full adoption curve -- see examples/17's docstring
+for why that's the wrong default once the point is "does this flip a real
+seat by a believable margin" rather than "does the mechanism work end to
+end": sustained maximum intensity saturates the population near 100%
+regardless of resistance, which is a real, checked property of the model,
+not a realistic campaign-swing magnitude.
+
 Run:  python examples/16_voter_social_network.py [constituency name]
 """
 import sys

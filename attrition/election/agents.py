@@ -99,15 +99,22 @@ def simulate_level1_contact(constituency, intensity_sequence, rho=0.7,
     for intensity in intensity_sequence:
         for v in voters:
             v.pressure = rho * v.pressure + (1.0 - rho) * float(intensity)
-            if rng.random() < v.pressure * (1.0 - v.switch_resistance):
-                v.switched = True
-            elif rng.random() < 0.02:
-                # small spontaneous reversion, so "switched" isn't a
-                # one-way ratchet by construction -- see FINDINGS.md's
-                # election-track sections for why that distinction (a
-                # decentralised prescriber's blindness, not a permanent
-                # arm-death event) matters here.
-                v.switched = False
+            # Deterministic threshold-crossing, not a per-round stochastic
+            # re-test: `switched` is exactly `pressure > switch_resistance`.
+            # An earlier version re-drew `switched` via a Bernoulli trial
+            # every round, which created an unintended ratchet -- once
+            # pressure was high, the trial kept re-confirming True almost
+            # every round, so the sub-1% reversion chance never had a real
+            # opportunity to matter. Found by connecting this to
+            # `outcome.py` and seeing 88%+ cumulative switching after only
+            # 9 rounds, wildly outside real campaign-swing magnitudes --
+            # not tuned away, fixed at the mechanism. `pressure` is
+            # bounded in [0, 1] by construction (a convex combination of
+            # its previous value and `intensity`), so a voter only ever
+            # switches if accumulated pressure genuinely exceeds their own
+            # resistance, and un-switches cleanly if pressure decays back
+            # below it.
+            v.switched = v.pressure > v.switch_resistance
         switched_fraction_by_round.append(
             sum(v.switched for v in voters) / n_voters)
 

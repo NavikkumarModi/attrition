@@ -1299,3 +1299,72 @@ for one). What FINDINGS.md#26 actually needed established -- that the
 floor isn't an artefact of one convenient environment -- is established.
 
 202/202 tests passing (was 201).
+
+## 35. The Election Layer: does simulated persuasion flip a real seat?
+
+Closes validation ladder level 4 ("intervention validation" -- does
+changing campaign/information conditions produce plausible directional
+effects?), the level of the plan's six-level ladder not yet exercised.
+Nothing built before this session connected Level 1/2's switched-fraction
+numbers to an actual recomputed election result -- `attrition/election/
+outcome.py` (`recompute_outcome`, `tipping_point`) does that: a real
+constituency's baseline shares, shifted by a stated, explicit reallocation
+rule (a switched fraction of the total electorate is added to the
+challenger's real baseline; every other party's real share, including the
+real winner's, shrinks proportionally), producing a winner, margin, and a
+flipped/not-flipped verdict against the real 2019 result.
+
+Building this immediately surfaced two real problems in already-shipped
+code, caught by connecting components that had only been tested in
+isolation, not by inspection:
+
+**Bug 1 -- an impossible outcome.** Feeding Level 1's own final switched
+fraction into the first version of `recompute_outcome` produced a
+challenger winning with an exact 100.00% share and 100.00pp margin.
+Tracing it down: `switched_fraction` can exceed what's mathematically
+available (more than every other party's combined real share), which drove
+the reallocation's scale factor negative before clamping, zeroing every
+other party out. Fixed by clamping the gain to the available share
+(`test_recompute_outcome_clamps_gain_to_available_share`) -- caught and
+fixed before being reported as a real number, not shipped and found later.
+
+**Bug 2 -- an unintended ratchet in Level 1 itself.** Even after the clamp,
+default demo inputs kept producing 85-98% switched fractions, which traced
+to `agents.py`'s original per-round mechanic: `switched` was re-drawn via a
+Bernoulli trial on `pressure * (1 - resistance)` every round, with a small
+independent reversion chance checked only when that trial *failed*. Once
+pressure was high, the main trial rarely failed, so the reversion chance
+almost never got evaluated -- an unintended one-way ratchet the module
+docstring had explicitly (and, it turned out, incorrectly) claimed didn't
+exist by construction. Fixed to deterministic threshold-crossing,
+`switched = pressure > switch_resistance`, which reverts cleanly when
+pressure decays and removes the stochastic-compounding artefact
+(`test_level1_switched_fraction_uses_deterministic_threshold_crossing`).
+The same fix applied to `network.py`'s duplicate loop, with peer-converted
+voters now tracked as a separate, deliberately sticky set rather than
+folded into the same boolean as reversible direct-contact pressure.
+
+**A property that survived both fixes, and is reported as a limitation, not
+tuned away further.** Sustained near-maximum contact intensity still drives
+accumulated pressure toward the ceiling for nearly the whole population,
+regardless of resistance -- mathematically correct given the model (pressure
+is a convex combination converging on the sustained input), and directionally
+sensible (closer, more-persuadable real seats are more sensitive to any given
+campaign, matching real intuition -- `test_tipping_point_correlates_with_real_
+margin`), but the achievable magnitudes are well outside real campaign-swing
+realism. `examples/17_election_outcome.py`'s default sequence stays well
+below the ceiling for exactly this reason and says so in-line; a genuinely
+close, high-persuadable-fraction seat (Kolkata Dakshin) still saturates
+near-total even under that modest sequence. Not fit to any survey or
+field-experiment data, same disclaimer class as `derive_campaign_
+parameters`'s -- magnitudes here are illustrative of the pipeline's
+mechanics, not calibrated forecasts.
+
+**Result, with the fixes and a realistic input:** at Ahmedabad East (real
+margin 38.91pp), a modest 5-round campaign (intensity 0.15->0.35) produces
+18.5% switched against a 20.1% tipping point -- BJP holds, 49.81% to
+runner-up, a believable near-miss. At Mumbai North (real margin 47.01pp,
+the widest real landslide in the Phase-1 set), the same campaign produces
+8.3% switched against a 24.2% tipping point -- a clear, unthreatened hold.
+
+206/206 tests passing (was 202).

@@ -12,7 +12,7 @@ real ones.*
 **Bandits with Consumable Action Sets**
 
 [![tests](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml/badge.svg)](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml)
-[![tests](https://img.shields.io/badge/tests-202%20passing-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/tests-206%20passing-brightgreen)](tests/)
 [![theorems](https://img.shields.io/badge/theorems-11%20proven-blue)](THEORY.md)
 [![python](https://img.shields.io/badge/python-3.9%E2%80%933.12-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
@@ -366,10 +366,20 @@ machinery proven for campaigns, no API key required) respond to campaign
 contact and diverge by disposition; a voter-to-voter social network
 (`attrition.network.AgentGraph` again, this time over voters) adds a
 separately-reported word-of-mouth effect on top of direct contact
-(`examples/16_voter_social_network.py`). A real trained campaign-policy
-checkpoint and scale past ten constituencies remain open, for reasons on
-record in `FINDINGS.md` sections 31 and 33 — recorded as open rather than
-implied done. See `FINDINGS.md` sections 27–33.
+(`examples/16_voter_social_network.py`). The Election Layer closes the
+loop: `attrition/election/outcome.py` turns a simulated persuasion effect
+into an actual recomputed seat outcome against the real 2019 result
+(`examples/17_election_outcome.py`), catching and fixing two real bugs
+along the way — an unclamped reallocation that produced an impossible
+100.00% outcome, and an unintended ratchet in Level 1's own switching rule
+that the original code had incorrectly claimed didn't exist. A real,
+checked property survived both fixes and is reported as a limitation, not
+tuned away: sustained near-maximum contact still saturates the population
+regardless of resistance, so magnitudes here are illustrative of the
+pipeline's mechanics, not calibrated forecasts. A real trained
+campaign-policy checkpoint and scale past ten constituencies remain open,
+for reasons on record in `FINDINGS.md` sections 31 and 33 — recorded as
+open rather than implied done. See `FINDINGS.md` sections 27–35.
 
 ### Scale with concurrent calls
 
