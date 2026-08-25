@@ -235,7 +235,17 @@ export default function ScenarioLab({ world }: { world: string | string[] }) {
             {llmError && <p className="error-box" style={{ marginTop: 12 }}>{llmError}</p>}
             {llmResult && (
               <div style={{ marginTop: 16 }}>
-                <div className="grid cols-2">
+                <div className="grid cols-4">
+                  <div className="card stat">
+                    <div className="value">{Object.keys(llmResult.per_persona).length}</div>
+                    <div className="label">LLM-driven agents in this run</div>
+                  </div>
+                  <div className="card stat">
+                    <div className="value">
+                      {Object.values(llmResult.per_persona).reduce((s, l) => s + l.total, 0)}
+                    </div>
+                    <div className="label">total real API decisions</div>
+                  </div>
                   <div className="card stat">
                     <div className="value">{llmResult.system_value.toFixed(3)}</div>
                     <div className="label">system value</div>

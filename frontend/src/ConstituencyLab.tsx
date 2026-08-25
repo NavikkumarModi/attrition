@@ -192,6 +192,30 @@ export default function ConstituencyLab({
       </div>
 
       {result && (
+        <div className="card">
+          <h2>Agents in this run</h2>
+          <div className="grid cols-4">
+            <div className="stat">
+              <div className="value">{nVoters.toLocaleString()}</div>
+              <div className="label">Level 1 statistical voter-agents</div>
+            </div>
+            <div className="stat">
+              <div className="value">{result.level2_decisions ? Object.keys(result.level2_decisions).length : 0}</div>
+              <div className="label">Level 2 LLM-driven voter personas</div>
+            </div>
+            <div className="stat">
+              <div className="value">{result.network ? nVoters.toLocaleString() : "off"}</div>
+              <div className="label">voters in the peer-propagation graph</div>
+            </div>
+            <div className="stat">
+              <div className="value">{result.flip_probability?.n_seeds ?? 1}</div>
+              <div className="label">independent seeds simulated this run</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {result && (
         <div className="grid cols-2">
           <div className="card">
             <h2>Level 1: switched fraction by round</h2>
