@@ -34,6 +34,7 @@ from .geo import load_boundaries, geojson_feature_collection
 from .strategist import greedy_allocation, even_allocation, AllocationResult
 from .forecast import (match_seats, national_swing, predict_seat_winner,
                        leave_one_state_out_backtest, MIN_SEATS_FOR_SWING)
+from .policy_training import GradientBanditPolicy, train_gradient_bandit
 
 __all__ = ["SOURCE", "load_constituencies", "get_constituency",
           "SyntheticVoter", "Constituency", "build_constituency",
@@ -50,4 +51,5 @@ __all__ = ["SOURCE", "load_constituencies", "get_constituency",
           "load_boundaries", "geojson_feature_collection",
           "greedy_allocation", "even_allocation", "AllocationResult",
           "match_seats", "national_swing", "predict_seat_winner",
-          "leave_one_state_out_backtest", "MIN_SEATS_FOR_SWING"]
+          "leave_one_state_out_backtest", "MIN_SEATS_FOR_SWING",
+          "GradientBanditPolicy", "train_gradient_bandit"]

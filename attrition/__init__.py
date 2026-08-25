@@ -28,7 +28,7 @@ from .domains import (agent_tools, adaptive_therapy, platform_trial,
                       design_space, DOMAIN_NOTES)
 from .envs import ConsumableBanditEnv, MultiAgentConsumableEnv
 from .scenarios import (SCENARIOS, load, describe, ScenarioRegistry, from_arrays,
-                        get_arrays)
+                        get_arrays, WORLDS, worlds, describe_worlds)
 from .simultaneous import (SimultaneousPool, planner_value_simultaneous,
                            decentralised_value_simultaneous, price_of_anarchy,
                            DegradingPool, decentralised_value_degrading)
@@ -40,7 +40,8 @@ from .engines import (LotkaVolterraTumour, derive_arm_parameters,
                       DesignSpaceEngine, derive_design_space_parameters,
                       derive_antibiotic_parameters, derive_campaign_parameters)
 from .llm import LLMClient, MockLLMClient, CallableLLMClient
-from .persona import Persona, PHARMA_PERSONAS, CAMPAIGN_PERSONAS, VOTER_PERSONAS
+from .persona import (Persona, PHARMA_PERSONAS, CAMPAIGN_PERSONAS, VOTER_PERSONAS,
+                      AGENT_PERSONAS)
 from .llm_policy import LLMPolicy
 from .population import (Population, simulate_population,
                          simulate_population_simultaneous,
@@ -65,7 +66,7 @@ __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
            "derive_antibiotic_parameters", "derive_campaign_parameters",
            "ConsumableBanditEnv", "MultiAgentConsumableEnv",
            "SCENARIOS", "load", "describe", "ScenarioRegistry", "from_arrays",
-           "get_arrays",
+           "get_arrays", "WORLDS", "worlds", "describe_worlds",
            "TerminalCommitment", "optimal_commitment_policy",
            "expand_outward_policy",
            "greedy_commitment_policy", "edge_first_policy",
@@ -74,7 +75,8 @@ __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
            "decentralised_value_simultaneous", "price_of_anarchy",
            "DegradingPool", "decentralised_value_degrading",
            "LLMClient", "MockLLMClient", "CallableLLMClient",
-           "Persona", "PHARMA_PERSONAS", "CAMPAIGN_PERSONAS", "VOTER_PERSONAS", "LLMPolicy",
+           "Persona", "PHARMA_PERSONAS", "CAMPAIGN_PERSONAS", "VOTER_PERSONAS",
+           "AGENT_PERSONAS", "LLMPolicy",
            "Population", "simulate_population",
            "simulate_population_simultaneous",
            "compare_population_to_baselines", "TraceStore",

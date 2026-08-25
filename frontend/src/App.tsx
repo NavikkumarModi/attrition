@@ -4,8 +4,9 @@ import ConstituencyLab from "./ConstituencyLab";
 import Calibration from "./Calibration";
 import Strategist from "./Strategist";
 import Forecast from "./Forecast";
+import PolicyCheckpoint from "./PolicyCheckpoint";
 
-type Tab = "overview" | "lab" | "strategist" | "calibration" | "forecast";
+type Tab = "overview" | "lab" | "strategist" | "calibration" | "forecast" | "policy";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("overview");
@@ -31,6 +32,7 @@ export default function App() {
         <button className={tab === "lab" ? "active" : ""} onClick={() => setTab("lab")}>Constituency lab</button>
         <button className={tab === "strategist" ? "active" : ""} onClick={() => setTab("strategist")}>Strategist</button>
         <button className={tab === "forecast" ? "active" : ""} onClick={() => setTab("forecast")}>Forecast</button>
+        <button className={tab === "policy" ? "active" : ""} onClick={() => setTab("policy")}>Trained policy</button>
         <button className={tab === "calibration" ? "active" : ""} onClick={() => setTab("calibration")}>Calibration</button>
       </nav>
 
@@ -38,6 +40,7 @@ export default function App() {
       {tab === "lab" && <ConstituencyLab initialState={selected?.state ?? null} initialName={selected?.name ?? null} />}
       {tab === "strategist" && <Strategist onSelect={openSeat} />}
       {tab === "forecast" && <Forecast />}
+      {tab === "policy" && <PolicyCheckpoint />}
       {tab === "calibration" && <Calibration />}
     </>
   );

@@ -1823,3 +1823,133 @@ was never calibrated for. Wired into the frontend's new "Forecast" tab
 (`GET /api/forecast`).
 
 225/225 tests passing (was 220).
+
+## 43. Agent-ecosystem world: the world taxonomy gets a first new member
+
+Prompted by an outside review of the project's positioning: `attrition`
+was at risk of reading as two unrelated simulators (election, AMR) that
+happen to share a repo, rather than one engine instantiated across
+domains. Two changes, one editorial and one structural:
+
+**Editorial:** the README now states the "one engine, many worlds" framing
+explicitly, and every registered scenario in `attrition.scenarios.SCENARIOS`
+now carries a `world` label (`agent-ecosystem`, `clinical-amr`, `election`,
+`environment`, `cybersecurity`, `synthetic`) via a new `worlds()`/
+`describe_worlds()` API and an `attrition list-worlds` CLI command. This is
+a grouping label, not new infrastructure -- every scenario in every group
+still runs on the unchanged `ConsumableBandit`/`SimultaneousPool` engine.
+
+**Structural:** the `agent-ecosystem` world (`shared-quota`/
+`shared-quota-competing`, previously scenario-only) now has the same
+population layer AMR and elections already had: `AGENT_PERSONAS`
+(conservative/balanced/aggressive tool-routing agents), a config-driven
+run (`examples/agent-ecosystem.json`), and a Python walkthrough
+(`examples/19_agent_ecosystem_population.py`) -- built by relabelling the
+existing `Population`/`LLMPolicy` machinery, the same relationship
+`campaign-persuasion` already had to the AMR engine it was transplanted
+from. `attrition.config._build_persona` now resolves persona names across
+all four `*_PERSONAS` registries (previously hard-coded to
+`PHARMA_PERSONAS` only), since persona names are unique across all four
+and a config file has no reason to know which registry its persona lives
+in. 230/230 tests passing (was 225).
+
+## 44. Closing the two deliberately-deferred items: an AMR reference table, and a real trained campaign policy
+
+Two items had been recorded as open rather than forced -- FINDINGS.md#26
+("Still open: one unified five-policy table... Recorded as open, not
+attempted here") and FINDINGS.md#31 ("A real trained-policy checkpoint for
+campaigns... no equivalent external, independently-trained campaign policy
+exists to transplant"). Both are closed here, each the only honest way
+available for what it actually is.
+
+**AMR (`experiments/exp65_amr_five_policy_reference_table.py`).** The
+blocker was never a missing number -- every number already existed,
+scattered across FINDINGS.md#24.1/24.2/24.4/25. It was that the two halves
+(this repo's engine; `abx_amr_simulator`'s environment) are not on the
+same axis, and forcing them onto one would manufacture false precision the
+rest of this project deliberately avoids (see e.g. FINDINGS.md#26's own
+"partially closed" robustness leg, which stopped short of the same kind of
+unjustified precision). The table puts all five side by side -- planner,
+greedy, eci, lambda_weighted(lam=1) recomputed live from this repo's
+engine; the external siloed/shared checkpoint numbers cited verbatim from
+FINDINGS.md#24.2/24.4, not recomputed -- with the incomparability stated
+prominently in the module docstring, not a footnote, and the only
+cross-half reading offered is qualitative: reward-shaping recovers real
+value for a single decision-maker in both halves (93.7% of the planner
+ceiling here; close to zero clinical cost there), and decentralising into
+non-coordinating copies erodes a large fraction of that recovery in both
+halves (PoA rises to 1.61 for greedy here; antibiotic A's resistance climbs
+from 74.6% back to 96.9% there). Regression-tested against exp62's own
+cited price-of-anarchy figure (1.07) so the table can't silently drift from
+the prose that already cites it.
+
+**Election (`attrition/election/policy_training.py`,
+`examples/20_campaign_policy_checkpoint.py`).** No external campaign
+policy exists to transplant, so this trains one from scratch: the
+gradient-bandit method (Sutton & Barto section 2.8), plain numpy, no new
+dependency, seeing only realised per-pull reward -- the same information
+Greedy sees, nothing about `(p, e)`. The result matches a checked
+prediction stated up front, not a coincidence found after the fact: because
+`ConsumableBandit.step`'s realised reward already folds the externality in
+as a burden term common to every available arm in a round, nothing in the
+training signal distinguishes a cheap-to-the-pool arm from an expensive
+one, so the trained policy should converge toward greedy, not ECI. It does
+(regret 0.011 vs. greedy's 0.000, on 200 held-out seeds, next to ECI's
+0.580). Decentralised into `m=3` frozen copies sharing one
+`SimultaneousPool` -- mirroring FINDINGS.md#24.4's AMR-checkpoint
+decentralisation -- system value falls to 5.91, *below* decentralised
+greedy's 8.02: identical copies of the same policy share a strong
+preference for the same arm, so collision compounds on top of the
+externality-blindness already shown for the single-agent case. This is a
+second, independent route to the same zero-regret-ruin pattern this
+project's hand-derived policies already show -- now demonstrated to emerge
+from a policy nobody hand-designed to fail, closing both items with new
+evidence rather than a relabelled existing result. 242/242 tests passing
+(was 230).
+
+## 45. Both frontends adapted to the new capabilities, not just the library
+
+Sections 43-44 added a new world (`agent-ecosystem`) and a new capability
+(the trained campaign-policy checkpoint) to the library, but neither
+frontend knew about either one -- worth closing, since a capability that
+only exists in `attrition/` and `examples/` isn't actually reachable by
+someone using the shipped UIs.
+
+**`app.py` (Streamlit, the general scenario browser).** Found a real bug
+while adapting it, not just a gap: the "Real LLM population" sidebar
+section hard-coded `PHARMA_PERSONAS` regardless of which scenario was
+selected, so picking `shared-quota` or `campaign-persuasion` still offered
+prescriber-roleplay personas with nothing to do with the selected world.
+Fixed with a `WORLD_PERSONAS` mapping (`clinical-amr` ->
+`PHARMA_PERSONAS`, `election` -> `CAMPAIGN_PERSONAS`, `agent-ecosystem` ->
+`AGENT_PERSONAS`) keyed off the scenario's own `world` label, and the
+section now explains itself and disables cleanly for worlds with no
+registered persona set (`environment`, `cybersecurity`, `synthetic`, and
+custom CSV uploads) instead of silently offering the wrong list. Also
+added a "World" filter above the scenario picker, so `attrition
+list-worlds`' grouping is now reachable in the UI, not just the CLI.
+Smoke-tested: `streamlit run app.py --server.headless true` serves HTTP
+200 with no startup traceback.
+
+**`frontend/` (React, the election-track app) and `election_api.py`.**
+Added `/api/campaign-policy` (trains the gradient-bandit policy once per
+server process, `@lru_cache`d like `/api/forecast`) and a new "Trained
+policy" tab (`PolicyCheckpoint.tsx`) reproducing
+`examples/20_campaign_policy_checkpoint.py` in the app -- learned
+per-arm preferences as a bar chart, single-agent value/regret against
+greedy/eci, and the decentralised m=3 result, following the same
+card/stat layout `Forecast.tsx`/`Strategist.tsx` already use. Two new
+tests (`tests/test_election_api.py`, using `fastapi.testclient`) check
+the endpoint's shape and that the trained policy's regret lands near
+greedy's, not ECI's, matching the CLI example's own claim. `npx tsc
+--noEmit` passes on the new files; a pre-existing, unrelated type error in
+`Overview.tsx` (a `recharts` tooltip formatter signature mismatch, present
+before this session, not touched by it) still fails `tsc -b`'s stricter
+project-reference build -- left as is, not silently "fixed" as part of an
+unrelated change.
+
+The AMR world's frontend surface (`app.py`'s scenario browser already
+covers `antibiotic-stewardship`/`antibiotic-stewardship-real`) needed no
+equivalent addition: `exp65`'s reference table is a reporting script, not
+an interactive capability, and doesn't have a natural UI form the way a
+trained policy or a new persona set does. 244/244 tests passing (was 242).

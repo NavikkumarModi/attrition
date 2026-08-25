@@ -11,8 +11,12 @@ module. Config keys map directly onto existing objects/functions:
                  is a registered name, its own registered delta/horizon are
                  the default and these override them
     mode         "turn-taking" (default) or "simultaneous"
-    population   list of {"persona": "<name in PHARMA_PERSONAS>"} or an
-                 inline {"name", "role", "description", "risk_tolerance"}
+    population   list of {"persona": "<name in any *_PERSONAS registry>"}
+                 (PHARMA_PERSONAS, CAMPAIGN_PERSONAS, VOTER_PERSONAS,
+                 AGENT_PERSONAS -- persona names are unique across all four,
+                 so a name alone is enough to resolve which registry it's
+                 in) or an inline {"name", "role", "description",
+                 "risk_tolerance"}
     baselines    list of policy names to compare against, e.g. ["greedy", "eci"]
     trace_path, run_id
                  optional; if `trace_path` is set the CLI writes every
@@ -29,7 +33,8 @@ import numpy as np
 
 from .consumable import ConsumableBandit
 from .llm import MockLLMClient
-from .persona import Persona, PHARMA_PERSONAS
+from .persona import (Persona, PHARMA_PERSONAS, CAMPAIGN_PERSONAS, VOTER_PERSONAS,
+                      AGENT_PERSONAS)
 from .policies import Greedy, ECI, UCB, Conservative
 from .population import Population
 from .scenarios import get_arrays
@@ -58,13 +63,17 @@ def load_config(path):
         return json.load(f)
 
 
+_ALL_PERSONAS = {**PHARMA_PERSONAS, **CAMPAIGN_PERSONAS, **VOTER_PERSONAS,
+                **AGENT_PERSONAS}
+
+
 def _build_persona(entry):
     if "persona" in entry:
         name = entry["persona"]
-        if name not in PHARMA_PERSONAS:
+        if name not in _ALL_PERSONAS:
             raise KeyError(f"unknown persona {name!r}; "
-                           f"available: {sorted(PHARMA_PERSONAS)}")
-        return PHARMA_PERSONAS[name]
+                           f"available: {sorted(_ALL_PERSONAS)}")
+        return _ALL_PERSONAS[name]
     return Persona(name=entry["name"], role=entry.get("role", "agent"),
                   description=entry.get("description", ""),
                   risk_tolerance=float(entry.get("risk_tolerance", 0.5)))

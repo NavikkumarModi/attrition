@@ -27,9 +27,9 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from attrition import (CallableLLMClient, ConsumableBandit, Greedy, ECI, SECI,
-                       Conservative, PHARMA_PERSONAS, Population,
-                       simulate_population, run, compare, SCENARIOS,
-                       get_arrays, render_dashboard)
+                       Conservative, PHARMA_PERSONAS, CAMPAIGN_PERSONAS,
+                       AGENT_PERSONAS, Population, simulate_population, run,
+                       compare, SCENARIOS, get_arrays, render_dashboard)
 from attrition.llm_policy import _CHOICE
 
 st.set_page_config(page_title="attrition", page_icon="⚗️", layout="wide")
@@ -59,6 +59,17 @@ POLICY_CLASSES = {"Greedy": Greedy, "ECI": ECI, "SECI": SECI,
                   "Conservative": Conservative}
 LLM_MODELS = {"Anthropic": "claude-haiku-4-5-20251001",
              "Groq": "openai/gpt-oss-20b"}
+# Which persona set makes sense to run a real LLM population against depends
+# on which world the selected scenario belongs to -- a shared-quota scenario
+# has nothing to do with PHARMA_PERSONAS's prescriber roleplay. Worlds with
+# no registered persona set (environment, cybersecurity, synthetic, custom
+# CSV uploads) simply don't offer the LLM-population section; there is
+# nothing honest to run it against yet.
+WORLD_PERSONAS = {
+    "clinical-amr": PHARMA_PERSONAS,
+    "election": CAMPAIGN_PERSONAS,
+    "agent-ecosystem": AGENT_PERSONAS,
+}
 
 
 def _build_llm_client(provider, api_key, model):
@@ -92,15 +103,23 @@ with st.sidebar:
                       label_visibility="collapsed")
 
     if source == "Built-in":
-        scenario_name = st.selectbox("Scenario", sorted(SCENARIOS))
+        all_worlds = sorted({spec.get("world", "custom")
+                            for spec in SCENARIOS.values()})
+        world_filter = st.selectbox("World", ["All worlds"] + all_worlds)
+        available = sorted(
+            name for name, spec in SCENARIOS.items()
+            if world_filter == "All worlds" or spec.get("world") == world_filter)
+        scenario_name = st.selectbox("Scenario", available)
         spec = SCENARIOS[scenario_name]
         with st.container(border=True):
             st.markdown(f"**{spec['phenomenon']}**")
             st.caption(spec["description"])
+            st.caption(f"world: `{spec.get('world', 'custom')}`")
         with st.expander("Expected behaviour (from theory)"):
             st.write(spec["expected_behaviour"])
         v, p, e, kw = get_arrays(scenario_name)
         title = scenario_name
+        persona_set = WORLD_PERSONAS.get(spec.get("world"))
     else:
         st.caption("CSV with columns v,p,e — one row per arm.")
         upload = st.file_uploader("Upload", type="csv",
@@ -118,6 +137,7 @@ with st.sidebar:
         e = np.array([float(r["e"]) for r in rows])
         kw = {"delta": 0.05, "horizon": 50}
         title = "custom"
+        persona_set = None
 
     st.subheader("Parameters")
     delta = st.number_input("delta (externality scale)",
@@ -139,28 +159,37 @@ with st.sidebar:
 
     st.divider()
     st.subheader("Real LLM population")
-    st.caption("Bring your own key -- used only for this session's "
-              "requests, never logged, never stored. Runs on this "
-              "scenario's own v/p/e/delta.")
-    provider = st.selectbox("Provider", ["None", "Anthropic", "Groq"],
-                            label_visibility="collapsed")
     llm_run_clicked = False
-    if provider != "None":
-        api_key = st.text_input(f"{provider} API key", type="password",
-                                placeholder="sk-... / gsk_...")
-        model = st.text_input("Model", value=LLM_MODELS[provider])
-        persona_names = st.multiselect("Personas", list(PHARMA_PERSONAS),
-                                       default=list(PHARMA_PERSONAS)[:2])
-        max_h = max(1, min(15, int(horizon)))
-        llm_horizon = (st.slider("shared pull budget", 1, max_h, min(8, max_h))
-                      if max_h > 1 else 1)
-        st.caption(f"Up to **{llm_horizon} real API calls** to `{model}` "
-                  f"(one shared pull budget across "
-                  f"{len(persona_names) or 0} personas -- not "
-                  f"{len(persona_names) or 0}x{llm_horizon}).")
-        llm_run_clicked = st.button("Run real LLM population",
-                                    use_container_width=True,
-                                    disabled=not api_key or not persona_names)
+    if persona_set is None:
+        st.caption(
+            f"No persona set is registered for "
+            f"{'this world' if source == 'Built-in' else 'a custom CSV upload'} "
+            f"yet -- see `attrition.persona` for the registered sets "
+            f"(PHARMA_PERSONAS, CAMPAIGN_PERSONAS, AGENT_PERSONAS) and "
+            f"`app.py`'s WORLD_PERSONAS mapping. Pick an agent-ecosystem, "
+            f"clinical-amr, or election scenario to enable this section.")
+    else:
+        st.caption("Bring your own key -- used only for this session's "
+                  "requests, never logged, never stored. Runs on this "
+                  "scenario's own v/p/e/delta.")
+        provider = st.selectbox("Provider", ["None", "Anthropic", "Groq"],
+                                label_visibility="collapsed")
+        if provider != "None":
+            api_key = st.text_input(f"{provider} API key", type="password",
+                                    placeholder="sk-... / gsk_...")
+            model = st.text_input("Model", value=LLM_MODELS[provider])
+            persona_names = st.multiselect("Personas", list(persona_set),
+                                           default=list(persona_set)[:2])
+            max_h = max(1, min(15, int(horizon)))
+            llm_horizon = (st.slider("shared pull budget", 1, max_h, min(8, max_h))
+                          if max_h > 1 else 1)
+            st.caption(f"Up to **{llm_horizon} real API calls** to `{model}` "
+                      f"(one shared pull budget across "
+                      f"{len(persona_names) or 0} personas -- not "
+                      f"{len(persona_names) or 0}x{llm_horizon}).")
+            llm_run_clicked = st.button("Run real LLM population",
+                                        use_container_width=True,
+                                        disabled=not api_key or not persona_names)
 
 if not run_clicked and not llm_run_clicked:
     with st.container(border=True):
@@ -208,7 +237,7 @@ if run_clicked:
 
 if llm_run_clicked:
     st.subheader(f"Real {provider} population")
-    personas = [PHARMA_PERSONAS[n] for n in persona_names]
+    personas = [persona_set[n] for n in persona_names]
     client = _build_llm_client(provider, api_key, model)
     population = Population.from_personas(personas, client=client)
     llm_env = ConsumableBandit(v, p, e, delta=delta, horizon=llm_horizon,

@@ -10,7 +10,8 @@ import pytest
 from attrition import (State, Greedy, LLMPolicy, Persona, MockLLMClient,
                        Population, simulate_population,
                        simulate_population_simultaneous, ConsumableBandit,
-                       SimultaneousPool, derive_antibiotic_parameters)
+                       SimultaneousPool, derive_antibiotic_parameters,
+                       AGENT_PERSONAS, agent_tools, SCENARIOS)
 
 
 def _state(seed=0):
@@ -192,6 +193,30 @@ def test_simultaneous_price_of_anarchy_saturates_past_collision_threshold():
         values[m] = result["system_value"] / m
 
     assert values[50] == pytest.approx(values[500], abs=1e-9)
+
+
+def test_agent_ecosystem_population_runs_simultaneous():
+    """Regression check for the agent-ecosystem world (examples/19): the
+    same Population/LLMPolicy machinery proven for AMR personas, applied to
+    AGENT_PERSONAS over the agent_tools() domain, produces a finished run
+    with sane accounting -- not a claim about which persona mix wins.
+    """
+    env = agent_tools()
+    agents = [AGENT_PERSONAS["agent-conservative"],
+              AGENT_PERSONAS["agent-balanced"],
+              AGENT_PERSONAS["agent-aggressive"]]
+    population = Population.from_personas(agents, client=MockLLMClient(seed=0))
+    pool = SimultaneousPool(env.v, env.p, env.e, delta=0.06, horizon=10,
+                            n_agents=len(agents), seed=0)
+    result = simulate_population_simultaneous(pool, population, rounds=10)
+    assert result["system_value"] == pytest.approx(
+        sum(a["value"] for a in result["agents"].values()))
+    assert sum(a["pulls"] for a in result["agents"].values()) > 0
+
+
+def test_shared_quota_scenarios_are_tagged_agent_ecosystem_world():
+    assert SCENARIOS["shared-quota"]["world"] == "agent-ecosystem"
+    assert SCENARIOS["shared-quota-competing"]["world"] == "agent-ecosystem"
 
 
 def test_simulate_population_writes_to_trace_store(tmp_path):

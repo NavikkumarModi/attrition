@@ -28,7 +28,30 @@ from .real_data import (derive_real_amr_parameters, derive_real_cmc_parameters,
                         derive_real_fisheries_parameters, derive_real_cve_parameters)
 
 __all__ = ["SCENARIOS", "load", "describe", "ScenarioRegistry", "from_arrays",
-           "get_arrays"]
+           "get_arrays", "worlds", "describe_worlds"]
+
+
+# Every scenario belongs to exactly one world -- a grouping label, not a
+# separate simulator. All worlds share the same engine (ConsumableBandit /
+# SimultaneousPool) and the same theorems; the label exists so scenarios that
+# are instances of the same real-world phenomenon can be listed, compared,
+# and reasoned about together instead of only as a flat list of names. See
+# `worlds()` / `describe_worlds()` below and the README's "One engine, many
+# worlds" section.
+WORLDS = {
+    "agent-ecosystem": "Autonomous software agents sharing API quota, "
+                       "credentials, or tool infrastructure.",
+    "clinical-amr": "Prescribing, dosing, and trial-design decisions that "
+                    "consume a shared biological or regulatory resource "
+                    "(drug-sensitive cells, control-arm concurrency, "
+                    "filing-envelope width, antimicrobial susceptibility).",
+    "election": "Campaigns or candidates contacting a shared, finite "
+               "persuadable-voter segment.",
+    "environment": "Extraction from a shared natural-resource stock.",
+    "cybersecurity": "Exploitation of a shared, live vulnerability catalog.",
+    "synthetic": "Hand-built stress cases and negative controls, not tied "
+                "to a real-world domain.",
+}
 
 
 class ScenarioRegistry(dict):
@@ -40,10 +63,10 @@ class ScenarioRegistry(dict):
     """
 
     def register(self, name, description, phenomenon, expected_behaviour,
-                build, agents=1):
+                build, agents=1, world="custom"):
         self[name] = {"description": description, "phenomenon": phenomenon,
                      "expected_behaviour": expected_behaviour,
-                     "agents": agents, "build": build}
+                     "agents": agents, "build": build, "world": world}
         return self[name]
 
 
@@ -73,6 +96,7 @@ SCENARIOS = ScenarioRegistry({
         "expected_behaviour": "greedy records zero private regret and loses "
                               "~30% of system value",
         "agents": 1,
+        "world": "agent-ecosystem",
         "build": lambda: (_agent_tools()[:3], dict(delta=0.06, horizon=40)),
     },
     "shared-quota-competing": {
@@ -88,6 +112,7 @@ SCENARIOS = ScenarioRegistry({
                               "agent charging delta*kappa/m instead of "
                               "delta*kappa loses system value monotonically in m",
         "agents": 2,
+        "world": "agent-ecosystem",
         "build": lambda: (_agent_tools()[:3], dict(delta=0.06, horizon=40)),
     },
 
@@ -99,6 +124,7 @@ SCENARIOS = ScenarioRegistry({
         "expected_behaviour": "greedy (MTD) loses 27-121% of system value with "
                               "zero private regret; corr(v, kappa) > 0",
         "agents": 1,
+        "world": "clinical-amr",
         "build": lambda: (derive_arm_parameters(engine_kwargs={"dt": 5.0},
                                                 s0_sd=0.26)[:3],
                           dict(delta=0.30, horizon=8)),
@@ -112,6 +138,7 @@ SCENARIOS = ScenarioRegistry({
         "expected_behaviour": "greedy is optimal (0% gap) because corr(v, kappa) "
                               "< 0: promising arms are also the ones never dropped",
         "agents": 1,
+        "world": "clinical-amr",
         "build": lambda: (derive_trial_parameters(periods=5)[:3],
                           dict(delta=0.4, horizon=8)),
     },
@@ -123,6 +150,7 @@ SCENARIOS = ScenarioRegistry({
         "phenomenon": "zero-regret ruin under regulatory lock-in",
         "expected_behaviour": "greedy loses 17-107% with zero private regret",
         "agents": 1,
+        "world": "clinical-amr",
         "build": lambda: (derive_design_space_parameters(n_settings=6)[:3],
                           dict(delta=0.6, horizon=8)),
     },
@@ -144,6 +172,7 @@ SCENARIOS = ScenarioRegistry({
                               "examples/04_pharma_population.py for the "
                               "simultaneous-action version where one exists.",
         "agents": 3,
+        "world": "clinical-amr",
         "build": lambda: (derive_antibiotic_parameters()[:3],
                           dict(delta=0.35, horizon=9)),
     },
@@ -173,6 +202,7 @@ SCENARIOS = ScenarioRegistry({
                               "action machinery in attrition.simultaneous "
                               "for the setting where one exists.",
         "agents": 3,
+        "world": "election",
         "build": lambda: (derive_campaign_parameters()[:3],
                           dict(delta=0.35, horizon=9)),
     },
@@ -184,6 +214,7 @@ SCENARIOS = ScenarioRegistry({
         "expected_behaviour": "greedy value can go negative while the optimum "
                               "stays positive",
         "agents": 1,
+        "world": "synthetic",
         "build": lambda: ((np.array([1.0] + [0.99]*8),
                            np.ones(9),
                            np.array([2.0] + [0.0]*8)),
@@ -195,6 +226,7 @@ SCENARIOS = ScenarioRegistry({
         "phenomenon": "alignment implies greedy is already optimal",
         "expected_behaviour": "greedy gap is ~0 despite dispersed kappa",
         "agents": 1,
+        "world": "synthetic",
         "build": lambda: ((np.linspace(1.2, 0.4, 6),
                            np.linspace(0.1, 0.9, 6),
                            np.linspace(0.1, 2.0, 6)),
@@ -229,6 +261,7 @@ SCENARIOS.register(
                         "even though the headline effect doesn't appear at "
                         "these default parameters."),
     agents=1,
+    world="clinical-amr",
     build=lambda: (derive_real_amr_parameters(indicator="both", n=200, seed=0)[:3],
                   dict(delta=0.05, horizon=40)),
 )
@@ -254,6 +287,7 @@ SCENARIOS.register(
                         "reported honestly rather than run until a bigger "
                         "gap appears by chance."),
     agents=1,
+    world="clinical-amr",
     build=lambda: (derive_real_cmc_parameters()[:3], dict(delta=0.6, horizon=8)),
 )
 
@@ -278,6 +312,7 @@ SCENARIOS.register(
                         "with delta/horizon, the sign and the mechanism do "
                         "not."),
     agents=1,
+    world="environment",
     build=lambda: (derive_real_fisheries_parameters()[:3],
                   dict(delta=0.15, horizon=12)),
 )
@@ -301,6 +336,7 @@ SCENARIOS.register(
                         "counts -- reported honestly rather than tuned to "
                         "look more dramatic."),
     agents=1,
+    world="cybersecurity",
     build=lambda: (derive_real_cve_parameters(n=200, seed=0)[:3],
                   dict(delta=0.05, horizon=40)),
 )
@@ -308,7 +344,8 @@ SCENARIOS.register(
 
 def from_arrays(v, p, e, name="custom", agents=1, delta=0.05, horizon=50,
                 description=None, phenomenon="user-supplied",
-                expected_behaviour="not characterised -- user-supplied domain"):
+                expected_behaviour="not characterised -- user-supplied domain",
+                world="custom"):
     """Register a scenario directly from arrays.
 
     The extension point for any consumable-action-set domain outside this
@@ -321,6 +358,10 @@ def from_arrays(v, p, e, name="custom", agents=1, delta=0.05, horizon=50,
 
     `v`, `p`, `e` are copied into the registered build closure, so later
     mutating the arrays passed in does not change the registered scenario.
+    `world` groups the scenario alongside others of the same real-world
+    phenomenon (see `WORLDS`/`worlds()`); pass one of the existing keys or
+    a new one -- `worlds()` reports whatever labels are actually in use, it
+    does not require registering the label first.
     """
     v = np.asarray(v, float).copy()
     p = np.asarray(p, float).copy()
@@ -332,7 +373,7 @@ def from_arrays(v, p, e, name="custom", agents=1, delta=0.05, horizon=50,
         name, description=description, phenomenon=phenomenon,
         expected_behaviour=expected_behaviour,
         build=lambda: ((v, p, e), dict(delta=delta, horizon=horizon)),
-        agents=agents)
+        agents=agents, world=world)
 
 
 def get_arrays(name):
@@ -375,8 +416,36 @@ def describe(name=None):
     names = sorted(SCENARIOS) if name is None else [name]
     for k in names:
         s = SCENARIOS[k]
-        print(f"{k}  ({s['agents']} agent{'s' if s['agents'] > 1 else ''})")
+        print(f"{k}  ({s['agents']} agent{'s' if s['agents'] > 1 else ''})"
+              f"  [world: {s.get('world', 'custom')}]")
         print(f"  {s['description']}")
         print(f"  phenomenon: {s['phenomenon']}")
         print(f"  expected:   {s['expected_behaviour']}")
+        print()
+
+
+def worlds():
+    """Group every registered scenario name by its `world` label.
+
+    Returns `{world: [scenario_name, ...]}`, sorted within each group. A
+    world is a grouping label, not a separate engine -- every scenario in
+    every group runs on the same `ConsumableBandit`/`SimultaneousPool`
+    machinery and is subject to the same theorems. See `WORLDS` for what
+    each built-in label means.
+    """
+    grouped = {}
+    for name, spec in SCENARIOS.items():
+        grouped.setdefault(spec.get("world", "custom"), []).append(name)
+    return {w: sorted(names) for w, names in sorted(grouped.items())}
+
+
+def describe_worlds():
+    """Print every world, its meaning, and the scenarios registered in it."""
+    grouped = worlds()
+    for w in sorted(grouped):
+        note = WORLDS.get(w, "(no description registered for this world)")
+        print(f"{w}  ({len(grouped[w])} scenario{'s' if len(grouped[w]) != 1 else ''})")
+        print(f"  {note}")
+        for name in grouped[w]:
+            print(f"  - {name}")
         print()

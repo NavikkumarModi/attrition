@@ -15,6 +15,7 @@ from .consumable import run as run_episode
 from .dashboard import render_dashboard
 from .population import simulate_population, simulate_population_simultaneous
 from .scenarios import describe as describe_scenarios
+from .scenarios import describe_worlds
 from .simultaneous import decentralised_value_simultaneous, planner_value_simultaneous
 from .trace import TraceStore
 
@@ -28,6 +29,11 @@ def _cmd_list_domains(args):
 
 def _cmd_describe(args):
     describe_scenarios(args.domain)
+    return 0
+
+
+def _cmd_list_worlds(args):
+    describe_worlds()
     return 0
 
 
@@ -120,6 +126,13 @@ def build_parser():
     p_desc = sub.add_parser("describe", help="describe one registered domain")
     p_desc.add_argument("domain")
     p_desc.set_defaults(func=_cmd_describe)
+
+    p_worlds = sub.add_parser("list-worlds",
+                              help="list scenarios grouped by world "
+                                   "(agent-ecosystem, clinical-amr, "
+                                   "election, environment, cybersecurity, "
+                                   "synthetic)")
+    p_worlds.set_defaults(func=_cmd_list_worlds)
 
     p_dash = sub.add_parser("dashboard",
                             help="render a self-contained HTML dashboard from a trace")

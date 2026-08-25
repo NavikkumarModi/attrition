@@ -5,6 +5,7 @@ option), so nothing here touches the network.
 """
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -12,6 +13,8 @@ from attrition import cli
 from attrition.config import build_from_config, load_config
 from attrition.consumable import ConsumableBandit
 from attrition.simultaneous import SimultaneousPool
+
+EXAMPLES_DIR = Path(__file__).resolve().parent.parent / "examples"
 
 
 def _inline_config(mode="turn-taking", baselines=None):
@@ -91,6 +94,34 @@ def test_cli_run_simultaneous_with_trace(tmp_path, capsys):
     assert trace_path.exists()
     out = capsys.readouterr().out
     assert "planner (optimum)" in out
+
+
+def test_build_from_config_resolves_agent_persona():
+    """_build_persona must resolve names across every *_PERSONAS registry,
+    not just PHARMA_PERSONAS -- config.py's docstring promises this, and
+    the shipped examples/agent-ecosystem.json config depends on it."""
+    cfg = _inline_config()
+    cfg["population"] = [{"persona": "agent-conservative"},
+                         {"persona": "agent-aggressive"}]
+    env, population, baselines, meta = build_from_config(cfg)
+    assert len(population) == 2
+
+
+def test_cli_list_worlds(capsys):
+    rc = cli.main(["list-worlds"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "agent-ecosystem" in out and "clinical-amr" in out
+
+
+def test_cli_run_agent_ecosystem_example(capsys):
+    """The shipped examples/agent-ecosystem.json config (the agent-ecosystem
+    world's config-driven counterpart to examples/antibiotic-stewardship.json)
+    must actually run end to end through the CLI, not just import cleanly."""
+    rc = cli.main(["run", str(EXAMPLES_DIR / "agent-ecosystem.json")])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "system_value" in out and "planner (optimum)" in out
 
 
 def test_cli_run_simultaneous_reports_lambda_weighted_gap(tmp_path, capsys):

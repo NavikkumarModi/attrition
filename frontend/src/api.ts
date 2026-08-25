@@ -104,6 +104,29 @@ export const fetchForecast = () => getJSON<ForecastResult>("/api/forecast");
 export const fetchNationalScan = () => getJSON<NationalScan>("/api/national-scan");
 export const fetchCalibration = () => getJSON<Calibration>("/api/calibration");
 
+export interface PolicyStats {
+  value: number;
+  value_se: number;
+  regret: number;
+  arms_left: number;
+}
+export interface CampaignPolicyResult {
+  contact_intensity: number[];
+  learned_preferences: number[];
+  favourite_arm: number;
+  single_agent: { greedy: PolicyStats; eci: PolicyStats; trained: PolicyStats };
+  decentralised: {
+    n_agents: number;
+    planner_optimum: number;
+    decentralised_greedy: number;
+    decentralised_eci: number;
+    trained_system_value: number;
+    trained_system_regret: number;
+  };
+}
+export const fetchCampaignPolicy = () =>
+  getJSON<CampaignPolicyResult>("/api/campaign-policy");
+
 export async function simulate(
   state: string,
   name: string,

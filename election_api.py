@@ -16,12 +16,16 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from attrition import (ConsumableBandit, Greedy, ECI, compare, Population,
+                       SimultaneousPool, simulate_population_simultaneous,
+                       planner_value_simultaneous, decentralised_value_simultaneous,
+                       derive_campaign_parameters)
 from attrition.election import (ALL_PHASE1_CONSTITUENCIES, build_constituency,
                                 real_margin_pct, tipping_point, recompute_outcome,
                                 simulate_level1_contact, simulate_level2_contact,
                                 get_constituency, geojson_feature_collection,
                                 greedy_allocation, even_allocation,
-                                leave_one_state_out_backtest)
+                                leave_one_state_out_backtest, train_gradient_bandit)
 
 app = FastAPI(title="ATTRITION Election API")
 app.add_middleware(
@@ -213,3 +217,54 @@ def forecast():
     Computed once per process (deterministic, no request-specific
     input)."""
     return leave_one_state_out_backtest()
+
+
+@lru_cache(maxsize=1)
+@app.get("/api/campaign-policy")
+def campaign_policy():
+    """A real trained campaign-contact policy (`attrition.election.
+    train_gradient_bandit`) -- see FINDINGS.md#44 and examples/
+    20_campaign_policy_checkpoint.py, which this endpoint reproduces in
+    JSON form. No external campaign policy exists to transplant, so this
+    trains one from scratch, in this repo's own engine, seeing only
+    realised per-pull reward -- the same information Greedy sees, nothing
+    about (p, e). Two stages: single-agent evaluation against Greedy/ECI on
+    held-out seeds, then decentralising the frozen policy into m=3
+    independent copies sharing one pool. Computed once per process
+    (deterministic, no request-specific input) -- training takes ~1-2s."""
+    v, p, e, intensity = derive_campaign_parameters()
+    delta, horizon, m = 0.35, 9, 3
+
+    def env_factory(seed):
+        return ConsumableBandit(v, p, e, delta=delta, horizon=horizon, seed=seed)
+
+    policy = train_gradient_bandit(env_factory, episodes=4000, alpha=0.15, seed=0)
+    results = compare(env_factory, [Greedy(), ECI(), policy], seeds=200)
+
+    planner = planner_value_simultaneous(v, p, e, delta, horizon, m)
+    greedy_dec = decentralised_value_simultaneous(v, p, e, delta, horizon, m,
+                                                   rule="greedy")
+    eci_dec = decentralised_value_simultaneous(v, p, e, delta, horizon, m,
+                                               rule="eci")
+    population = Population({f"campaign-{i}": policy for i in range(m)})
+    pool = SimultaneousPool(v, p, e, delta=delta, horizon=horizon, n_agents=m, seed=0)
+    sim = simulate_population_simultaneous(pool, population, rounds=horizon)
+
+    return {
+        "contact_intensity": [float(x) for x in intensity],
+        "learned_preferences": [float(x) for x in policy.h],
+        "favourite_arm": int(policy.h.argmax()),
+        "single_agent": {
+            "greedy": results["greedy"],
+            "eci": results["eci"],
+            "trained": results[policy.name],
+        },
+        "decentralised": {
+            "n_agents": m,
+            "planner_optimum": planner,
+            "decentralised_greedy": greedy_dec,
+            "decentralised_eci": eci_dec,
+            "trained_system_value": sim["system_value"],
+            "trained_system_regret": sim["system_regret"],
+        },
+    }

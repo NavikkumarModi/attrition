@@ -1,0 +1,12 @@
+{
+  "domain": "shared-quota",
+  "mode": "simultaneous",
+  "seed": 0,
+  "population": [
+    {"persona": "agent-conservative"},
+    {"persona": "agent-balanced"},
+    {"persona": "agent-aggressive"}
+  ],
+  "baselines": ["greedy", "eci"],
+  "run_id": "agent-ecosystem-demo"
+}
