@@ -15,6 +15,7 @@ additional, optional surface.)
 import dataclasses
 import json
 import os
+import statistics
 from functools import lru_cache
 from typing import Optional
 
@@ -292,12 +293,45 @@ def calibration():
         return json.load(f)
 
 
+_TOTAL_NATIONAL_ELECTORS = sum(c.electors for c in ALL_PHASE1_CONSTITUENCIES)
+
+
+def _society_metrics(targeted, flipped):
+    """Real, closed-form metrics over the seats a strategy TARGETED --
+    "what does spending this budget cost/reach, societally" -- deliberately
+    built only from fields already real and already validated (electors,
+    state, tipping_point), not from a new mechanistic run. Wiring this to
+    the intensity-sequence mechanism (simulate_level1_contact) would
+    require inventing a budget-to-intensity-sequence mapping that doesn't
+    exist anywhere in this codebase -- see FINDINGS.md#48 for why that
+    was deliberately not attempted, the same discipline that keeps the
+    persuasion mechanism and the forecast baseline as two separate
+    questions rather than one merged (overclaiming) one."""
+    if not targeted:
+        return {"efficiency": None, "electors_in_scope": 0,
+               "electors_in_scope_pct_national": 0.0, "n_states_touched": 0,
+               "states_touched": [], "cost_mean_pct": None, "cost_dispersion_pct": 0.0}
+    tps = _tipping_points()
+    costs = [tps[_seat_id(c)] * 100.0 for c in targeted if tps[_seat_id(c)] is not None]
+    electors_in_scope = sum(c.electors for c in targeted)
+    states_touched = sorted({c.state for c in targeted})
+    return {
+        "efficiency": len(flipped) / len(targeted),
+        "electors_in_scope": electors_in_scope,
+        "electors_in_scope_pct_national": 100.0 * electors_in_scope / _TOTAL_NATIONAL_ELECTORS,
+        "n_states_touched": len(states_touched),
+        "states_touched": states_touched,
+        "cost_mean_pct": statistics.fmean(costs) if costs else None,
+        "cost_dispersion_pct": statistics.pstdev(costs) if len(costs) > 1 else 0.0,
+    }
+
+
 def _allocation_response(result):
-    by_id = {_seat_id(c): c for c in ALL_PHASE1_CONSTITUENCIES}
     return {
         "n_targeted": len(result.targeted), "n_flipped": len(result.flipped),
         "budget_spent": result.budget_spent, "budget_remaining": result.budget_remaining,
         "flipped": [_summary(c) for c in result.flipped[:25]],
+        "society": _society_metrics(result.targeted, result.flipped),
     }
 
 

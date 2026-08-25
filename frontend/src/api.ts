@@ -118,12 +118,22 @@ export interface SeatFeatureCollection {
 }
 export const fetchConstituenciesGeoJSON = () => getJSON<SeatFeatureCollection>("/api/constituencies.geojson");
 
+export interface SocietyMetrics {
+  efficiency: number | null;
+  electors_in_scope: number;
+  electors_in_scope_pct_national: number;
+  n_states_touched: number;
+  states_touched: string[];
+  cost_mean_pct: number | null;
+  cost_dispersion_pct: number;
+}
 export interface AllocationSide {
   n_targeted: number;
   n_flipped: number;
   budget_spent: number;
   budget_remaining: number;
   flipped: SeatSummary[];
+  society: SocietyMetrics;
 }
 export interface StrategistFilters {
   constituency_type?: string;

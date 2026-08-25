@@ -81,6 +81,63 @@ export default function Strategist({
       </div>
 
       {result && (
+        <div className="card">
+          <h2>What this costs society, not just seats flipped</h2>
+          <p className="muted" style={{ fontSize: 12, marginBottom: 12, maxWidth: 760 }}>
+            Real, closed-form metrics over which seats each policy TARGETED — reach (electors, states touched) and
+            efficiency (flipped ÷ targeted). Deliberately not re-derived from a mechanistic simulation run: doing
+            that would require inventing a mapping from this budget unit to a contact-intensity sequence that
+            doesn't exist anywhere in this project (see FINDINGS.md #48) — these numbers stay honest by staying
+            inside the model that's actually validated.
+          </p>
+          <div className="grid cols-2">
+            <div>
+              <h3 style={{ marginTop: 0 }}>Greedy</h3>
+              <div className="grid cols-2">
+                <div className="stat">
+                  <div className="value">{((result.greedy.society.efficiency ?? 0) * 100).toFixed(0)}%</div>
+                  <div className="label">efficiency (flipped ÷ targeted)</div>
+                </div>
+                <div className="stat">
+                  <div className="value">{result.greedy.society.n_states_touched}</div>
+                  <div className="label">states touched</div>
+                </div>
+                <div className="stat">
+                  <div className="value">{result.greedy.society.electors_in_scope_pct_national.toFixed(1)}%</div>
+                  <div className="label">of national electorate in scope</div>
+                </div>
+                <div className="stat">
+                  <div className="value">{result.greedy.society.cost_mean_pct?.toFixed(2) ?? "—"}%</div>
+                  <div className="label">mean tipping-point cost of targeted seats</div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 style={{ marginTop: 0 }}>Even</h3>
+              <div className="grid cols-2">
+                <div className="stat">
+                  <div className="value">{((result.even.society.efficiency ?? 0) * 100).toFixed(0)}%</div>
+                  <div className="label">efficiency (flipped ÷ targeted)</div>
+                </div>
+                <div className="stat">
+                  <div className="value">{result.even.society.n_states_touched}</div>
+                  <div className="label">states touched</div>
+                </div>
+                <div className="stat">
+                  <div className="value">{result.even.society.electors_in_scope_pct_national.toFixed(1)}%</div>
+                  <div className="label">of national electorate in scope</div>
+                </div>
+                <div className="stat">
+                  <div className="value">{result.even.society.cost_mean_pct?.toFixed(2) ?? "—"}%</div>
+                  <div className="label">mean tipping-point cost of targeted seats</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {result && (
         <div className="grid cols-2">
           <div className="card">
             <h2>Greedy — cheapest seats first</h2>

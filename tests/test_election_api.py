@@ -231,3 +231,43 @@ def test_strategist_constituency_type_filter_only_returns_matching_seats():
 def test_strategist_invalid_incumbency_400s():
     resp = client.get("/api/strategist", params={"incumbency": "not-a-value"})
     assert resp.status_code == 400
+
+
+# --------------------------------------------------- society metrics
+def test_strategist_society_metrics_present_for_both_policies():
+    data = client.get("/api/strategist", params={"budget_pct": 30}).json()
+    for key in ("greedy", "even"):
+        society = data[key]["society"]
+        assert "efficiency" in society
+        assert "electors_in_scope" in society
+        assert "n_states_touched" in society
+
+
+def test_strategist_greedy_efficiency_is_always_one():
+    """greedy_allocation never targets a seat it can't finish (strategist
+    .py's own docstring), so every targeted seat must also be flipped."""
+    data = client.get("/api/strategist", params={"budget_pct": 30}).json()
+    assert data["greedy"]["society"]["efficiency"] == pytest.approx(1.0)
+
+
+def test_strategist_even_touches_more_states_than_greedy_at_low_budget():
+    """The real, checkable tradeoff this metric exists to show: even
+    spreads across far more of the country than greedy at the same
+    budget, at the cost of efficiency."""
+    data = client.get("/api/strategist", params={"budget_pct": 30}).json()
+    assert (data["even"]["society"]["n_states_touched"]
+           >= data["greedy"]["society"]["n_states_touched"])
+    assert (data["even"]["society"]["electors_in_scope_pct_national"]
+           >= data["greedy"]["society"]["electors_in_scope_pct_national"])
+
+
+def test_strategist_society_metrics_empty_scope_does_not_crash():
+    """A filter combination with zero matching seats must return a sane
+    empty society block, not a 500 from statistics.fmean([])."""
+    resp = client.get("/api/strategist",
+                      params={"budget_pct": 1, "constituency_type": "ST",
+                             "sub_region": "AVADH"})
+    assert resp.status_code == 200
+    society = resp.json()["greedy"]["society"]
+    assert society["efficiency"] in (None, 0.0, 1.0)
+    assert society["cost_dispersion_pct"] == 0.0

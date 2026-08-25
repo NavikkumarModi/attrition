@@ -2087,3 +2087,47 @@ Strategist to `incumbency=challenger` correctly dropped scope from 543 to
 
 25 new/extended backend tests (`tests/test_election_api.py`). 267/267
 tests passing (was 255).
+
+## 48. Strategist gets real society-level metrics -- deliberately not a new mechanistic run
+
+Follow-up to "move toward society simulation": the natural next step looked
+like running the mechanistic Level 1 simulator (`simulate_level1_contact`,
+which consumes an `intensity_sequence` over rounds) across every seat
+Strategist targets, to get simulated switched-fraction spread and network
+reach at national scale. Checked before building it: `greedy_allocation`/
+`even_allocation` operate in a completely different unit -- a closed-form
+percent-of-electorate "cost" derived directly from `tipping_point`, with
+no rounds, no intensity sequence, and no defined mapping from "budget
+spent on a seat" to "what contact-intensity sequence that seat receives."
+Inventing that mapping just to produce a national simulated run would
+manufacture a connection between two deliberately separate model layers --
+the same overclaim this project has consistently refused elsewhere (the
+AMR reference table's two incomparable halves, FINDINGS.md#44; the
+forecast baseline being "a different question, asked directly" rather
+than merged with the persuasion mechanism, #42). Not built, for that
+reason, not because it was hard.
+
+**What's real and buildable instead**: society-level metrics computed
+entirely from fields already real and already validated -- which seats a
+strategy TARGETS, not a new simulation of what happens once it does.
+`election_api.py`'s `_society_metrics` adds, per allocation
+(`greedy`/`even`): `efficiency` (flipped ÷ targeted -- always 1.0 for
+greedy, since it never targets a seat it can't finish, by
+`strategist.py`'s own docstring; a real, checkable distinguishing number
+for `even`, which can target and still fail to flip); `electors_in_scope`
+and its percent of the real national total (~912M, summed from
+`Constituency.electors`); `n_states_touched`/`states_touched` (real,
+per-seat `state` field); and `cost_mean_pct`/`cost_dispersion_pct` (mean
+and population stdev of targeted seats' real `tipping_point`, via
+`statistics.fmean`/`pstdev` -- stdlib, no new dependency).
+
+**The result is a genuine, checkable tradeoff**, not a manufactured one:
+at budget_pct=30, greedy touches 19 states (8.7% of the national
+electorate) and flips everything it targets; even spreads across all 36
+states (91.4% of the electorate) and flips almost nothing at that budget
+-- the "what does it cost society to win" question the strategy
+discussion asked for, answered with zero new simulation risk. Verified
+live in the browser (`Strategist.tsx`'s new "What this costs society"
+card) against the API's own numbers. 5 new tests, including an
+empty-filter-scope regression guard (`statistics.fmean([])` on a filter
+combination matching zero seats would otherwise 500).

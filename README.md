@@ -512,6 +512,17 @@ had never been updated to respect `REALISTIC_PERSUASION_CEILING_PCT`
 (added later, in #41) and was returning switched fractions ~20x past the
 real calibration ceiling — fixed at the mechanism, in `network.py`.
 
+Strategist also reports what a budget costs society, not just how many
+seats it flips (`FINDINGS.md` #48): efficiency (flipped ÷ targeted),
+national-electorate reach, states touched, and mean/dispersion of
+targeted seats' real tipping-point cost — all closed-form, derived from
+already-validated fields, deliberately not from a new mechanistic run
+(that would require inventing a budget-to-contact-intensity mapping that
+doesn't exist in this project). The result is a real tradeoff: at a
+30-point budget, greedy touches 19 states (8.7% of the national
+electorate) and flips everything it targets; even spreads across all 36
+states (91.4% of the electorate) and flips almost nothing.
+
 ### Scale with concurrent calls
 
 `simulate_population_simultaneous` and `compare_population_to_baselines` take
