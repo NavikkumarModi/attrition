@@ -916,3 +916,74 @@ lambda-weighted, and the planner appear together in sections 24.1/25, in
 this repo's engine. The trained RL baseline appears only in sections
 24.2/24.4, in their environment. No single run has all five side by side on
 common ground. Recorded as open, not attempted here.
+
+## 27. Election track, Phase 1: a real, validated population engine — no theorem claims yet
+
+First concrete step on the election track, per the parallel-track plan:
+population infrastructure now, campaign/persuasion agents and any
+regret-harm claim later, once this layer is validated on its own. Mirrors
+the AMR extension's discipline (`docs/amr-stewardship-extension.md`) --
+real data, checked claims, honest scope -- applied to a domain this repo
+had zero code in before this session.
+
+**Data.** `lokdhaba.ashoka.edu.in`'s live query API
+(`POST /api/data/api/v2.0/getDerivedData`) returned 502 Bad Gateway when
+checked (2026-08-25), independent of query size -- a real infrastructure
+outage, not a client-side problem, confirmed by driving the actual site in
+a browser and reading the network requests, not assumed. The Trivedi
+Centre's own GitHub-hosted archive (`github.com/tcpd/tcpd-ld-data-archive`,
+"LD data as on June 2023", per-state gzipped CSVs) was usable and is
+arguably more reproducible regardless: static, versioned files rather than
+a live query against infrastructure that may or may not be up for someone
+else re-running this. `scripts/fetch_election_data.py` pulls ten real,
+named, verified-to-exist constituencies (2019 General Election, the most
+recent year in the archive) into `attrition/data/tcpd_lokdhaba_ge.json`:
+
+| state | constituency | note | electors | turnout | top party |
+|---|---|---|---:|---:|---|
+| Gujarat | Ahmedabad East | urban | 1,811,851 | 61.61% | BJP 67.2% |
+| Maharashtra | Mumbai North | urban | 1,647,350 | 60.08% | BJP 71.4% |
+| Uttar Pradesh | Lucknow | urban | 2,040,367 | 54.72% | BJP 56.7% |
+| Uttar Pradesh | Azamgarh | rural | 1,789,168 | 57.52% | SP 60.4% |
+| West Bengal | Kolkata Dakshin | urban | 1,728,851 | 69.79% | AITC 47.5% |
+| Tamil Nadu | Chennai Central | urban | 1,332,300 | 58.95% | DMK 57.1% |
+| Karnataka | Bangalore Rural | rural | 2,497,458 | 64.94% | INC 54.1% |
+| Bihar | Patna Sahib | urban | 2,146,008 | 45.77% | BJP 61.9% |
+| Kerala | Thiruvananthapuram | urban | 1,371,427 | 73.66% | INC 41.2% |
+| Assam | Gauhati | northeast | 2,181,319 | 80.86% | BJP 57.2% |
+
+**Architecture.** `attrition/election/` is a subpackage, not a
+`SCENARIOS` entry -- the population layer (real data pipelines, no single
+`(v, p, e)` triple) doesn't fit the scenario-registry contract every other
+domain in this repo terminates at, per the domain-extension discussion's
+unification guidance. `lokdhaba.py` holds the real, observed data;
+`population.py` holds `SyntheticVoter` (deliberately thin: constituency,
+turned-out, voted-for -- nothing else) and `synthetic_voter_population`,
+which samples turnout as Bernoulli(real turnout rate) and, among those who
+turn out, party choice from a categorical distribution weighted by real
+vote share. This is Level 0 of the plan's three-tier agent hierarchy: no
+LLM calls, millions-scalable, exact by construction.
+
+**Validation ladder, level 1.** `validate_population` checks the sampled
+population reproduces the real turnout and vote-share numbers within 0.5
+points, for all ten constituencies, not asserted once and assumed to
+generalise (`tests/test_election.py`). All ten pass.
+
+**A real bug, caught by the validation function it was building, not
+shipped.** Several candidates in the real data share a party label --
+every independent candidate is coded "IND" -- so `AHMEDABAD EAST` alone
+has multiple distinct "IND" rows with different individual vote shares.
+The first version of `validate_population` compared the *combined* sampled
+share (correctly aggregated, since sampling draws by row index) against
+*one* duplicate row's individual real share (1.80% sampled vs. 0.54% real,
+failing a 0.5-point tolerance) instead of the real shares aggregated the
+same way. Fixed by summing real shares per unique label before comparing;
+`test_duplicate_party_labels_aggregate_correctly` regression-tests it.
+Recorded because this is exactly the kind of silent-until-checked error the
+validation ladder exists to catch, and it did.
+
+**Scope, stated plainly.** Ten constituencies, one real cross-section
+(2019), Level 0 only. No campaign agents, no persuasion dynamics, no
+social network layer, no LLM calls, and -- unlike the AMR extension -- no
+regret-harm claim of any kind yet. This section documents infrastructure
+being validated, not a result.

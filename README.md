@@ -12,7 +12,7 @@ real ones.*
 **Bandits with Consumable Action Sets**
 
 [![tests](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml/badge.svg)](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml)
-[![tests](https://img.shields.io/badge/tests-175%20passing-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/tests-182%20passing-brightgreen)](tests/)
 [![theorems](https://img.shields.io/badge/theorems-11%20proven-blue)](THEORY.md)
 [![python](https://img.shields.io/badge/python-3.9%E2%80%933.12-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
@@ -327,6 +327,16 @@ partially permanent? the sign of the gap flips depending on the scoring
 rule's own persistence assumption). Full findings in `FINDINGS.md` sections
 24–25; the readable summary is
 [`docs/amr-stewardship-extension.md`](docs/amr-stewardship-extension.md).
+
+A second domain track, elections, is under construction alongside AMR:
+`attrition.election` (Phase 1) is a population engine over ten real Lok
+Sabha constituencies (2019 General Election, Trivedi Centre for Political
+Data / LokDhaba, deliberately different environments — urban/rural/
+Northeast, not a representative sample), with statistical voters sampled to
+reproduce each constituency's real turnout and vote share, not synthetic
+individual-level attributes. No LLM calls, no campaign agents, no theorem
+claim yet — see the module docstrings in `attrition/election/` and
+`scripts/fetch_election_data.py` for scope and provenance.
 
 ### Scale with concurrent calls
 

@@ -1,0 +1,1302 @@
+[
+ {
+  "state": "Gujarat",
+  "constituency": "AHMEDABAD EAST",
+  "note": "urban",
+  "year": 2019,
+  "constituency_type": "GEN",
+  "electors": 1811851,
+  "turnout_pct": 61.61,
+  "n_candidates": 26,
+  "enop": 1.89,
+  "candidates": [
+   {
+    "position": 1,
+    "party": "BJP",
+    "votes": 749834,
+    "vote_share_pct": 67.17
+   },
+   {
+    "position": 2,
+    "party": "INC",
+    "votes": 315504,
+    "vote_share_pct": 28.26
+   },
+   {
+    "position": 3,
+    "party": "BSP",
+    "votes": 9121,
+    "vote_share_pct": 0.82
+   },
+   {
+    "position": 4,
+    "party": "NOTA",
+    "votes": 9008,
+    "vote_share_pct": 0.81
+   },
+   {
+    "position": 5,
+    "party": "IND",
+    "votes": 6082,
+    "vote_share_pct": 0.54
+   },
+   {
+    "position": 6,
+    "party": "IND",
+    "votes": 3548,
+    "vote_share_pct": 0.32
+   },
+   {
+    "position": 7,
+    "party": "IND",
+    "votes": 2517,
+    "vote_share_pct": 0.23
+   },
+   {
+    "position": 8,
+    "party": "NIRBHP",
+    "votes": 2449,
+    "vote_share_pct": 0.22
+   },
+   {
+    "position": 9,
+    "party": "IND",
+    "votes": 1791,
+    "vote_share_pct": 0.16
+   },
+   {
+    "position": 10,
+    "party": "HND",
+    "votes": 1649,
+    "vote_share_pct": 0.15
+   },
+   {
+    "position": 11,
+    "party": "IND",
+    "votes": 1466,
+    "vote_share_pct": 0.13
+   },
+   {
+    "position": 12,
+    "party": "IND",
+    "votes": 1395,
+    "vote_share_pct": 0.12
+   },
+   {
+    "position": 13,
+    "party": "PAP",
+    "votes": 1346,
+    "vote_share_pct": 0.12
+   },
+   {
+    "position": 14,
+    "party": "IND",
+    "votes": 1337,
+    "vote_share_pct": 0.12
+   },
+   {
+    "position": 15,
+    "party": "MaNPa",
+    "votes": 1272,
+    "vote_share_pct": 0.11
+   },
+   {
+    "position": 16,
+    "party": "JANSAPP",
+    "votes": 899,
+    "vote_share_pct": 0.08
+   },
+   {
+    "position": 17,
+    "party": "IND",
+    "votes": 898,
+    "vote_share_pct": 0.08
+   },
+   {
+    "position": 18,
+    "party": "JSVP",
+    "votes": 821,
+    "vote_share_pct": 0.07
+   },
+   {
+    "position": 19,
+    "party": "LoRP",
+    "votes": 705,
+    "vote_share_pct": 0.06
+   },
+   {
+    "position": 20,
+    "party": "RTORP",
+    "votes": 704,
+    "vote_share_pct": 0.06
+   },
+   {
+    "position": 21,
+    "party": "LOGAP",
+    "votes": 635,
+    "vote_share_pct": 0.06
+   },
+   {
+    "position": 22,
+    "party": "ANC",
+    "votes": 628,
+    "vote_share_pct": 0.06
+   },
+   {
+    "position": 23,
+    "party": "SABHP",
+    "votes": 604,
+    "vote_share_pct": 0.05
+   },
+   {
+    "position": 24,
+    "party": "YJJP",
+    "votes": 589,
+    "vote_share_pct": 0.05
+   },
+   {
+    "position": 25,
+    "party": "IND",
+    "votes": 573,
+    "vote_share_pct": 0.05
+   },
+   {
+    "position": 26,
+    "party": "IND",
+    "votes": 534,
+    "vote_share_pct": 0.05
+   },
+   {
+    "position": 27,
+    "party": "IND",
+    "votes": 458,
+    "vote_share_pct": 0.04
+   }
+  ]
+ },
+ {
+  "state": "Maharashtra",
+  "constituency": "MUMBAI NORTH",
+  "note": "urban",
+  "year": 2019,
+  "constituency_type": "GEN",
+  "electors": 1647350,
+  "turnout_pct": 60.08,
+  "n_candidates": 18,
+  "enop": 1.75,
+  "candidates": [
+   {
+    "position": 1,
+    "party": "BJP",
+    "votes": 706678,
+    "vote_share_pct": 71.4
+   },
+   {
+    "position": 2,
+    "party": "INC",
+    "votes": 241431,
+    "vote_share_pct": 24.39
+   },
+   {
+    "position": 3,
+    "party": "VBA",
+    "votes": 15691,
+    "vote_share_pct": 1.59
+   },
+   {
+    "position": 4,
+    "party": "NOTA",
+    "votes": 11966,
+    "vote_share_pct": 1.21
+   },
+   {
+    "position": 5,
+    "party": "BSP",
+    "votes": 3925,
+    "vote_share_pct": 0.4
+   },
+   {
+    "position": 6,
+    "party": "IND",
+    "votes": 1393,
+    "vote_share_pct": 0.14
+   },
+   {
+    "position": 7,
+    "party": "IND",
+    "votes": 1352,
+    "vote_share_pct": 0.14
+   },
+   {
+    "position": 8,
+    "party": "BLRP",
+    "votes": 1234,
+    "vote_share_pct": 0.12
+   },
+   {
+    "position": 9,
+    "party": "IND",
+    "votes": 1078,
+    "vote_share_pct": 0.11
+   },
+   {
+    "position": 10,
+    "party": "HBP",
+    "votes": 906,
+    "vote_share_pct": 0.09
+   },
+   {
+    "position": 11,
+    "party": "IND",
+    "votes": 900,
+    "vote_share_pct": 0.09
+   },
+   {
+    "position": 12,
+    "party": "IND",
+    "votes": 634,
+    "vote_share_pct": 0.06
+   },
+   {
+    "position": 13,
+    "party": "MLPOIRF",
+    "votes": 489,
+    "vote_share_pct": 0.05
+   },
+   {
+    "position": 14,
+    "party": "BMUP",
+    "votes": 449,
+    "vote_share_pct": 0.05
+   },
+   {
+    "position": 15,
+    "party": "SABHP",
+    "votes": 423,
+    "vote_share_pct": 0.04
+   },
+   {
+    "position": 16,
+    "party": "RASMARP",
+    "votes": 388,
+    "vote_share_pct": 0.04
+   },
+   {
+    "position": 17,
+    "party": "IND",
+    "votes": 292,
+    "vote_share_pct": 0.03
+   },
+   {
+    "position": 18,
+    "party": "BHAPRAP",
+    "votes": 274,
+    "vote_share_pct": 0.03
+   },
+   {
+    "position": 19,
+    "party": "NAP",
+    "votes": 256,
+    "vote_share_pct": 0.03
+   }
+  ]
+ },
+ {
+  "state": "Uttar Pradesh",
+  "constituency": "LUCKNOW",
+  "note": "urban",
+  "year": 2019,
+  "constituency_type": "GEN",
+  "electors": 2040367,
+  "turnout_pct": 54.72,
+  "n_candidates": 15,
+  "enop": 2.38,
+  "candidates": [
+   {
+    "position": 1,
+    "party": "BJP",
+    "votes": 633026,
+    "vote_share_pct": 56.7
+   },
+   {
+    "position": 2,
+    "party": "SP",
+    "votes": 285724,
+    "vote_share_pct": 25.59
+   },
+   {
+    "position": 3,
+    "party": "INC",
+    "votes": 180011,
+    "vote_share_pct": 16.12
+   },
+   {
+    "position": 4,
+    "party": "NOTA",
+    "votes": 7416,
+    "vote_share_pct": 0.66
+   },
+   {
+    "position": 5,
+    "party": "ABJS",
+    "votes": 2104,
+    "vote_share_pct": 0.19
+   },
+   {
+    "position": 6,
+    "party": "ASaP",
+    "votes": 1251,
+    "vote_share_pct": 0.11
+   },
+   {
+    "position": 7,
+    "party": "IND",
+    "votes": 981,
+    "vote_share_pct": 0.09
+   },
+   {
+    "position": 8,
+    "party": "NEP",
+    "votes": 935,
+    "vote_share_pct": 0.08
+   },
+   {
+    "position": 9,
+    "party": "IND",
+    "votes": 859,
+    "vote_share_pct": 0.08
+   },
+   {
+    "position": 10,
+    "party": "AIFB",
+    "votes": 739,
+    "vote_share_pct": 0.07
+   },
+   {
+    "position": 11,
+    "party": "PPID",
+    "votes": 675,
+    "vote_share_pct": 0.06
+   },
+   {
+    "position": 12,
+    "party": "IND",
+    "votes": 594,
+    "vote_share_pct": 0.05
+   },
+   {
+    "position": 13,
+    "party": "INL",
+    "votes": 572,
+    "vote_share_pct": 0.05
+   },
+   {
+    "position": 14,
+    "party": "SABHP",
+    "votes": 569,
+    "vote_share_pct": 0.05
+   },
+   {
+    "position": 15,
+    "party": "SFP",
+    "votes": 515,
+    "vote_share_pct": 0.05
+   },
+   {
+    "position": 16,
+    "party": "MARD",
+    "votes": 474,
+    "vote_share_pct": 0.04
+   }
+  ]
+ },
+ {
+  "state": "Uttar Pradesh",
+  "constituency": "AZAMGARH",
+  "note": "rural",
+  "year": 2019,
+  "constituency_type": "GEN",
+  "electors": 1789168,
+  "turnout_pct": 57.52,
+  "n_candidates": 15,
+  "enop": 2.08,
+  "candidates": [
+   {
+    "position": 1,
+    "party": "SP",
+    "votes": 621578,
+    "vote_share_pct": 60.4
+   },
+   {
+    "position": 2,
+    "party": "BJP",
+    "votes": 361704,
+    "vote_share_pct": 35.15
+   },
+   {
+    "position": 3,
+    "party": "SBSP",
+    "votes": 10078,
+    "vote_share_pct": 0.98
+   },
+   {
+    "position": 4,
+    "party": "NOTA",
+    "votes": 7255,
+    "vote_share_pct": 0.7
+   },
+   {
+    "position": 5,
+    "party": "RUC",
+    "votes": 6763,
+    "vote_share_pct": 0.66
+   },
+   {
+    "position": 6,
+    "party": "IND",
+    "votes": 3739,
+    "vote_share_pct": 0.36
+   },
+   {
+    "position": 7,
+    "party": "JKiP",
+    "votes": 3148,
+    "vote_share_pct": 0.31
+   },
+   {
+    "position": 8,
+    "party": "SaDa",
+    "votes": 2901,
+    "vote_share_pct": 0.28
+   },
+   {
+    "position": 9,
+    "party": "IND",
+    "votes": 2204,
+    "vote_share_pct": 0.21
+   },
+   {
+    "position": 10,
+    "party": "IND",
+    "votes": 2098,
+    "vote_share_pct": 0.2
+   },
+   {
+    "position": 11,
+    "party": "IND",
+    "votes": 1931,
+    "vote_share_pct": 0.19
+   },
+   {
+    "position": 12,
+    "party": "IND",
+    "votes": 1432,
+    "vote_share_pct": 0.14
+   },
+   {
+    "position": 13,
+    "party": "IND",
+    "votes": 1250,
+    "vote_share_pct": 0.12
+   },
+   {
+    "position": 14,
+    "party": "AJPI",
+    "votes": 1106,
+    "vote_share_pct": 0.11
+   },
+   {
+    "position": 15,
+    "party": "NAP",
+    "votes": 976,
+    "vote_share_pct": 0.09
+   },
+   {
+    "position": 16,
+    "party": "NEP",
+    "votes": 949,
+    "vote_share_pct": 0.09
+   }
+  ]
+ },
+ {
+  "state": "West Bengal",
+  "constituency": "KOLKATA DAKSHIN",
+  "note": "urban",
+  "year": 2019,
+  "constituency_type": "GEN",
+  "electors": 1728851,
+  "turnout_pct": 69.79,
+  "n_candidates": 13,
+  "enop": 2.78,
+  "candidates": [
+   {
+    "position": 1,
+    "party": "AITC",
+    "votes": 573119,
+    "vote_share_pct": 47.5
+   },
+   {
+    "position": 2,
+    "party": "BJP",
+    "votes": 417927,
+    "vote_share_pct": 34.64
+   },
+   {
+    "position": 3,
+    "party": "CPM",
+    "votes": 140275,
+    "vote_share_pct": 11.63
+   },
+   {
+    "position": 4,
+    "party": "INC",
+    "votes": 42618,
+    "vote_share_pct": 3.53
+   },
+   {
+    "position": 5,
+    "party": "NOTA",
+    "votes": 14824,
+    "vote_share_pct": 1.23
+   },
+   {
+    "position": 6,
+    "party": "IND",
+    "votes": 4564,
+    "vote_share_pct": 0.38
+   },
+   {
+    "position": 7,
+    "party": "IND",
+    "votes": 2457,
+    "vote_share_pct": 0.2
+   },
+   {
+    "position": 8,
+    "party": "SUCI(C)",
+    "votes": 2391,
+    "vote_share_pct": 0.2
+   },
+   {
+    "position": 9,
+    "party": "BSP",
+    "votes": 2360,
+    "vote_share_pct": 0.2
+   },
+   {
+    "position": 10,
+    "party": "SHS",
+    "votes": 1697,
+    "vote_share_pct": 0.14
+   },
+   {
+    "position": 11,
+    "party": "IND",
+    "votes": 1658,
+    "vote_share_pct": 0.14
+   },
+   {
+    "position": 12,
+    "party": "IND",
+    "votes": 1253,
+    "vote_share_pct": 0.1
+   },
+   {
+    "position": 13,
+    "party": "IND",
+    "votes": 801,
+    "vote_share_pct": 0.07
+   },
+   {
+    "position": 14,
+    "party": "IND",
+    "votes": 701,
+    "vote_share_pct": 0.06
+   }
+  ]
+ },
+ {
+  "state": "Tamil Nadu",
+  "constituency": "CHENNAI CENTRAL",
+  "note": "urban",
+  "year": 2019,
+  "constituency_type": "GEN",
+  "electors": 1332300,
+  "turnout_pct": 58.95,
+  "n_candidates": 31,
+  "enop": 2.63,
+  "candidates": [
+   {
+    "position": 1,
+    "party": "DMK",
+    "votes": 448911,
+    "vote_share_pct": 57.15
+   },
+   {
+    "position": 2,
+    "party": "PMK",
+    "votes": 147391,
+    "vote_share_pct": 18.77
+   },
+   {
+    "position": 3,
+    "party": "MNM",
+    "votes": 92249,
+    "vote_share_pct": 11.74
+   },
+   {
+    "position": 4,
+    "party": "NTK",
+    "votes": 30886,
+    "vote_share_pct": 3.93
+   },
+   {
+    "position": 5,
+    "party": "SDPI",
+    "votes": 23741,
+    "vote_share_pct": 3.02
+   },
+   {
+    "position": 6,
+    "party": "NOTA",
+    "votes": 13822,
+    "vote_share_pct": 1.76
+   },
+   {
+    "position": 7,
+    "party": "ACDP",
+    "votes": 5768,
+    "vote_share_pct": 0.73
+   },
+   {
+    "position": 8,
+    "party": "RPI(A)",
+    "votes": 3398,
+    "vote_share_pct": 0.43
+   },
+   {
+    "position": 9,
+    "party": "BSP",
+    "votes": 2696,
+    "vote_share_pct": 0.34
+   },
+   {
+    "position": 10,
+    "party": "IND",
+    "votes": 1770,
+    "vote_share_pct": 0.23
+   },
+   {
+    "position": 11,
+    "party": "TNLK",
+    "votes": 1556,
+    "vote_share_pct": 0.2
+   },
+   {
+    "position": 12,
+    "party": "IND",
+    "votes": 1444,
+    "vote_share_pct": 0.18
+   },
+   {
+    "position": 13,
+    "party": "IND",
+    "votes": 1234,
+    "vote_share_pct": 0.16
+   },
+   {
+    "position": 14,
+    "party": "IND",
+    "votes": 1229,
+    "vote_share_pct": 0.16
+   },
+   {
+    "position": 15,
+    "party": "IND",
+    "votes": 1184,
+    "vote_share_pct": 0.15
+   },
+   {
+    "position": 16,
+    "party": "PPOI",
+    "votes": 1030,
+    "vote_share_pct": 0.13
+   },
+   {
+    "position": 17,
+    "party": "IND",
+    "votes": 929,
+    "vote_share_pct": 0.12
+   },
+   {
+    "position": 18,
+    "party": "DMSK",
+    "votes": 690,
+    "vote_share_pct": 0.09
+   },
+   {
+    "position": 19,
+    "party": "AIMAK",
+    "votes": 645,
+    "vote_share_pct": 0.08
+   },
+   {
+    "position": 20,
+    "party": "AIVP",
+    "votes": 643,
+    "vote_share_pct": 0.08
+   },
+   {
+    "position": 21,
+    "party": "IND",
+    "votes": 511,
+    "vote_share_pct": 0.07
+   },
+   {
+    "position": 22,
+    "party": "IND",
+    "votes": 504,
+    "vote_share_pct": 0.06
+   },
+   {
+    "position": 23,
+    "party": "IND",
+    "votes": 497,
+    "vote_share_pct": 0.06
+   },
+   {
+    "position": 24,
+    "party": "IND",
+    "votes": 377,
+    "vote_share_pct": 0.05
+   },
+   {
+    "position": 25,
+    "party": "IND",
+    "votes": 360,
+    "vote_share_pct": 0.05
+   },
+   {
+    "position": 26,
+    "party": "IND",
+    "votes": 356,
+    "vote_share_pct": 0.05
+   },
+   {
+    "position": 27,
+    "party": "IND",
+    "votes": 334,
+    "vote_share_pct": 0.04
+   },
+   {
+    "position": 28,
+    "party": "IND",
+    "votes": 325,
+    "vote_share_pct": 0.04
+   },
+   {
+    "position": 29,
+    "party": "IND",
+    "votes": 322,
+    "vote_share_pct": 0.04
+   },
+   {
+    "position": 30,
+    "party": "IND",
+    "votes": 235,
+    "vote_share_pct": 0.03
+   },
+   {
+    "position": 31,
+    "party": "IND",
+    "votes": 216,
+    "vote_share_pct": 0.03
+   },
+   {
+    "position": 32,
+    "party": "IND",
+    "votes": 197,
+    "vote_share_pct": 0.03
+   }
+  ]
+ },
+ {
+  "state": "Karnataka",
+  "constituency": "BANGALORE RURAL",
+  "note": "rural",
+  "year": 2019,
+  "constituency_type": "GEN",
+  "electors": 2497458,
+  "turnout_pct": 64.94,
+  "n_candidates": 15,
+  "enop": 2.17,
+  "candidates": [
+   {
+    "position": 1,
+    "party": "INC",
+    "votes": 878258,
+    "vote_share_pct": 54.15
+   },
+   {
+    "position": 2,
+    "party": "BJP",
+    "votes": 671388,
+    "vote_share_pct": 41.4
+   },
+   {
+    "position": 3,
+    "party": "BSP",
+    "votes": 19972,
+    "vote_share_pct": 1.23
+   },
+   {
+    "position": 4,
+    "party": "NOTA",
+    "votes": 12454,
+    "vote_share_pct": 0.77
+   },
+   {
+    "position": 5,
+    "party": "UPJP",
+    "votes": 9889,
+    "vote_share_pct": 0.61
+   },
+   {
+    "position": 6,
+    "party": "PPOI",
+    "votes": 8123,
+    "vote_share_pct": 0.5
+   },
+   {
+    "position": 7,
+    "party": "IND",
+    "votes": 4785,
+    "vote_share_pct": 0.3
+   },
+   {
+    "position": 8,
+    "party": "rpsn",
+    "votes": 2801,
+    "vote_share_pct": 0.17
+   },
+   {
+    "position": 9,
+    "party": "IND",
+    "votes": 2490,
+    "vote_share_pct": 0.15
+   },
+   {
+    "position": 10,
+    "party": "SUCI(C)",
+    "votes": 2094,
+    "vote_share_pct": 0.13
+   },
+   {
+    "position": 11,
+    "party": "SJPA",
+    "votes": 2025,
+    "vote_share_pct": 0.12
+   },
+   {
+    "position": 12,
+    "party": "IND",
+    "votes": 2020,
+    "vote_share_pct": 0.12
+   },
+   {
+    "position": 13,
+    "party": "IND",
+    "votes": 1859,
+    "vote_share_pct": 0.11
+   },
+   {
+    "position": 14,
+    "party": "RPI(A)",
+    "votes": 1462,
+    "vote_share_pct": 0.09
+   },
+   {
+    "position": 15,
+    "party": "IND",
+    "votes": 1362,
+    "vote_share_pct": 0.08
+   },
+   {
+    "position": 16,
+    "party": "IND",
+    "votes": 924,
+    "vote_share_pct": 0.06
+   }
+  ]
+ },
+ {
+  "state": "Bihar",
+  "constituency": "PATNA SAHIB",
+  "note": "urban",
+  "year": 2019,
+  "constituency_type": "GEN",
+  "electors": 2146008,
+  "turnout_pct": 45.77,
+  "n_candidates": 18,
+  "enop": 2.04,
+  "candidates": [
+   {
+    "position": 1,
+    "party": "BJP",
+    "votes": 607506,
+    "vote_share_pct": 61.85
+   },
+   {
+    "position": 2,
+    "party": "INC",
+    "votes": 322849,
+    "vote_share_pct": 32.87
+   },
+   {
+    "position": 3,
+    "party": "IND",
+    "votes": 9319,
+    "vote_share_pct": 0.95
+   },
+   {
+    "position": 4,
+    "party": "IND",
+    "votes": 5446,
+    "vote_share_pct": 0.55
+   },
+   {
+    "position": 5,
+    "party": "IND",
+    "votes": 5255,
+    "vote_share_pct": 0.53
+   },
+   {
+    "position": 6,
+    "party": "NOTA",
+    "votes": 5076,
+    "vote_share_pct": 0.52
+   },
+   {
+    "position": 7,
+    "party": "ASDHP",
+    "votes": 3766,
+    "vote_share_pct": 0.38
+   },
+   {
+    "position": 8,
+    "party": "IND",
+    "votes": 3515,
+    "vote_share_pct": 0.36
+   },
+   {
+    "position": 9,
+    "party": "IND",
+    "votes": 3447,
+    "vote_share_pct": 0.35
+   },
+   {
+    "position": 10,
+    "party": "IND",
+    "votes": 2806,
+    "vote_share_pct": 0.29
+   },
+   {
+    "position": 11,
+    "party": "IND",
+    "votes": 2575,
+    "vote_share_pct": 0.26
+   },
+   {
+    "position": 12,
+    "party": "IND",
+    "votes": 1572,
+    "vote_share_pct": 0.16
+   },
+   {
+    "position": 13,
+    "party": "BMF",
+    "votes": 1483,
+    "vote_share_pct": 0.15
+   },
+   {
+    "position": 14,
+    "party": "JP",
+    "votes": 1437,
+    "vote_share_pct": 0.15
+   },
+   {
+    "position": 15,
+    "party": "SHS",
+    "votes": 1424,
+    "vote_share_pct": 0.14
+   },
+   {
+    "position": 16,
+    "party": "VSIP",
+    "votes": 1290,
+    "vote_share_pct": 0.13
+   },
+   {
+    "position": 17,
+    "party": "VCSMP",
+    "votes": 1272,
+    "vote_share_pct": 0.13
+   },
+   {
+    "position": 18,
+    "party": "SUCI(C)",
+    "votes": 1220,
+    "vote_share_pct": 0.12
+   },
+   {
+    "position": 19,
+    "party": "BJKD",
+    "votes": 1027,
+    "vote_share_pct": 0.1
+   }
+  ]
+ },
+ {
+  "state": "Kerala",
+  "constituency": "THIRUVANANTHAPURAM",
+  "note": "urban",
+  "year": 2019,
+  "constituency_type": "GEN",
+  "electors": 1371427,
+  "turnout_pct": 73.66,
+  "n_candidates": 17,
+  "enop": 2.94,
+  "candidates": [
+   {
+    "position": 1,
+    "party": "INC",
+    "votes": 416131,
+    "vote_share_pct": 41.19
+   },
+   {
+    "position": 2,
+    "party": "BJP",
+    "votes": 316142,
+    "vote_share_pct": 31.3
+   },
+   {
+    "position": 3,
+    "party": "CPI",
+    "votes": 258556,
+    "vote_share_pct": 25.6
+   },
+   {
+    "position": 4,
+    "party": "NOTA",
+    "votes": 4580,
+    "vote_share_pct": 0.45
+   },
+   {
+    "position": 5,
+    "party": "IND",
+    "votes": 3521,
+    "vote_share_pct": 0.35
+   },
+   {
+    "position": 6,
+    "party": "BSP",
+    "votes": 2535,
+    "vote_share_pct": 0.25
+   },
+   {
+    "position": 7,
+    "party": "IND",
+    "votes": 1822,
+    "vote_share_pct": 0.18
+   },
+   {
+    "position": 8,
+    "party": "PNP",
+    "votes": 1695,
+    "vote_share_pct": 0.17
+   },
+   {
+    "position": 9,
+    "party": "IND",
+    "votes": 1050,
+    "vote_share_pct": 0.1
+   },
+   {
+    "position": 10,
+    "party": "IND",
+    "votes": 1007,
+    "vote_share_pct": 0.1
+   },
+   {
+    "position": 11,
+    "party": "SUCI(C)",
+    "votes": 664,
+    "vote_share_pct": 0.07
+   },
+   {
+    "position": 12,
+    "party": "IND",
+    "votes": 604,
+    "vote_share_pct": 0.06
+   },
+   {
+    "position": 13,
+    "party": "IND",
+    "votes": 465,
+    "vote_share_pct": 0.05
+   },
+   {
+    "position": 14,
+    "party": "IND",
+    "votes": 345,
+    "vote_share_pct": 0.03
+   },
+   {
+    "position": 15,
+    "party": "IND",
+    "votes": 339,
+    "vote_share_pct": 0.03
+   },
+   {
+    "position": 16,
+    "party": "IND",
+    "votes": 267,
+    "vote_share_pct": 0.03
+   },
+   {
+    "position": 17,
+    "party": "IND",
+    "votes": 258,
+    "vote_share_pct": 0.03
+   },
+   {
+    "position": 18,
+    "party": "IND",
+    "votes": 199,
+    "vote_share_pct": 0.02
+   }
+  ]
+ },
+ {
+  "state": "Assam",
+  "constituency": "GAUHATI",
+  "note": "northeast",
+  "year": 2019,
+  "constituency_type": "GEN",
+  "electors": 2181319,
+  "turnout_pct": 80.86,
+  "n_candidates": 17,
+  "enop": 2.13,
+  "candidates": [
+   {
+    "position": 1,
+    "party": "BJP",
+    "votes": 1008936,
+    "vote_share_pct": 57.2
+   },
+   {
+    "position": 2,
+    "party": "INC",
+    "votes": 663330,
+    "vote_share_pct": 37.61
+   },
+   {
+    "position": 3,
+    "party": "IND",
+    "votes": 21193,
+    "vote_share_pct": 1.2
+   },
+   {
+    "position": 4,
+    "party": "NOTA",
+    "votes": 10466,
+    "vote_share_pct": 0.59
+   },
+   {
+    "position": 5,
+    "party": "AITC",
+    "votes": 10141,
+    "vote_share_pct": 0.57
+   },
+   {
+    "position": 6,
+    "party": "IND",
+    "votes": 9044,
+    "vote_share_pct": 0.51
+   },
+   {
+    "position": 7,
+    "party": "IND",
+    "votes": 7849,
+    "vote_share_pct": 0.45
+   },
+   {
+    "position": 8,
+    "party": "IND",
+    "votes": 5483,
+    "vote_share_pct": 0.31
+   },
+   {
+    "position": 9,
+    "party": "SwaBP",
+    "votes": 4110,
+    "vote_share_pct": 0.23
+   },
+   {
+    "position": 10,
+    "party": "RPI(A)",
+    "votes": 3650,
+    "vote_share_pct": 0.21
+   },
+   {
+    "position": 11,
+    "party": "IND",
+    "votes": 2836,
+    "vote_share_pct": 0.16
+   },
+   {
+    "position": 12,
+    "party": "IND",
+    "votes": 2753,
+    "vote_share_pct": 0.16
+   },
+   {
+    "position": 13,
+    "party": "VPI",
+    "votes": 2590,
+    "vote_share_pct": 0.15
+   },
+   {
+    "position": 14,
+    "party": "PUJP",
+    "votes": 2456,
+    "vote_share_pct": 0.14
+   },
+   {
+    "position": 15,
+    "party": "SP",
+    "votes": 2383,
+    "vote_share_pct": 0.14
+   },
+   {
+    "position": 16,
+    "party": "BGanP",
+    "votes": 2351,
+    "vote_share_pct": 0.13
+   },
+   {
+    "position": 17,
+    "party": "HND",
+    "votes": 2122,
+    "vote_share_pct": 0.12
+   },
+   {
+    "position": 18,
+    "party": "NRCong",
+    "votes": 2064,
+    "vote_share_pct": 0.12
+   }
+  ]
+ }
+]
