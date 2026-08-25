@@ -1953,3 +1953,62 @@ covers `antibiotic-stewardship`/`antibiotic-stewardship-real`) needed no
 equivalent addition: `exp65`'s reference table is a reporting script, not
 an interactive capability, and doesn't have a natural UI form the way a
 trained policy or a new persona set does. 244/244 tests passing (was 242).
+
+## 46. Unifying the two frontends into one, after an honest audit found they weren't
+
+Asked directly whether the election frontend was well-designed and whether
+it covered the agent-ecosystem/LLM-population capabilities: the honest
+answer was no on the second count, not a design flaw but a scope one --
+`frontend/` (React) was built as an election-only app from the start,
+and `app.py` (Streamlit) was the only surface with a world-agnostic
+scenario picker and LLM-population runner. Two separate frontends, each
+internally consistent, but "one unified frontend" was never actually true.
+
+Closed by generalising `election_api.py` from an election-only backend
+into the backend for every world, then building a generic UI on top of it
+that sits alongside the existing election-specific tabs rather than
+replacing them:
+
+**Backend additions** (`election_api.py`): `GET /api/worlds` (JSON form of
+`attrition list-worlds`), `GET /api/scenarios/{name}` (arrays + metadata),
+`POST /api/scenarios/{name}/compare` (classical-policy comparison, the
+JSON form of `app.py`'s "Run simulation"), `GET /api/scenarios/{name}
+/personas` and `POST /api/scenarios/{name}/llm-population` (real LLM
+population runs, world-appropriate persona set, bring-your-own-key same as
+`app.py`'s disclosed pattern), and `GET /api/amr/reference-table` (exp65,
+JSON form). Found and fixed a real bug while building the `/compare`
+endpoint that was latent in `app.py` too: `Conservative` has no default
+`e_bound` (`Conservative()` raises `TypeError`), so both `app.py`'s
+classical-policy list and any naive port of it would crash the moment a
+user picked Conservative -- the new endpoint derives `e_bound` from the
+scenario's own `e.max()`, the same pattern `examples/04/19/20` already use.
+
+**Frontend restructure**: `App.tsx`'s single tab row became a two-level
+nav -- a World row (Election / Clinical-AMR / Agent-ecosystem / Other
+domains) with each world's own sub-tabs underneath, so the existing
+election-specific components (`Overview`, `ConstituencyLab`, `Strategist`,
+`Forecast`, `PolicyCheckpoint`, `Calibration`) are unchanged and still
+election-only, while a new `ScenarioLab.tsx` (world-parametrised: scenario
+picker, description/phenomenon/expected-behaviour card, policy-comparison
+checkboxes + seeds slider + result cards, and the LLM-population panel)
+serves clinical-amr, agent-ecosystem, and a combined "Other domains" view
+(environment + cybersecurity + synthetic, which have no persona set and
+correctly show that instead of an empty/wrong picker). `AmrReferenceTable
+.tsx` reproduces `exp65` in the browser under Clinical-AMR's own
+"Reference table" sub-tab.
+
+Verified live, not just compiled: `npx tsc --noEmit` passes clean; both
+dev servers (`uvicorn election_api:app --reload`, `npm run dev`) were
+started via `.claude/launch.json` and driven through the actual browser --
+every world tab loads real data, "Run simulation" on the agent-ecosystem
+world returns real greedy/eci numbers matching the CLI's own output,
+Conservative no longer crashes, and the AMR reference table renders the
+same figures `exp65`'s script prints. 13 new backend tests
+(`tests/test_election_api.py`, extended) cover the new endpoints,
+including a regression test for the Conservative bug. 255/255 tests
+passing (was 244).
+
+`app.py` (Streamlit) is left in place, not removed -- it's still the
+simpler single-file deployment option (see README's "Interactive app"
+section, including the hosted `streamlit.app` link), and nothing about
+unifying the React frontend requires retiring it.

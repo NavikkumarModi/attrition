@@ -487,7 +487,15 @@ decentralised greedy — collision between identical copies compounding on
 top of externality-blindness. Reachable in the frontend too: `frontend/`'s
 "Trained policy" tab (backed by `election_api.py`'s `/api/campaign-policy`)
 reproduces this end to end, live in the browser. See `FINDINGS.md`
-sections 27–45.
+sections 27–46.
+
+`frontend/` is no longer election-only: it's a World-level tab (Election /
+Clinical-AMR / Agent-ecosystem / Other domains), each with its own
+sub-tabs — the election-specific ones unchanged, plus a generic scenario
+lab (policy comparison, real LLM-population runs, world-appropriate
+personas) and the AMR reference table for the other worlds. `election_api
+.py` backs all of it now, not just the election track. See `FINDINGS.md`
+#46.
 
 ### Scale with concurrent calls
 
@@ -574,6 +582,14 @@ the selected scenario's world — `PHARMA_PERSONAS` for `clinical-amr`,
 `CAMPAIGN_PERSONAS` for `election`, `AGENT_PERSONAS` for
 `agent-ecosystem` — rather than always offering pharma personas
 regardless of what's selected.
+
+The React app (`frontend/`, `pip install fastapi "uvicorn[standard]"` +
+`uvicorn election_api:app --port 8000` + `npm --prefix frontend run dev`)
+covers the same ground with richer, world-specific views — a "Scenario
+lab" tab per world (agent-ecosystem, clinical-amr, environment/
+cybersecurity/synthetic) alongside the full election track, plus AMR's
+reference table. `app.py` stays the simpler single-file option with no
+Node toolchain and a free public deployment; `frontend/` is the deeper one.
 
 ---
 

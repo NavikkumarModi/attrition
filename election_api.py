@@ -1,33 +1,44 @@
-"""A thin FastAPI wrapper around `attrition.election`, for the dedicated
-election-track frontend (`frontend/`) -- no new simulation logic lives
-here, only JSON plumbing over functions already proven by `tests/
-test_election.py` and `examples/12`-`18`.
+"""A thin FastAPI wrapper around `attrition` -- originally scoped to just
+the election track, now the backend for the unified frontend (`frontend/`)
+covering every world (see `attrition.scenarios.worlds()`): election,
+clinical-amr, agent-ecosystem, environment, cybersecurity, synthetic. No
+new simulation logic lives here, only JSON plumbing over functions already
+proven by `tests/`, `examples/`, and `experiments/`.
 
 Run:  uvicorn election_api:app --reload --port 8000
 (pip install fastapi "uvicorn[standard]" -- not in requirements.txt, since
-the core package and its Streamlit app (`app.py`) don't need a web server
-to run the simulator itself; this is an additional, optional surface.)
+the core package and its Streamlit app (`app.py`, still the simpler
+single-file deployment option -- see README's "Interactive app" section)
+don't need a web server to run the simulator itself; this is an
+additional, optional surface.)
 """
 import json
 import os
 from functools import lru_cache
+from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from attrition import (ConsumableBandit, Greedy, ECI, compare, Population,
+from attrition import (ConsumableBandit, Greedy, ECI, SECI, UCB, ThompsonSampling,
+                       Conservative, compare, run, Population, simulate_population,
                        SimultaneousPool, simulate_population_simultaneous,
                        planner_value_simultaneous, decentralised_value_simultaneous,
-                       derive_campaign_parameters)
+                       derive_campaign_parameters, SCENARIOS, get_arrays, worlds,
+                       WORLDS, PHARMA_PERSONAS, CAMPAIGN_PERSONAS, AGENT_PERSONAS,
+                       CallableLLMClient)
+from attrition.llm_policy import _CHOICE
 from attrition.election import (ALL_PHASE1_CONSTITUENCIES, build_constituency,
                                 real_margin_pct, tipping_point, recompute_outcome,
                                 simulate_level1_contact, simulate_level2_contact,
                                 get_constituency, geojson_feature_collection,
                                 greedy_allocation, even_allocation,
                                 leave_one_state_out_backtest, train_gradient_bandit)
+from experiments.exp65_amr_five_policy_reference_table import (
+    in_repo_half, EXTERNAL_SILOED, EXTERNAL_SHARED)
 
-app = FastAPI(title="ATTRITION Election API")
+app = FastAPI(title="ATTRITION API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
@@ -268,3 +279,212 @@ def campaign_policy():
             "trained_system_regret": sim["system_regret"],
         },
     }
+
+
+# --------------------------------------------------------- worlds/scenarios
+# Everything below serves the unified frontend's non-election worlds
+# (agent-ecosystem, clinical-amr, environment, cybersecurity, synthetic) --
+# a generic scenario runner, the JSON form of `app.py`'s Streamlit sidebar,
+# so the same capabilities exist in both surfaces rather than only one.
+
+WORLD_PERSONAS = {
+    "clinical-amr": PHARMA_PERSONAS,
+    "election": CAMPAIGN_PERSONAS,
+    "agent-ecosystem": AGENT_PERSONAS,
+}
+
+POLICY_FACTORIES = {
+    "greedy": lambda v, p, e: Greedy(),
+    "eci": lambda v, p, e: ECI(),
+    "seci": lambda v, p, e: SECI(),
+    "conservative": lambda v, p, e: Conservative(e_bound=float(e.max())),
+    "thompson": lambda v, p, e: ThompsonSampling(),
+    "ucb": lambda v, p, e: UCB(),
+}
+
+
+def _scenario_summary(name, spec):
+    return {"name": name, "world": spec.get("world", "custom"),
+           "description": spec["description"], "phenomenon": spec["phenomenon"],
+           "expected_behaviour": spec["expected_behaviour"], "agents": spec["agents"]}
+
+
+@app.get("/api/worlds")
+def list_worlds():
+    """Every registered scenario grouped by world (`attrition.scenarios.
+    worlds()`), plus each world's one-line meaning (`WORLDS`) -- the JSON
+    form of `attrition list-worlds`."""
+    grouped = worlds()
+    return {
+        w: {"description": WORLDS.get(w, "(no description registered)"),
+           "scenarios": [_scenario_summary(sname, SCENARIOS[sname]) for sname in snames]}
+        for w, snames in grouped.items()
+    }
+
+
+@app.get("/api/scenarios/{name}")
+def scenario_detail(name: str):
+    if name not in SCENARIOS:
+        raise HTTPException(status_code=404, detail=f"unknown scenario {name!r}")
+    spec = SCENARIOS[name]
+    v, p, e, kw = get_arrays(name)
+    detail = _scenario_summary(name, spec)
+    detail.update({"v": [float(x) for x in v], "p": [float(x) for x in p],
+                   "e": [float(x) for x in e], "delta": kw["delta"],
+                   "horizon": kw["horizon"]})
+    return detail
+
+
+class CompareRequest(BaseModel):
+    policies: list[str] = ["greedy", "eci"]
+    seeds: int = 20
+    delta: Optional[float] = None
+    horizon: Optional[int] = None
+
+
+@app.post("/api/scenarios/{name}/compare")
+def scenario_compare(name: str, req: CompareRequest):
+    """Aggregate value/regret for one or more classical policies on this
+    scenario, over matched seeded episodes -- the JSON form of `app.py`'s
+    "Run simulation" button / `attrition.compare`."""
+    if name not in SCENARIOS:
+        raise HTTPException(status_code=404, detail=f"unknown scenario {name!r}")
+    v, p, e, kw = get_arrays(name)
+    delta = req.delta if req.delta is not None else kw["delta"]
+    horizon = req.horizon if req.horizon is not None else kw["horizon"]
+    unknown = [pn for pn in req.policies if pn not in POLICY_FACTORIES]
+    if unknown:
+        raise HTTPException(status_code=400,
+                            detail=f"unknown polic{'y' if len(unknown) == 1 else 'ies'} "
+                                   f"{unknown}; available: {sorted(POLICY_FACTORIES)}")
+    policies = [POLICY_FACTORIES[pn](v, p, e) for pn in req.policies]
+    env_factory = lambda seed: ConsumableBandit(v, p, e, delta=delta,
+                                                horizon=horizon, seed=seed)
+    return compare(env_factory, policies, seeds=req.seeds)
+
+
+def _persona_list(world):
+    persona_set = WORLD_PERSONAS.get(world)
+    if not persona_set:
+        return []
+    return [{"name": p.name, "role": p.role, "description": p.description,
+            "risk_tolerance": p.risk_tolerance} for p in persona_set.values()]
+
+
+@app.get("/api/scenarios/{name}/personas")
+def scenario_personas(name: str):
+    """Which persona set (if any) makes sense to run a real LLM population
+    against, for this scenario's world -- empty for worlds with no
+    registered persona set (environment, cybersecurity, synthetic)."""
+    if name not in SCENARIOS:
+        raise HTTPException(status_code=404, detail=f"unknown scenario {name!r}")
+    return _persona_list(SCENARIOS[name].get("world"))
+
+
+class LLMPopulationRequest(BaseModel):
+    provider: str  # "anthropic" or "groq"
+    api_key: str
+    model: Optional[str] = None
+    persona_names: list[str]
+    horizon: int = 8
+
+
+_LLM_MODELS = {"anthropic": "claude-haiku-4-5-20251001", "groq": "openai/gpt-oss-20b"}
+
+
+def _build_llm_client(provider, api_key, model):
+    if provider == "anthropic":
+        import anthropic
+        sdk_client = anthropic.Anthropic(api_key=api_key)
+
+        def call(system, user):
+            msg = sdk_client.messages.create(
+                model=model, max_tokens=300, system=system,
+                messages=[{"role": "user", "content": user}])
+            return msg.content[0].text
+    elif provider == "groq":
+        import groq
+        sdk_client = groq.Groq(api_key=api_key)
+
+        def call(system, user):
+            kwargs = {"reasoning_effort": "low"} if "gpt-oss" in model else {}
+            completion = sdk_client.chat.completions.create(
+                model=model,
+                messages=[{"role": "system", "content": system},
+                         {"role": "user", "content": user}],
+                max_tokens=300, **kwargs)
+            return completion.choices[0].message.content
+    else:
+        raise HTTPException(status_code=400,
+                            detail=f"unknown provider {provider!r}; expected "
+                                   f"'anthropic' or 'groq'")
+    return CallableLLMClient(call)
+
+
+@app.post("/api/scenarios/{name}/llm-population")
+def scenario_llm_population(name: str, req: LLMPopulationRequest):
+    """Run a real LLM-driven population against this scenario -- bring your
+    own key (used only for this request, never logged or stored; still
+    passes through this server process to place the call, the same
+    disclosed tradeoff `app.py`'s equivalent section makes). JSON form of
+    `app.py`'s "Real LLM population" section / `examples/04`, `13`, `19`."""
+    if name not in SCENARIOS:
+        raise HTTPException(status_code=404, detail=f"unknown scenario {name!r}")
+    spec = SCENARIOS[name]
+    persona_set = WORLD_PERSONAS.get(spec.get("world"))
+    if not persona_set:
+        raise HTTPException(status_code=400,
+                            detail=f"no persona set registered for world "
+                                   f"{spec.get('world')!r}")
+    unknown = [pn for pn in req.persona_names if pn not in persona_set]
+    if unknown:
+        raise HTTPException(status_code=400,
+                            detail=f"unknown persona(s) {unknown}; available: "
+                                   f"{sorted(persona_set)}")
+    v, p, e, kw = get_arrays(name)
+    model = req.model or _LLM_MODELS.get(req.provider)
+    try:
+        client = _build_llm_client(req.provider, req.api_key, model)
+    except HTTPException:
+        raise
+    except Exception as ex:
+        raise HTTPException(status_code=400, detail=f"could not build client: {ex}")
+
+    personas = [persona_set[pn] for pn in req.persona_names]
+    population = Population.from_personas(personas, client=client)
+    env = ConsumableBandit(v, p, e, delta=kw["delta"], horizon=req.horizon, seed=0)
+
+    try:
+        result = simulate_population(env, population)
+    except Exception as ex:
+        raise HTTPException(status_code=502,
+                            detail=f"the API call failed before any decision "
+                                   f"was logged: {ex}")
+
+    per_persona = {}
+    for pname, policy in population.members.items():
+        log = getattr(policy, "log", [])
+        genuine = sum(1 for row in log
+                     if row.get("response") and _CHOICE.search(row["response"]))
+        errors = {}
+        for row in log:
+            if row.get("error"):
+                errors[row["error"]] = errors.get(row["error"], 0) + 1
+        per_persona[pname] = {"genuine": genuine, "total": len(log), "errors": errors}
+
+    return {"system_value": result["system_value"],
+           "system_regret": result["system_regret"], "per_persona": per_persona}
+
+
+@lru_cache(maxsize=1)
+@app.get("/api/amr/reference-table")
+def amr_reference_table():
+    """The "unified five-policy table" (FINDINGS.md#26/#44,
+    experiments/exp65_amr_five_policy_reference_table.py) -- planner/greedy/
+    eci/lambda_weighted recomputed live from this repo's engine, plus the
+    external abx_amr_simulator checkpoint numbers cited verbatim from
+    FINDINGS.md#24.2/24.4 (NOT recomputed here -- see that module's
+    docstring for exactly why the two halves are not on the same axis)."""
+    repo = in_repo_half()
+    return {"in_repo": repo, "external_siloed": EXTERNAL_SILOED,
+           "external_shared": EXTERNAL_SHARED}

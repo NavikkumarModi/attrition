@@ -127,6 +127,85 @@ export interface CampaignPolicyResult {
 export const fetchCampaignPolicy = () =>
   getJSON<CampaignPolicyResult>("/api/campaign-policy");
 
+async function postJSON<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`${path}: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
+export interface ScenarioSummary {
+  name: string;
+  world: string;
+  description: string;
+  phenomenon: string;
+  expected_behaviour: string;
+  agents: number;
+}
+export interface WorldsResult {
+  [world: string]: { description: string; scenarios: ScenarioSummary[] };
+}
+export const fetchWorlds = () => getJSON<WorldsResult>("/api/worlds");
+
+export interface ScenarioDetail extends ScenarioSummary {
+  v: number[];
+  p: number[];
+  e: number[];
+  delta: number;
+  horizon: number;
+}
+export const fetchScenario = (name: string) =>
+  getJSON<ScenarioDetail>(`/api/scenarios/${encodeURIComponent(name)}`);
+
+export const fetchScenarioCompare = (
+  name: string,
+  policies: string[],
+  seeds = 20,
+) =>
+  postJSON<Record<string, PolicyStats>>(
+    `/api/scenarios/${encodeURIComponent(name)}/compare`,
+    { policies, seeds },
+  );
+
+export interface PersonaSummary {
+  name: string;
+  role: string;
+  description: string;
+  risk_tolerance: number;
+}
+export const fetchScenarioPersonas = (name: string) =>
+  getJSON<PersonaSummary[]>(`/api/scenarios/${encodeURIComponent(name)}/personas`);
+
+export interface LLMPopulationResult {
+  system_value: number;
+  system_regret: number;
+  per_persona: Record<string, { genuine: number; total: number; errors: Record<string, number> }>;
+}
+export const runScenarioLLMPopulation = (
+  name: string,
+  req: { provider: string; api_key: string; model?: string; persona_names: string[]; horizon?: number },
+) =>
+  postJSON<LLMPopulationResult>(
+    `/api/scenarios/${encodeURIComponent(name)}/llm-population`,
+    req,
+  );
+
+export interface AmrReferenceTable {
+  in_repo: {
+    planner: number;
+    greedy: number;
+    eci: number;
+    "lambda_weighted(lam=1)": number;
+  };
+  external_siloed: Record<string, number>;
+  external_shared: Record<string, number>;
+}
+export const fetchAmrReferenceTable = () =>
+  getJSON<AmrReferenceTable>("/api/amr/reference-table");
+
 export async function simulate(
   state: string,
   name: string,
