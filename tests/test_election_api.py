@@ -271,3 +271,27 @@ def test_strategist_society_metrics_empty_scope_does_not_crash():
     society = resp.json()["greedy"]["society"]
     assert society["efficiency"] in (None, 0.0, 1.0)
     assert society["cost_dispersion_pct"] == 0.0
+
+
+# ----------------------------------------------- assembly rollup
+def test_assembly_rollup_endpoint_returns_real_shape():
+    resp = client.get("/api/constituencies/Gujarat/AHMEDABAD EAST/assembly-rollup")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["seat"] == {"state": "Gujarat", "name": "AHMEDABAD EAST"}
+    assert data["rollup"]["n_constituent_acs_matched"] >= 1
+
+
+def test_assembly_rollup_endpoint_404s_on_unknown_seat():
+    resp = client.get("/api/constituencies/Nowhere/Nothing/assembly-rollup")
+    assert resp.status_code == 404
+
+
+def test_assembly_rollup_coverage_endpoint():
+    resp = client.get("/api/assembly-rollup/coverage")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["n_real_seats_total"] == 543
+    assert "Karnataka" in data["year_by_state"]
+    assert data["year_by_state"]["Karnataka"]["gap_from_2019"] == \
+        data["year_by_state"]["Karnataka"]["year"] - 2019

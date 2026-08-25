@@ -282,6 +282,36 @@ export interface AmrReferenceTable {
 export const fetchAmrReferenceTable = () =>
   getJSON<AmrReferenceTable>("/api/amr/reference-table");
 
+export interface AssemblyRollup {
+  n_constituent_acs_matched: number;
+  party_diversity: number;
+  most_common_party: string;
+  most_common_party_fraction: number;
+  mean_turnout_pct: number | null;
+  mean_margin_pct: number | null;
+  woman_winner_fraction: number;
+  incumbent_winner_fraction: number;
+  assembly_years_used: number[];
+}
+export interface AssemblyRollupResponse {
+  seat: { state: string; name: string };
+  rollup: AssemblyRollup | null;
+}
+export const fetchAssemblyRollup = (state: string, name: string) =>
+  getJSON<AssemblyRollupResponse>(
+    `/api/constituencies/${encodeURIComponent(state)}/${encodeURIComponent(name)}/assembly-rollup`,
+  );
+
+export interface AssemblyRollupCoverage {
+  n_ac_rows_total: number;
+  n_ac_rows_matched_to_crosswalk: number;
+  n_real_seats_total: number;
+  n_real_seats_with_rollup: number;
+  year_by_state: Record<string, { year: number; gap_from_2019: number }>;
+}
+export const fetchAssemblyRollupCoverage = () =>
+  getJSON<AssemblyRollupCoverage>("/api/assembly-rollup/coverage");
+
 export async function simulate(
   state: string,
   name: string,

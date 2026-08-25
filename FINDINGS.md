@@ -2131,3 +2131,92 @@ live in the browser (`Strategist.tsx`'s new "What this costs society"
 card) against the API's own numbers. 5 new tests, including an
 empty-filter-scope regression guard (`statistics.fmean([])` on a filter
 combination matching zero seats would otherwise 500).
+
+## 49. A second real data source: state Assembly results, joined via a real (not approximated) crosswalk
+
+Follow-up to the data-source search: two links -- DataMeet's Assembly-
+Constituency map and TCPD's own state Assembly archive -- solved the
+geographic-mismatch problem that blocked every other candidate found
+earlier (SHRUG, Census 2011: both real, both organised by district, and
+districts don't align cleanly to the 543 real Lok Sabha Parliamentary
+Constituencies (PCs) this project is built on -- joining them honestly
+would need real areal-interpolation approximation, a materially bigger
+and riskier undertaking than a straight join).
+
+**Why this pair is different.** By India's actual delimitation design,
+every Assembly Constituency (AC) belongs to exactly ONE Parliamentary
+Constituency -- never split across two. DataMeet's `assembly-
+constituencies` shapefile attribute table (`India_AC.dbf`, CC BY 2.5
+India, same publisher and repo already trusted for the PC boundaries in
+`geo.py`) carries that real PC cross-reference for all 4,182 real ACs.
+And TCPD/LokDhaba -- the exact same publisher and archive already
+providing the 543-seat Lok Sabha snapshot -- also publishes real,
+candidate-level state Assembly election results going back to 1962. So
+this isn't a new source to vet from scratch: it's the same two trusted
+publishers, one new real administrative join between them.
+
+**What was fetched** (`scripts/fetch_assembly_data.py`,
+`scripts/fetch_assembly_boundaries.py`, stdlib only -- the DBF parser is
+~30 lines of `struct`, no GIS/geopandas dependency added):
+`attrition/data/tcpd_lokdhaba_ae.json` (4,115 real state Assembly
+constituency results, one winner per real AC, across 31 real states with
+their own legislature) and `attrition/data/datameet_ac_pc_crosswalk.json`
+(4,182 real AC-to-PC mappings, attribute table only -- no boundary
+geometry needed for a crosswalk, since this is an exact administrative
+join, not a spatial one).
+
+**A real methodological point, surfaced rather than glossed over**: state
+Assembly elections run on each state's own five-year cycle, not one
+national date -- there is no single real "2019 state Assembly election."
+`fetch_assembly_data.py` picks, per state, the real election year closest
+to 2019 and records the gap. Several states line up exactly (Andhra
+Pradesh, Arunachal Pradesh, Haryana, Jharkhand, Maharashtra, Odisha,
+Sikkim: gap 0, several held concurrently with the Lok Sabha poll); the
+spread runs from Jammu & Kashmir (2014, gap -5, no election held there
+since) to Assam/Kerala/Puducherry/Tamil Nadu/West Bengal (2021, gap +2).
+Every rollup number is reported "as of that state's nearest real
+Assembly election," and the exact year is always surfaced alongside the
+number, in the API response and the UI -- never silently presented as
+"2019 data."
+
+**The join itself, real and honestly incomplete, not chased to 100%.**
+Matching TCPD's `(state, constituency_name)` against DataMeet's
+`(state, ac_name)` after the same `_normalise` punctuation/whitespace
+handling `geo.py` already uses, plus three real, checked state-name
+aliases (Odisha/"Orissa" -- the same alias `geo.py` already carries for
+the PC-level join; Uttarakhand/"Uttarkhand" -- a genuine typo in this
+file, not previously needed; Telangana ACs being mislabelled "Andhra
+Pradesh" in DataMeet's own crosswalk -- a disclosed error in their
+README, aliased for the join rather than silently "corrected"): 3,813 of
+4,115 real ACs (92.7%) match directly. `attrition/election/assembly.py`
+then resolves each matched AC's DataMeet PC name back to the real TCPD
+seat by reusing `geo.py`'s existing `_lookup_key` (no second, potentially
+-drifting alias table) -- 493 of 543 real seats (90.8%) end up with at
+least one matched constituent AC. The remaining ~9% is real spelling-
+variant long tail this module does not hand-chase to 100%, the same
+scope discipline `geo.py`'s own alias table represents the *result* of,
+not assumed here -- reported honestly via `assembly_rollup_coverage()`,
+never silently defaulted to zero for the unmatched seats (`None`,
+checked by a dedicated regression test).
+
+**What it produces, per real seat**: `n_constituent_acs_matched`, real
+winning-party diversity and the most common party's share, real mean
+Assembly turnout/margin, and real woman-winner/incumbent-winner fractions
+across the seat's constituent Assembly segments -- e.g. Ahmedabad East
+(Gujarat): 2 matched segments, both real 2017 BJP wins, 100% incumbent,
+0% women, mean turnout 69.4%. Exposed via `GET /api/constituencies/
+{state}/{name}/assembly-rollup` and `GET /api/assembly-rollup/coverage`,
+and a new card in `ConstituencyLab.tsx` -- verified live against the
+API's own numbers. 6 new tests in `tests/test_assembly.py` plus 3 in
+`tests/test_election_api.py`.
+
+No per-voter demographic or economic data is introduced by any of this --
+every number is a real aggregate over real, candidate-level Assembly
+election results, the same observed/aggregate-constrained discipline
+`population.py` already enforces for the Lok Sabha side. `indian_mlas`
+(garudadevdataservices), a third link sent alongside these two, was
+checked and NOT integrated: single contributor, zero stars, no LICENSE
+file, no stated primary source for its hand-maintained Excel data -- it
+does not clear the provenance bar every other real source in this
+project meets (see `real_data.py`'s `SOURCES`, `lokdhaba.py`'s `SOURCE`),
+regardless of its data being publicly browsable.

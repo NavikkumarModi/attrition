@@ -523,6 +523,22 @@ doesn't exist in this project). The result is a real tradeoff: at a
 electorate) and flips everything it targets; even spreads across all 36
 states (91.4% of the electorate) and flips almost nothing.
 
+A second real data source is now joined in: state Assembly (Vidhan
+Sabha) election results, rolled up to each real Lok Sabha seat via
+DataMeet's real Assembly-Constituency-to-Parliamentary-Constituency
+crosswalk (`FINDINGS.md` #49) — an exact administrative join (every
+Assembly Constituency belongs to exactly one Parliamentary Constituency
+by design), not an approximation, unlike the district-level sources
+(Census, SHRUG) that were checked and set aside for exactly that reason.
+Same two publishers already trusted elsewhere in this project (TCPD for
+the election results, DataMeet for the boundaries) — 92.7% of real
+Assembly Constituencies and 90.8% of real seats get real rollup data
+(party diversity, incumbent/woman-winner fractions, mean turnout/margin
+of constituent Assembly segments), honestly reported per-state against
+the real Assembly-election year used (state elections don't share the
+Lok Sabha's national date, so the year gap from 2019 is always surfaced,
+never hidden). `Constituency lab`'s new card shows it per seat.
+
 ### Scale with concurrent calls
 
 `simulate_population_simultaneous` and `compare_population_to_baselines` take

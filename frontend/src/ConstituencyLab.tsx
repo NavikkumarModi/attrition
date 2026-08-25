@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, Legend,
 } from "recharts";
-import { fetchConstituencies, simulate, type SeatSummary, type SimulateResult } from "./api";
+import {
+  fetchConstituencies, simulate, fetchAssemblyRollup, fetchAssemblyRollupCoverage,
+  type SeatSummary, type SimulateResult, type AssemblyRollupResponse, type AssemblyRollupCoverage,
+} from "./api";
 
 const DEFAULT_SEQUENCE = [0.15, 0.2, 0.25, 0.3, 0.35];
 
@@ -26,11 +29,20 @@ export default function ConstituencyLab({
   const [marginOverrideOn, setMarginOverrideOn] = useState(false);
   const [marginOverride, setMarginOverride] = useState(5);
 
+  const [assemblyRollup, setAssemblyRollup] = useState<AssemblyRollupResponse | null>(null);
+  const [assemblyCoverage, setAssemblyCoverage] = useState<AssemblyRollupCoverage | null>(null);
+
   useEffect(() => { fetchConstituencies().then(setSeats).catch(() => {}); }, []);
+  useEffect(() => { fetchAssemblyRollupCoverage().then(setAssemblyCoverage).catch(() => {}); }, []);
 
   useEffect(() => {
     if (initialState && initialName) { setState(initialState); setName(initialName); }
   }, [initialState, initialName]);
+
+  useEffect(() => {
+    setAssemblyRollup(null);
+    fetchAssemblyRollup(state, name).then(setAssemblyRollup).catch(() => {});
+  }, [state, name]);
 
   const seat = seats.find((s) => s.state === state && s.name === name);
 
@@ -121,6 +133,56 @@ export default function ConstituencyLab({
           {loading ? "Running…" : "Run simulation"}
         </button>
         {error && <p className="error-box" style={{ marginTop: 12 }}>{error}</p>}
+      </div>
+
+      <div className="card">
+        <h2>Real state Assembly rollup for this seat</h2>
+        <p className="muted" style={{ fontSize: 12, marginBottom: 12, maxWidth: 760 }}>
+          A second real data source (TCPD's state Assembly election results, joined to this seat via DataMeet's
+          real Assembly-Constituency-to-Parliamentary-Constituency crosswalk — an exact administrative fact, not an
+          approximation) — not a new mechanism, real aggregate results over this seat's constituent state Assembly
+          segments. State elections run on each state's own cycle, not a single national date, so the year used is
+          not always 2019 — shown explicitly below. See FINDINGS.md #49.
+        </p>
+        {assemblyRollup?.rollup ? (
+          <>
+            <div className="grid cols-4">
+              <div className="stat">
+                <div className="value">{assemblyRollup.rollup.n_constituent_acs_matched}</div>
+                <div className="label">constituent Assembly segments matched</div>
+              </div>
+              <div className="stat">
+                <div className="value">{assemblyRollup.rollup.most_common_party}</div>
+                <div className="label">
+                  most common winner ({(assemblyRollup.rollup.most_common_party_fraction * 100).toFixed(0)}% of segments)
+                </div>
+              </div>
+              <div className="stat">
+                <div className="value">{(assemblyRollup.rollup.woman_winner_fraction * 100).toFixed(0)}%</div>
+                <div className="label">segments with a real woman winner</div>
+              </div>
+              <div className="stat">
+                <div className="value">{(assemblyRollup.rollup.incumbent_winner_fraction * 100).toFixed(0)}%</div>
+                <div className="label">segments won by a real incumbent</div>
+              </div>
+            </div>
+            <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
+              Party diversity: {assemblyRollup.rollup.party_diversity} distinct real winning parties · mean turnout{" "}
+              {assemblyRollup.rollup.mean_turnout_pct?.toFixed(1) ?? "—"}% · mean margin{" "}
+              {assemblyRollup.rollup.mean_margin_pct?.toFixed(1) ?? "—"}pp · assembly year(s) used:{" "}
+              {assemblyRollup.rollup.assembly_years_used.join(", ")}.
+            </p>
+          </>
+        ) : (
+          <p className="muted" style={{ fontSize: 13 }}>
+            No constituent Assembly Constituency matched for this seat — a real, disclosed gap in the
+            AC-to-PC join (
+            {assemblyCoverage
+              ? `${assemblyCoverage.n_real_seats_with_rollup} of ${assemblyCoverage.n_real_seats_total} real seats have rollup data`
+              : "loading coverage…"}
+            ), not a claim that this seat has no Assembly Constituencies.
+          </p>
+        )}
       </div>
 
       <div className="card">

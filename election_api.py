@@ -37,7 +37,9 @@ from attrition.election import (ALL_PHASE1_CONSTITUENCIES, build_constituency,
                                 simulate_level1_contact_with_network,
                                 get_constituency, geojson_feature_collection,
                                 greedy_allocation, even_allocation,
-                                leave_one_state_out_backtest, train_gradient_bandit)
+                                leave_one_state_out_backtest, train_gradient_bandit,
+                                assembly_rollup_for_seat, assembly_rollup_coverage,
+                                ASSEMBLY_YEAR_BY_STATE)
 from experiments.exp65_amr_five_policy_reference_table import (
     in_repo_half, EXTERNAL_SILOED, EXTERNAL_SHARED)
 
@@ -119,6 +121,35 @@ def constituency_detail(state: str, name: str):
     detail["parties"] = list(c.parties)
     detail["vote_share_pct"] = list(c.vote_share_pct)
     return detail
+
+
+@app.get("/api/constituencies/{state}/{name}/assembly-rollup")
+def constituency_assembly_rollup(state: str, name: str):
+    """Real state Assembly election results, rolled up from this real
+    seat's constituent Assembly Constituencies via DataMeet's real
+    AC-to-PC crosswalk (`attrition.election.assembly`) -- not a new
+    mechanism, a second real data source joined to the first. `null` for
+    the 50/543 real seats with no matched constituent AC (see that
+    module's docstring for the honest, disclosed coverage numbers)."""
+    _resolve(state, name)  # 404s on an unknown seat before touching the rollup
+    rollup = assembly_rollup_for_seat(state, name)
+    return {"seat": {"state": state, "name": name}, "rollup": rollup}
+
+
+@lru_cache(maxsize=1)
+@app.get("/api/assembly-rollup/coverage")
+def assembly_rollup_coverage_endpoint():
+    """Real, checked coverage numbers for the AE-to-PC join, plus the real
+    assembly-election year used per state and its gap from 2019 -- state
+    assembly elections happen on each state's own cycle, not one national
+    date, so this must be surfaced wherever rollup numbers are shown, not
+    silently treated as "the same year" as the Lok Sabha data."""
+    coverage = assembly_rollup_coverage()
+    coverage["year_by_state"] = {
+        state: {"year": year, "gap_from_2019": gap}
+        for state, (year, gap) in ASSEMBLY_YEAR_BY_STATE().items()
+    }
+    return coverage
 
 
 class SimulateRequest(BaseModel):

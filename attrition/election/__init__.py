@@ -35,6 +35,8 @@ from .strategist import greedy_allocation, even_allocation, AllocationResult
 from .forecast import (match_seats, national_swing, predict_seat_winner,
                        leave_one_state_out_backtest, MIN_SEATS_FOR_SWING)
 from .policy_training import GradientBanditPolicy, train_gradient_bandit
+from .assembly import (ASSEMBLY_YEAR_BY_STATE, assembly_rollup_for_seat,
+                       all_assembly_rollups, assembly_rollup_coverage)
 
 __all__ = ["SOURCE", "load_constituencies", "get_constituency",
           "SyntheticVoter", "Constituency", "build_constituency",
@@ -52,4 +54,6 @@ __all__ = ["SOURCE", "load_constituencies", "get_constituency",
           "greedy_allocation", "even_allocation", "AllocationResult",
           "match_seats", "national_swing", "predict_seat_winner",
           "leave_one_state_out_backtest", "MIN_SEATS_FOR_SWING",
-          "GradientBanditPolicy", "train_gradient_bandit"]
+          "GradientBanditPolicy", "train_gradient_bandit",
+          "ASSEMBLY_YEAR_BY_STATE", "assembly_rollup_for_seat",
+          "all_assembly_rollups", "assembly_rollup_coverage"]
