@@ -2293,3 +2293,58 @@ passing (was 280).
 No per-voter demographic or economic data is introduced -- every number
 is a real, published district aggregate, the same discipline every real
 data source in this project already follows.
+
+## 51. Simulation granularity: variable-length rounds, and population split by real constituent district
+
+Asked directly to move on "simulation granularities," scoped to two
+concrete axes: time (contact rounds) and population (voter resolution).
+
+**Time granularity** was already fully supported by the backend --
+`simulate_level1_contact`/`_with_network` already accept an
+arbitrary-length `intensity_sequence` -- the frontend just hard-coded it
+to a fixed 5-round array. `ConstituencyLab.tsx` now has "+ add round" and
+a per-round "✕" remove control, no API change needed.
+
+**Population granularity** is new: `attrition/election/granularity.py`'s
+`simulate_level1_contact_by_district` splits a seat's requested
+`n_voters` across its real constituent districts (`census.py`'s real
+2011 population weights, #50) by the largest-remainder method (Hamilton
+apportionment -- the same exact-sum-preserving technique real electoral
+seat-apportionment uses, not a rounding scheme that could silently
+over/under-allocate voters), and runs `simulate_level1_contact`
+independently per sub-population.
+
+**A real limitation stated up front, not left for a reader to notice**:
+sub-populations differ ONLY in real population size, not in
+persuadability -- there is no real per-district margin or incumbency
+data to derive a differentiated resistance distribution from, so every
+sub-population draws from the same seat-wide Beta distribution
+`agents.py` already uses. This adds spatial resolution to the
+REPORTING (a genuine per-district switched fraction), not a new causal
+claim that voters in different constituent districts are differently
+persuadable. The combined figure is an EXACT population-weighted mean,
+not an approximation -- unlike `census.py`'s own district rollup, the
+sub-populations here are disjoint by construction (they partition the
+same `n_voters`), so weighting by each one's own real size and summing
+is exact, checked by
+`test_combined_fraction_is_the_exact_population_weighted_mean`. Falls
+back cleanly to one undifferentiated pool for the ~19% of real seats
+with no `census.py` rollup (`district: None`, not silently dropped).
+
+Wired into `/api/simulate` as `use_district_granularity` (opt-in,
+backward compatible) -- returns per-district figures plus the combined
+one, and `level1_switched_fraction_by_round` becomes `null` for this
+path (there is no single seat-wide per-round curve once the population
+is split), which the frontend now renders as an explicit fallback
+message rather than crashing on a null `.map()` -- a real bug caught
+during this same change, before it shipped. Deliberately NOT combined
+with network propagation yet (400 if both are requested): running the
+network-propagation mechanism per sub-population is a real extension,
+left as future work rather than silently approximated.
+
+Verified live end to end: Ahmedabad East at n_voters=3000 splits 485
+(Gandhinagar) / 2,515 (Ahmadabad) -- matching their real ~16%/84%
+population shares exactly -- with a combined figure that lands between
+the two sub-populations' own results, as an exact weighted mean must.
+9 new tests (`tests/test_granularity.py`, `tests/test_election_api.py`).
+297/297 tests passing (was 289).

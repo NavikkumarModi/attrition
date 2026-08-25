@@ -39,6 +39,7 @@ from .assembly import (ASSEMBLY_YEAR_BY_STATE, assembly_rollup_for_seat,
                        all_assembly_rollups, assembly_rollup_coverage)
 from .census import (census_rollup_for_seat, all_census_rollups,
                      census_rollup_coverage)
+from .granularity import simulate_level1_contact_by_district
 
 __all__ = ["SOURCE", "load_constituencies", "get_constituency",
           "SyntheticVoter", "Constituency", "build_constituency",
@@ -59,4 +60,5 @@ __all__ = ["SOURCE", "load_constituencies", "get_constituency",
           "GradientBanditPolicy", "train_gradient_bandit",
           "ASSEMBLY_YEAR_BY_STATE", "assembly_rollup_for_seat",
           "all_assembly_rollups", "assembly_rollup_coverage",
-          "census_rollup_for_seat", "all_census_rollups", "census_rollup_coverage"]
+          "census_rollup_for_seat", "all_census_rollups", "census_rollup_coverage",
+          "simulate_level1_contact_by_district"]

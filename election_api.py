@@ -40,7 +40,8 @@ from attrition.election import (ALL_PHASE1_CONSTITUENCIES, build_constituency,
                                 leave_one_state_out_backtest, train_gradient_bandit,
                                 assembly_rollup_for_seat, assembly_rollup_coverage,
                                 ASSEMBLY_YEAR_BY_STATE,
-                                census_rollup_for_seat, census_rollup_coverage)
+                                census_rollup_for_seat, census_rollup_coverage,
+                                simulate_level1_contact_by_district)
 from experiments.exp65_amr_five_policy_reference_table import (
     in_repo_half, EXTERNAL_SILOED, EXTERNAL_SHARED)
 
@@ -193,6 +194,8 @@ class SimulateRequest(BaseModel):
     incumbent_override: Optional[bool] = None  # counterfactual: real real seat's
                                                # actual incumbency status overridden
     margin_override_pct: Optional[float] = None  # counterfactual real margin
+    use_district_granularity: bool = False    # split n_voters across real
+                                               # constituent districts (FINDINGS.md#51)
 
 
 def _with_overrides(c, incumbent_override, margin_override_pct):
@@ -250,27 +253,46 @@ def simulate(req: SimulateRequest):
     granular controls: voter-to-voter network propagation
     (`attrition.election.simulate_level1_contact_with_network`), a
     flip-probability sweep across `n_seeds` seeds instead of one
-    deterministic run, and two real counterfactual overrides (incumbency,
-    margin) -- see `_with_overrides`'s docstring for exactly what these do
-    and don't claim."""
+    deterministic run, two real counterfactual overrides (incumbency,
+    margin), and population granularity -- splitting `n_voters` across the
+    seat's real constituent districts instead of one undifferentiated pool
+    (`attrition.election.simulate_level1_contact_by_district`, FINDINGS.md
+    #51) -- see `_with_overrides`'s and that function's docstrings for
+    exactly what each control does and doesn't claim."""
+    if req.use_network and req.use_district_granularity:
+        raise HTTPException(status_code=400,
+                            detail="use_network and use_district_granularity "
+                                   "cannot both be set -- district granularity "
+                                   "does not yet run the network-propagation "
+                                   "path per sub-population")
     c = _resolve(req.state, req.name)
     c = _with_overrides(c, req.incumbent_override, req.margin_override_pct)
     n_voters = max(50, min(req.n_voters, 10000))
     n_seeds = max(1, min(req.n_seeds, 50))
 
     def run_once(seed):
+        """Returns (fractions_by_round_or_None, final, extra) where
+        `extra` is a small dict tagged by `kind` ("network"/"district"/
+        None) -- a tagged structure instead of a bare positional value,
+        since the two granular paths return shapes too different
+        (a float vs. a list of per-district results) to safely share one
+        untagged slot."""
+        if req.use_district_granularity:
+            per_district, final = simulate_level1_contact_by_district(
+                c, req.intensity_sequence, n_voters=n_voters, seed=seed)
+            return None, final, {"kind": "district", "per_district": per_district}
         if req.use_network:
             voter_ids = [f"v{i}" for i in range(n_voters)]
             graph = AgentGraph.random(voter_ids, p=req.graph_density, seed=seed)
             fractions, final, direct_only = simulate_level1_contact_with_network(
                 c, req.intensity_sequence, n_voters=n_voters, graph=graph,
                 peer_conversion_prob=req.peer_conversion_prob, seed=seed)
-            return fractions, final, direct_only
+            return fractions, final, {"kind": "network", "direct_only": direct_only}
         fractions, final = simulate_level1_contact(
             c, req.intensity_sequence, n_voters=n_voters, seed=seed)
         return fractions, final, None
 
-    fractions, final, direct_only = run_once(req.seed)
+    fractions, final, extra = run_once(req.seed)
     outcome = recompute_outcome(c, final)
     result = {
         "seat": _seat_summary_live(c),
@@ -282,11 +304,14 @@ def simulate(req: SimulateRequest):
             "margin_pct": outcome.margin_pct, "flipped": outcome.flipped,
         },
     }
-    if direct_only is not None:
+    if extra and extra["kind"] == "network":
         result["network"] = {"final_switched_fraction": final,
-                             "direct_only_final_switched_fraction": direct_only,
+                             "direct_only_final_switched_fraction": extra["direct_only"],
                              "peer_conversion_prob": req.peer_conversion_prob,
                              "graph_density": req.graph_density}
+    elif extra and extra["kind"] == "district":
+        result["district_granularity"] = {"per_district": extra["per_district"],
+                                          "combined_final_switched_fraction": final}
     if req.include_level2:
         result["level2_decisions"] = simulate_level2_contact(c, req.intensity_sequence)
 

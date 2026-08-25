@@ -30,6 +30,7 @@ export default function ConstituencyLab({
   const [incumbentOverride, setIncumbentOverride] = useState<"real" | "yes" | "no">("real");
   const [marginOverrideOn, setMarginOverrideOn] = useState(false);
   const [marginOverride, setMarginOverride] = useState(5);
+  const [useDistrictGranularity, setUseDistrictGranularity] = useState(false);
 
   const [assemblyRollup, setAssemblyRollup] = useState<AssemblyRollupResponse | null>(null);
   const [assemblyCoverage, setAssemblyCoverage] = useState<AssemblyRollupCoverage | null>(null);
@@ -65,6 +66,7 @@ export default function ConstituencyLab({
           graph_density: graphDensity,
           incumbent_override: incumbentOverride === "real" ? null : incumbentOverride === "yes",
           margin_override_pct: marginOverrideOn ? marginOverride : null,
+          use_district_granularity: useDistrictGranularity,
         }),
       );
     } catch (e) {
@@ -74,12 +76,19 @@ export default function ConstituencyLab({
     }
   }
 
-  const chartData = result
+  const chartData = result?.level1_switched_fraction_by_round
     ? result.level1_switched_fraction_by_round.map((f, i) => ({
         round: i + 1,
         switched: f * 100,
       }))
     : [];
+
+  function addRound() {
+    setSequence((s) => [...s, s[s.length - 1] ?? 0.2]);
+  }
+  function removeRound(i: number) {
+    setSequence((s) => (s.length > 1 ? s.filter((_, idx) => idx !== i) : s));
+  }
 
   return (
     <>
@@ -120,7 +129,7 @@ export default function ConstituencyLab({
             <input type="range" min={500} max={10000} step={500} value={nVoters}
                   onChange={(e) => setNVoters(Number(e.target.value))} />
             <label className="muted" style={{ fontSize: 12, display: "block", marginTop: 10 }}>
-              Contact intensity by round
+              Contact intensity by round ({sequence.length} round{sequence.length !== 1 ? "s" : ""})
             </label>
             {sequence.map((v, i) => (
               <div className="round-slider-row" key={i}>
@@ -132,8 +141,16 @@ export default function ConstituencyLab({
                         setSequence(next);
                       }} />
                 <span className="v">{v.toFixed(2)}</span>
+                <button className="run-btn" style={{ padding: "2px 8px", fontSize: 11 }}
+                       onClick={() => removeRound(i)} disabled={sequence.length <= 1}>
+                  ✕
+                </button>
               </div>
             ))}
+            <button className="run-btn" style={{ padding: "4px 10px", fontSize: 12, marginTop: 4 }}
+                   onClick={addRound}>
+              + add round
+            </button>
           </div>
         </div>
         <button className="run-btn" onClick={run} disabled={loading} style={{ marginTop: 10 }}>
@@ -251,7 +268,8 @@ export default function ConstituencyLab({
         <div className="grid cols-2">
           <div>
             <label className="muted" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
-              <input type="checkbox" checked={useNetwork} onChange={(e) => setUseNetwork(e.target.checked)} />
+              <input type="checkbox" checked={useNetwork} onChange={(e) => setUseNetwork(e.target.checked)}
+                    disabled={useDistrictGranularity} />
               Voter-to-voter network propagation
             </label>
             {useNetwork && (
@@ -304,6 +322,18 @@ export default function ConstituencyLab({
                 <span className="v">{marginOverride.toFixed(1)}pp</span>
               </div>
             )}
+
+            <label className="muted" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, marginTop: 14 }}>
+              <input type="checkbox" checked={useDistrictGranularity}
+                    onChange={(e) => setUseDistrictGranularity(e.target.checked)}
+                    disabled={useNetwork} />
+              Population granularity: split voters across real constituent districts
+            </label>
+            {useNetwork && (
+              <p className="muted" style={{ fontSize: 11 }}>
+                Not available together with network propagation yet — pick one.
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -332,28 +362,61 @@ export default function ConstituencyLab({
         </div>
       )}
 
+      {result?.district_granularity && (
+        <div className="card">
+          <h2>Population granularity: split by real constituent district</h2>
+          <p className="muted" style={{ fontSize: 12, marginBottom: 12 }}>
+            Sub-populations differ only in real population SIZE, not persuadability — there is no real per-district
+            margin data to derive a differentiated resistance distribution from. See FINDINGS.md #51.
+          </p>
+          <table className="seat-table">
+            <thead><tr><th>District</th><th>Voters</th><th>Final switched %</th></tr></thead>
+            <tbody>
+              {result.district_granularity.per_district.map((d, i) => (
+                <tr key={i}>
+                  <td>{d.district ?? "(no rollup — whole seat as one pool)"}</td>
+                  <td>{d.n_voters.toLocaleString()}</td>
+                  <td>{(d.final_switched_fraction * 100).toFixed(2)}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
+            Combined (exact population-weighted mean):{" "}
+            {(result.district_granularity.combined_final_switched_fraction * 100).toFixed(2)}%
+          </p>
+        </div>
+      )}
+
       {result && (
         <div className="grid cols-2">
           <div className="card">
             <h2>Level 1: switched fraction by round</h2>
-            <ResponsiveContainer width="100%" height={280}>
-              <LineChart data={chartData} margin={{ top: 8, right: 24, bottom: 8, left: 0 }}>
-                <CartesianGrid stroke="#232938" />
-                <XAxis dataKey="round" tick={{ fill: "#8b93a7", fontSize: 11 }} />
-                <YAxis
-                  unit="%" tick={{ fill: "#8b93a7", fontSize: 11 }}
-                  domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, result.seat.tipping_point_pct ?? 0) * 1.15)]}
-                />
-                <Tooltip contentStyle={{ background: "#171c28", border: "1px solid #232938", fontSize: 12 }} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <ReferenceLine
-                  y={(result.seat.tipping_point_pct ?? 0)}
-                  stroke="#e0615e" strokeDasharray="4 4"
-                  label={{ value: "tipping point", position: "insideTopRight", fill: "#e0615e", fontSize: 11 }}
-                />
-                <Line type="monotone" dataKey="switched" name="switched %" stroke="#5ec8e0" strokeWidth={2} dot />
-              </LineChart>
-            </ResponsiveContainer>
+            {result.level1_switched_fraction_by_round ? (
+              <ResponsiveContainer width="100%" height={280}>
+                <LineChart data={chartData} margin={{ top: 8, right: 24, bottom: 8, left: 0 }}>
+                  <CartesianGrid stroke="#232938" />
+                  <XAxis dataKey="round" tick={{ fill: "#8b93a7", fontSize: 11 }} />
+                  <YAxis
+                    unit="%" tick={{ fill: "#8b93a7", fontSize: 11 }}
+                    domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, result.seat.tipping_point_pct ?? 0) * 1.15)]}
+                  />
+                  <Tooltip contentStyle={{ background: "#171c28", border: "1px solid #232938", fontSize: 12 }} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  <ReferenceLine
+                    y={(result.seat.tipping_point_pct ?? 0)}
+                    stroke="#e0615e" strokeDasharray="4 4"
+                    label={{ value: "tipping point", position: "insideTopRight", fill: "#e0615e", fontSize: 11 }}
+                  />
+                  <Line type="monotone" dataKey="switched" name="switched %" stroke="#5ec8e0" strokeWidth={2} dot />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="muted" style={{ fontSize: 13 }}>
+                No per-round breakdown for population-granular runs — see the district table above for the final
+                per-district and combined figures.
+              </p>
+            )}
           </div>
 
           <div className="card">

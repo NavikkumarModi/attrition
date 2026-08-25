@@ -200,6 +200,34 @@ def test_simulate_n_seeds_and_n_voters_are_capped():
     assert resp.json()["flip_probability"]["n_seeds"] == 50
 
 
+def test_simulate_district_granularity_partitions_voters_exactly():
+    resp = client.post("/api/simulate",
+                       json={**_SEAT, "use_district_granularity": True, "n_voters": 3000})
+    assert resp.status_code == 200
+    data = resp.json()["district_granularity"]
+    assert sum(d["n_voters"] for d in data["per_district"]) == 3000
+    assert data["combined_final_switched_fraction"] == \
+        pytest.approx(resp.json()["level1_final_switched_fraction"])
+
+
+def test_simulate_district_granularity_and_network_conflict_400s():
+    resp = client.post("/api/simulate",
+                       json={**_SEAT, "use_district_granularity": True, "use_network": True})
+    assert resp.status_code == 400
+
+
+def test_simulate_district_granularity_falls_back_cleanly_with_no_rollup():
+    resp = client.post(
+        "/api/simulate",
+        json={"state": "Andaman & Nicobar Islands", "name": "ANDAMAN & NICOBAR ISLANDS",
+             "use_district_granularity": True, "n_voters": 500})
+    assert resp.status_code == 200
+    per_district = resp.json()["district_granularity"]["per_district"]
+    assert len(per_district) == 1
+    assert per_district[0]["district"] is None
+    assert per_district[0]["n_voters"] == 500
+
+
 # ---------------------------------------------- granular /api/strategist
 def test_strategist_filters_endpoint_lists_real_facets():
     data = client.get("/api/strategist/filters").json()

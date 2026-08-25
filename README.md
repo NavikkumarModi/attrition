@@ -554,6 +554,20 @@ double-count people in a district shared with another seat) — 81.6% of
 real seats get at least one matched district, honestly lower than the
 Assembly rollup's rate because this compounds two real joins, not one.
 
+Two simulation-granularity upgrades followed (`FINDINGS.md` #51):
+Constituency lab's contact-round sequence is no longer fixed at 5 (`+ add
+round`/remove, the backend already accepted arbitrary lengths); and
+`attrition.election.simulate_level1_contact_by_district` splits a seat's
+requested voter count across its real constituent districts by real 2011
+population share (exact-sum apportionment, not rounding), running the
+existing mechanism independently per sub-population. Sub-populations
+differ only in real size, not persuadability — stated up front, since
+there's no real per-district margin data to differentiate them by — and
+the combined figure is an EXACT population-weighted mean (the
+sub-populations are disjoint by construction, unlike the census
+rollup's districts, which cannot be summed this way). `use_district_
+granularity` in `/api/simulate`, opt-in and backward compatible.
+
 ### Scale with concurrent calls
 
 `simulate_population_simultaneous` and `compare_population_to_baselines` take

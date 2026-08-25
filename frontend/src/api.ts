@@ -73,9 +73,19 @@ export interface NetworkEffect {
   peer_conversion_prob: number;
   graph_density: number;
 }
+export interface DistrictGranularityDistrict {
+  state: string;
+  district: string | null;
+  n_voters: number;
+  final_switched_fraction: number;
+}
+export interface DistrictGranularity {
+  per_district: DistrictGranularityDistrict[];
+  combined_final_switched_fraction: number;
+}
 export interface SimulateResult {
   seat: SimulateSeatSummary;
-  level1_switched_fraction_by_round: number[];
+  level1_switched_fraction_by_round: number[] | null;
   level1_final_switched_fraction: number;
   outcome: {
     winner: string;
@@ -88,6 +98,7 @@ export interface SimulateResult {
   level2_decisions?: Record<string, boolean[]>;
   network?: NetworkEffect;
   flip_probability?: FlipProbability;
+  district_granularity?: DistrictGranularity;
 }
 export interface SimulateOptions {
   seed?: number;
@@ -97,6 +108,7 @@ export interface SimulateOptions {
   graph_density?: number;
   incumbent_override?: boolean | null;
   margin_override_pct?: number | null;
+  use_district_granularity?: boolean;
 }
 
 async function getJSON<T>(path: string): Promise<T> {
