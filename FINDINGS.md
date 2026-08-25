@@ -2348,3 +2348,78 @@ population shares exactly -- with a combined figure that lands between
 the two sub-populations' own results, as an exact weighted mean must.
 9 new tests (`tests/test_granularity.py`, `tests/test_election_api.py`).
 297/297 tests passing (was 289).
+
+## 52. Toward the "million agent" scale: a real bottleneck found and fixed, not just a bigger cap
+
+Asked to continue toward the strategy discussion's "million agent"
+framing. Checked before raising any limit: `attrition.election.agents.
+simulate_level1_contact`'s per-voter Python loop -- the mechanism every
+granular control this session builds on -- benchmarks at **1,000,000
+voters x 5 rounds in ~0.5s**, and `population.py`'s Level 0 sampler
+(already documented as "millions-scalable") confirms the same at
+**1,000,000 voters in ~0.38s**. The API's `n_voters` cap (10,000,
+inherited from FINDINGS.md#47's original granular-controls pass, never
+revisited) was never the real constraint -- it was just never raised to
+match what the mechanism could already do. Raised to 1,000,000 for the
+plain and district-granularity paths.
+
+**The real bottleneck, found by actually trying it, not assumed**: voter-
+to-voter network propagation's graph construction. `AgentGraph.random`
+(`attrition/network.py`) tests every possible pair -- O(n^2) -- fine at
+the population sizes it was built for (hundreds to a few thousand;
+n=5000 benchmarks at 0.45s) but a genuinely different problem at real
+scale, and not just a slow one: a FIXED edge probability `p` implies a
+mean degree that grows linearly with population (mean degree =
+p*(n-1)), so naively raising `n_voters` while leaving `graph_density`
+fixed at its existing default (0.02) would try to build a graph with
+**~10 billion edges at n=1,000,000** (checked by direct calculation, not
+estimated) -- an absurd social-network claim, not a performance problem
+to optimise around. Real people's number of social connections doesn't
+grow with the size of the country they live in.
+
+**Fixed at the mechanism, not the cap.** `AgentGraph.random_by_degree`
+(new, `attrition/network.py`) generates a sparse random graph
+parameterised by MEAN DEGREE instead of edge probability -- vectorised
+(numpy, already a core dependency, not a new one): draws
+`n * mean_degree / 2` edges directly as random index pairs, O(n *
+mean_degree) instead of O(n^2). Benchmarked: a 1,000,000-node,
+mean-degree-10 graph builds in ~5.5s (dominated by `AgentGraph`'s
+existing dict-of-sets adjacency construction, a further, disclosed,
+NOT-yet-optimised cost -- `AgentGraph`'s core storage is a widely-used
+class across this repo, not something to restructure inside this pass);
+a 500,000-node graph builds in ~2.1s. `AgentGraph.random` itself is left
+completely unchanged (same algorithm, same tests, same small-population
+behaviour) -- `random_by_degree` is a new, additive method, not a
+replacement, so nothing that already depended on `random`'s exact
+output changes.
+
+**Wired into `/api/simulate` as an automatic cutover, not a manual
+switch the caller has to know to flip.** Below a real, benchmarked
+threshold (5,000 voters), the network path still uses the exact
+`AgentGraph.random` it always has -- zero behaviour change for every
+existing small-population call. At or above that threshold (or if
+`mean_degree` is set explicitly at any size), it switches to
+`random_by_degree`. A real design correction caught while wiring this
+up, not shipped as first written: the natural-seeming "derive
+mean_degree from graph_density * n_voters, then clamp to a sanity cap"
+formula would exceed the cap for nearly any large `n_voters` regardless
+of what `graph_density` the caller chose, making `graph_density` look
+like it still controlled density when it was actually just hitting the
+cap every time -- replaced with a fixed, honest default (10) once the
+parameterisation itself changes, not a formula that quietly stops
+depending on its own input.
+
+**The two paths' `n_voters` caps differ, and the difference is
+real, not arbitrary**: 1,000,000 without network propagation (the
+Level 1 mechanism itself is fast at that size); 500,000 with it
+(graph construction dominates that path's cost). Both documented
+in the API and the frontend, not just picked and left unexplained.
+
+Verified live in the browser: a real 1,000,000-voter run (network off)
+completes in well under a second and renders normally; the network
+path's response now reports which graph-generation method and parameter
+were actually used (`graph_method`, `graph_param`), so the cutover is
+visible, not silent. 9 new tests (`tests/test_network.py`, `tests/
+test_election_api.py`), including a regression check that
+`random_by_degree`'s mean degree stays population-independent (the
+exact property `random`'s fixed-probability design lacks at scale).

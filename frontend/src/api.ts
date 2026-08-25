@@ -72,6 +72,8 @@ export interface NetworkEffect {
   direct_only_final_switched_fraction: number;
   peer_conversion_prob: number;
   graph_density: number;
+  graph_method: "random" | "random_by_degree";
+  graph_param: number;
 }
 export interface DistrictGranularityDistrict {
   state: string;
@@ -109,6 +111,7 @@ export interface SimulateOptions {
   incumbent_override?: boolean | null;
   margin_override_pct?: number | null;
   use_district_granularity?: boolean;
+  mean_degree?: number | null;
 }
 
 async function getJSON<T>(path: string): Promise<T> {

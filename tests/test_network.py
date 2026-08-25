@@ -40,6 +40,48 @@ def test_random_graph_is_deterministic_by_seed():
         assert g1.neighbors(a) == g2.neighbors(a)
 
 
+# ---------------------------------------- random_by_degree (FINDINGS.md#52)
+def test_random_by_degree_is_deterministic_by_seed():
+    ids = [f"v{i}" for i in range(500)]
+    g1 = AgentGraph.random_by_degree(ids, mean_degree=8, seed=3)
+    g2 = AgentGraph.random_by_degree(ids, mean_degree=8, seed=3)
+    for a in ids:
+        assert g1.neighbors(a) == g2.neighbors(a)
+
+
+def test_random_by_degree_achieves_the_target_mean_degree_approximately():
+    """Real, checked property: the mean degree across all agents must land
+    close to the requested value -- not exact (self-loops are dropped, not
+    resampled, a real documented undercount), but close for a population
+    large enough that the undercount is negligible."""
+    ids = [f"v{i}" for i in range(20000)]
+    g = AgentGraph.random_by_degree(ids, mean_degree=10, seed=0)
+    mean_degree = sum(len(g.neighbors(a)) for a in ids) / len(ids)
+    assert 9.5 <= mean_degree <= 10.5
+
+
+def test_random_by_degree_stays_sparse_at_large_population():
+    """Regression check for the real correctness issue random_by_degree
+    exists to fix: AgentGraph.random's fixed edge PROBABILITY implies a
+    mean degree that grows linearly with population size (an absurd
+    social-network claim at real scale, see network.py's docstring).
+    random_by_degree's edge count must instead scale linearly with
+    population at a FIXED mean degree."""
+    small = AgentGraph.random_by_degree([f"v{i}" for i in range(1000)],
+                                        mean_degree=10, seed=0)
+    large = AgentGraph.random_by_degree([f"v{i}" for i in range(100000)],
+                                        mean_degree=10, seed=0)
+    small_mean = sum(len(small.neighbors(a)) for a in small.agent_ids) / 1000
+    large_mean = sum(len(large.neighbors(a)) for a in large.agent_ids) / 100000
+    assert abs(small_mean - large_mean) < 1.0
+
+
+def test_random_by_degree_handles_trivial_population_sizes():
+    assert AgentGraph.random_by_degree([], mean_degree=10, seed=0).agent_ids == []
+    g = AgentGraph.random_by_degree(["only"], mean_degree=10, seed=0)
+    assert g.neighbors("only") == []
+
+
 def _small_population():
     personas = [Persona(name=f"p{i}", role="tester", description="",
                         risk_tolerance=r)

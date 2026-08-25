@@ -190,7 +190,17 @@ class SimulateRequest(BaseModel):
     n_seeds: int = 1                          # >1 -> flip-probability sweep
     use_network: bool = False                 # voter-to-voter peer propagation
     peer_conversion_prob: float = 0.05
-    graph_density: float = 0.02
+    graph_density: float = 0.02                # edge probability -- exact
+                                               # Erdos-Renyi, used as-is below
+                                               # _LARGE_POPULATION_THRESHOLD
+    mean_degree: Optional[float] = None       # expected neighbors/voter --
+                                               # used instead of graph_density
+                                               # at/above that threshold (or
+                                               # if set explicitly at any
+                                               # size); see FINDINGS.md#52
+                                               # for why a fixed edge
+                                               # probability stops making
+                                               # sense at real scale
     incumbent_override: Optional[bool] = None  # counterfactual: real real seat's
                                                # actual incumbency status overridden
     margin_override_pct: Optional[float] = None  # counterfactual real margin
@@ -245,6 +255,33 @@ def _seat_summary_live(c):
     }
 
 
+# Real, benchmarked bounds (FINDINGS.md#52), not arbitrary round numbers:
+# plain/district-granularity Level 1 (agents.py's per-voter Python loop)
+# runs 1,000,000 voters x 5 rounds in ~0.5s. The network path is bounded
+# lower because graph CONSTRUCTION, not the contact simulation itself,
+# dominates its cost -- AgentGraph.random_by_degree builds a 500,000-node,
+# mean-degree-10 graph in ~2s; the O(n^2) AgentGraph.random this path used
+# to always use is not an option at these sizes at all (see network.py's
+# docstring: n=1,000,000 at graph_density=0.02 implies ~10 billion edges,
+# not merely slow to build).
+_MAX_N_VOTERS = 1_000_000
+_MAX_N_VOTERS_NETWORK = 500_000
+_LARGE_POPULATION_THRESHOLD = 5_000  # AgentGraph.random's O(n^2) pair-test
+                                     # is still fast below this; above it,
+                                     # switch to the mean-degree generator
+_MAX_MEAN_DEGREE = 100.0             # sanity cap: mean_degree, explicit or
+                                     # derived, is clamped here
+_DEFAULT_LARGE_POPULATION_MEAN_DEGREE = 10.0  # NOT derived from
+    # graph_density * n_voters: that formula reproduces graph_density's
+    # real meaning only near the small-n scale it was calibrated at (e.g.
+    # 0.02 * 500 = 10, this same constant); above the threshold it would
+    # already exceed _MAX_MEAN_DEGREE and get silently clamped for almost
+    # any n_voters, making graph_density look like it still controls
+    # density when it's actually just hitting the cap every time. A fixed
+    # default is the honest choice once the parameterisation itself has
+    # changed (see network.py's AgentGraph.random_by_degree docstring).
+
+
 @app.post("/api/simulate")
 def simulate(req: SimulateRequest):
     """Level 1 (always) + Level 2 (optional) campaign simulation over one
@@ -267,7 +304,8 @@ def simulate(req: SimulateRequest):
                                    "path per sub-population")
     c = _resolve(req.state, req.name)
     c = _with_overrides(c, req.incumbent_override, req.margin_override_pct)
-    n_voters = max(50, min(req.n_voters, 10000))
+    n_voters_cap = _MAX_N_VOTERS_NETWORK if req.use_network else _MAX_N_VOTERS
+    n_voters = max(50, min(req.n_voters, n_voters_cap))
     n_seeds = max(1, min(req.n_seeds, 50))
 
     def run_once(seed):
@@ -283,11 +321,21 @@ def simulate(req: SimulateRequest):
             return None, final, {"kind": "district", "per_district": per_district}
         if req.use_network:
             voter_ids = [f"v{i}" for i in range(n_voters)]
-            graph = AgentGraph.random(voter_ids, p=req.graph_density, seed=seed)
+            if req.mean_degree is not None or n_voters >= _LARGE_POPULATION_THRESHOLD:
+                mean_degree = (req.mean_degree if req.mean_degree is not None
+                              else _DEFAULT_LARGE_POPULATION_MEAN_DEGREE)
+                mean_degree = min(mean_degree, _MAX_MEAN_DEGREE)
+                graph = AgentGraph.random_by_degree(voter_ids, mean_degree=mean_degree,
+                                                    seed=seed)
+                graph_method, graph_param = "random_by_degree", mean_degree
+            else:
+                graph = AgentGraph.random(voter_ids, p=req.graph_density, seed=seed)
+                graph_method, graph_param = "random", req.graph_density
             fractions, final, direct_only = simulate_level1_contact_with_network(
                 c, req.intensity_sequence, n_voters=n_voters, graph=graph,
                 peer_conversion_prob=req.peer_conversion_prob, seed=seed)
-            return fractions, final, {"kind": "network", "direct_only": direct_only}
+            return fractions, final, {"kind": "network", "direct_only": direct_only,
+                                      "graph_method": graph_method, "graph_param": graph_param}
         fractions, final = simulate_level1_contact(
             c, req.intensity_sequence, n_voters=n_voters, seed=seed)
         return fractions, final, None
@@ -308,7 +356,9 @@ def simulate(req: SimulateRequest):
         result["network"] = {"final_switched_fraction": final,
                              "direct_only_final_switched_fraction": extra["direct_only"],
                              "peer_conversion_prob": req.peer_conversion_prob,
-                             "graph_density": req.graph_density}
+                             "graph_density": req.graph_density,
+                             "graph_method": extra["graph_method"],
+                             "graph_param": extra["graph_param"]}
     elif extra and extra["kind"] == "district":
         result["district_granularity"] = {"per_district": extra["per_district"],
                                           "combined_final_switched_fraction": final}

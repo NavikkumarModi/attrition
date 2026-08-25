@@ -26,6 +26,8 @@ export default function ConstituencyLab({
   const [useNetwork, setUseNetwork] = useState(false);
   const [peerConversionProb, setPeerConversionProb] = useState(0.05);
   const [graphDensity, setGraphDensity] = useState(0.02);
+  const [meanDegreeOn, setMeanDegreeOn] = useState(false);
+  const [meanDegree, setMeanDegree] = useState(10);
   const [nSeeds, setNSeeds] = useState(1);
   const [incumbentOverride, setIncumbentOverride] = useState<"real" | "yes" | "no">("real");
   const [marginOverrideOn, setMarginOverrideOn] = useState(false);
@@ -64,6 +66,7 @@ export default function ConstituencyLab({
           use_network: useNetwork,
           peer_conversion_prob: peerConversionProb,
           graph_density: graphDensity,
+          mean_degree: meanDegreeOn ? meanDegree : null,
           incumbent_override: incumbentOverride === "real" ? null : incumbentOverride === "yes",
           margin_override_pct: marginOverrideOn ? marginOverride : null,
           use_district_granularity: useDistrictGranularity,
@@ -125,9 +128,21 @@ export default function ConstituencyLab({
             )}
           </div>
           <div>
-            <label className="muted" style={{ fontSize: 12 }}>n_voters ({nVoters})</label>
-            <input type="range" min={500} max={10000} step={500} value={nVoters}
+            <label className="muted" style={{ fontSize: 12 }}>n_voters ({nVoters.toLocaleString()})</label>
+            <input type="range" min={500} max={10000} step={500} value={Math.min(nVoters, 10000)}
                   onChange={(e) => setNVoters(Number(e.target.value))} />
+            <div className="search-row" style={{ marginTop: 6 }}>
+              {[10000, 100000, 500000, 1000000].map((n) => (
+                <button key={n} className="run-btn" style={{ padding: "4px 10px", fontSize: 11 }}
+                       onClick={() => setNVoters(n)}>
+                  {n.toLocaleString()}
+                </button>
+              ))}
+            </div>
+            <p className="muted" style={{ fontSize: 11, marginTop: 4 }}>
+              Real, benchmarked capacity (FINDINGS.md #52): up to 1,000,000 voters (~0.5s) without network
+              propagation on; up to 500,000 with it on (graph construction dominates that path's cost).
+            </p>
             <label className="muted" style={{ fontSize: 12, display: "block", marginTop: 10 }}>
               Contact intensity by round ({sequence.length} round{sequence.length !== 1 ? "s" : ""})
             </label>
@@ -283,9 +298,27 @@ export default function ConstituencyLab({
                 <div className="round-slider-row">
                   <span>graph density</span>
                   <input type="range" min={0.005} max={0.1} step={0.005} value={graphDensity}
-                        onChange={(e) => setGraphDensity(Number(e.target.value))} />
+                        onChange={(e) => setGraphDensity(Number(e.target.value))}
+                        disabled={meanDegreeOn} />
                   <span className="v">{graphDensity.toFixed(3)}</span>
                 </div>
+                <p className="muted" style={{ fontSize: 11 }}>
+                  Above ~5,000 voters, graph density stops being used automatically — a fixed edge probability
+                  implies a mean degree that grows with population size (a real correctness issue, not a style
+                  choice — see FINDINGS.md #52). Set mean degree explicitly instead:
+                </p>
+                <label className="muted" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                  <input type="checkbox" checked={meanDegreeOn} onChange={(e) => setMeanDegreeOn(e.target.checked)} />
+                  Set mean degree explicitly (real neighbors per voter, population-independent)
+                </label>
+                {meanDegreeOn && (
+                  <div className="round-slider-row">
+                    <span>mean degree</span>
+                    <input type="range" min={1} max={100} step={1} value={meanDegree}
+                          onChange={(e) => setMeanDegree(Number(e.target.value))} />
+                    <span className="v">{meanDegree}</span>
+                  </div>
+                )}
               </>
             )}
 
@@ -443,8 +476,10 @@ export default function ConstituencyLab({
                   with peer propagation: {(result.network.final_switched_fraction * 100).toFixed(2)}% — the
                   network added{" "}
                   {((result.network.final_switched_fraction - result.network.direct_only_final_switched_fraction) * 100).toFixed(2)}
-                  pp on top of direct contact, at peer_conversion_prob={result.network.peer_conversion_prob},
-                  graph_density={result.network.graph_density}.
+                  pp on top of direct contact, at peer_conversion_prob={result.network.peer_conversion_prob}, graph:{" "}
+                  {result.network.graph_method === "random_by_degree"
+                    ? `mean degree ${result.network.graph_param} (large-population generator, FINDINGS.md #52)`
+                    : `density ${result.network.graph_param} (exact Erdos-Renyi)`}.
                 </p>
               </>
             )}

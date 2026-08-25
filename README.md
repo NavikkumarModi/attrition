@@ -568,6 +568,24 @@ sub-populations are disjoint by construction, unlike the census
 rollup's districts, which cannot be summed this way). `use_district_
 granularity` in `/api/simulate`, opt-in and backward compatible.
 
+Toward "million agent" scale (`FINDINGS.md` #52): benchmarked before
+raising anything — Level 1's per-voter loop and Level 0's sampler both
+run 1,000,000 voters in well under a second, so the API's `n_voters` cap
+(10,000, never revisited since it was first set) was raised to
+1,000,000. The real bottleneck was voter-to-voter network propagation's
+graph construction: a fixed edge PROBABILITY implies a mean degree that
+grows with population size — at n=1,000,000 the existing default would
+try to build a ~10-billion-edge graph, an absurd social-network claim,
+not a performance problem. Fixed with `AgentGraph.random_by_degree`
+(`attrition/network.py`) — a vectorised, mean-degree-parameterised
+generator (O(n·k) instead of O(n²)) that keeps the existing `AgentGraph
+.random` completely untouched for the small populations it was built
+for, and that `/api/simulate` switches to automatically above 5,000
+voters. Network propagation's cap is 500,000 (graph construction still
+dominates its cost); the plain and district-granularity paths' cap is
+1,000,000. Verified live: a real 1,000,000-voter run completes in well
+under a second in the browser.
+
 ### Scale with concurrent calls
 
 `simulate_population_simultaneous` and `compare_population_to_baselines` take

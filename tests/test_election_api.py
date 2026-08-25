@@ -228,6 +228,46 @@ def test_simulate_district_granularity_falls_back_cleanly_with_no_rollup():
     assert per_district[0]["n_voters"] == 500
 
 
+# ------------------------------------------ large-population scale (FINDINGS.md#52)
+def test_simulate_n_voters_cap_is_much_higher_without_network():
+    """Regression check: the plain/district-granularity paths must accept
+    populations well past the old 10,000 cap -- agents.py's Level 1 loop
+    was benchmarked fast enough (~0.5s at 1,000,000) to raise it."""
+    resp = client.post("/api/simulate", json={**_SEAT, "n_voters": 200000})
+    assert resp.status_code == 200
+    assert resp.json()["level1_final_switched_fraction"] >= 0.0
+
+
+def test_simulate_network_small_population_keeps_exact_graph():
+    resp = client.post("/api/simulate",
+                       json={**_SEAT, "use_network": True, "n_voters": 500})
+    assert resp.status_code == 200
+    assert resp.json()["network"]["graph_method"] == "random"
+
+
+def test_simulate_network_large_population_switches_to_degree_graph():
+    """Regression check for the real correctness fix: above the large-
+    population threshold, the API must not build AgentGraph.random's
+    O(n^2) graph (an absurd edge count at real scale, see network.py's
+    docstring) -- it must switch to the mean-degree generator."""
+    resp = client.post("/api/simulate",
+                       json={**_SEAT, "use_network": True, "n_voters": 20000})
+    assert resp.status_code == 200
+    net = resp.json()["network"]
+    assert net["graph_method"] == "random_by_degree"
+    assert net["graph_param"] <= 100.0  # never silently exceeds the sanity cap
+
+
+def test_simulate_network_explicit_mean_degree_is_honoured_not_silently_ignored():
+    resp = client.post("/api/simulate",
+                       json={**_SEAT, "use_network": True, "n_voters": 500,
+                            "mean_degree": 5})
+    assert resp.status_code == 200
+    net = resp.json()["network"]
+    assert net["graph_method"] == "random_by_degree"
+    assert net["graph_param"] == 5.0
+
+
 # ---------------------------------------------- granular /api/strategist
 def test_strategist_filters_endpoint_lists_real_facets():
     data = client.get("/api/strategist/filters").json()
