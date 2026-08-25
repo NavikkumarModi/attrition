@@ -1143,9 +1143,15 @@ what it transplants.
 
 - **Level 1/2 agents** (behavioural, then LLM cognitive, per the population-
   engine's three-tier plan) -- Level 0 (statistical) only exists.
-- **Social network / persuasion-propagation layer** -- `attrition.network.
-  AgentGraph` exists and is proven elsewhere in this repo, but is not wired
-  into the election track.
+- **Voter-to-voter social network / persuasion-propagation layer** --
+  `attrition.network.AgentGraph` is now wired into the election track, but
+  only campaign-to-campaign (do campaigns herd toward each other's contact
+  choices? `examples/15_campaign_peer_influence.py`,
+  `test_campaign_peer_visibility_runs_end_to_end`) -- information or
+  misinformation propagating voter-to-voter through the synthetic
+  population itself is a materially different, larger, still-open piece,
+  not attempted. Stated precisely rather than let the campaign-network
+  result imply more than it shows.
 - **Scale past ten constituencies** -- explicitly out of scope for further
   work in this pass: this is a data-engineering and compute exercise, not a
   research question, and inflating the constituency count without a new
@@ -1160,3 +1166,12 @@ what it transplants.
 These are recorded as open, not implied to be near-term next steps by
 default -- the next actual step should be chosen deliberately, not just
 whichever of these is cheapest to start.
+
+**Update, same session:** campaign-to-campaign peer visibility closed
+(above). On one real run at Ahmedabad East (3 campaigns, complete
+visibility graph, conformity=0.3), system value rose from 6.753 (isolated)
+to 9.040 (networked) -- herding amplified the more-disciplined personas'
+choices this time, not the heaviest-contact arm, but the module docstring
+is explicit this is a single-run illustration, not a directional claim; see
+`examples/06_peer_influence.py`'s equivalent AMR caveat for why the sign
+isn't the point. 193/193 tests passing (was 192).

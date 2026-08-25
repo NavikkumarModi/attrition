@@ -190,3 +190,32 @@ def test_identification_floor_is_strictly_positive_where_defined():
     from attrition.election import PHASE1_IDENTIFICATION_FLOORS
     for name, r in PHASE1_IDENTIFICATION_FLOORS.items():
         assert r["se_floor"] > 0.0, f"{name}: floor must be strictly positive"
+
+
+# ------------------------------------- campaign-to-campaign peer visibility
+def test_campaign_peer_visibility_runs_end_to_end():
+    """attrition.network.AgentGraph (proven elsewhere, see
+    examples/06_peer_influence.py) wired onto campaign agents over a real
+    constituency. Scope check, not a directional claim -- see
+    examples/15_campaign_peer_influence.py's docstring for why this is a
+    campaign-to-campaign network, not a voter-to-voter one."""
+    from attrition import (AgentGraph, MockLLMClient, CAMPAIGN_PERSONAS,
+                           Population, SimultaneousPool,
+                           simulate_population_simultaneous)
+    from attrition.election import derive_persuasion_parameters_from_constituency
+
+    v, p, e, intensity, s0 = derive_persuasion_parameters_from_constituency(
+        "Ahmedabad East")
+    campaigns = [CAMPAIGN_PERSONAS["campaign-disciplined"],
+                CAMPAIGN_PERSONAS["campaign-balanced"],
+                CAMPAIGN_PERSONAS["campaign-maximalist"]]
+    agent_ids = [c.name for c in campaigns]
+    graph = AgentGraph.complete(agent_ids)
+    pool = SimultaneousPool(v, p, e, delta=0.35, horizon=9,
+                            n_agents=len(campaigns), seed=0)
+    population = Population.from_personas(
+        campaigns, client=MockLLMClient(seed=0, conformity=0.3))
+    result = simulate_population_simultaneous(pool, population, rounds=9,
+                                               graph=graph)
+    assert "system_value" in result and "system_regret" in result
+    assert result["system_regret"] >= 0.0

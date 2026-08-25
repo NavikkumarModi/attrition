@@ -12,7 +12,7 @@ real ones.*
 **Bandits with Consumable Action Sets**
 
 [![tests](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml/badge.svg)](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml)
-[![tests](https://img.shields.io/badge/tests-192%20passing-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/tests-193%20passing-brightgreen)](tests/)
 [![theorems](https://img.shields.io/badge/theorems-11%20proven-blue)](THEORY.md)
 [![python](https://img.shields.io/badge/python-3.9%E2%80%933.12-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
@@ -355,10 +355,13 @@ result promised in this project's earliest planning is closed out: Theorem
 constituency's derived parameters, shows only 2 of 5 contact-intensity
 levels ever generate an identifying event at all, and where identification
 is possible the floor is real, strictly positive, and un-improvable by more
-campaign time (`examples/14_identification_cost.py`). Level 1/2 agents, the
-social network layer, and scale past ten constituencies remain open,
-recorded as such rather than implied done. See `FINDINGS.md` sections
-27–31.
+campaign time (`examples/14_identification_cost.py`). Campaign-to-campaign
+peer visibility is wired in too, reusing `attrition.network.AgentGraph`
+proven elsewhere in this repo (`examples/15_campaign_peer_influence.py`) —
+precisely scoped as campaign-to-campaign, not voter-to-voter propagation,
+which remains open along with Level 1/2 agents, a real trained campaign
+checkpoint, and scale past ten constituencies. Recorded as open rather than
+implied done. See `FINDINGS.md` sections 27–31.
 
 ### Scale with concurrent calls
 
