@@ -82,3 +82,41 @@ def test_duplicate_party_labels_aggregate_correctly():
     # expected -- the point of this test is that it's off by ~0.0002, a
     # renormalisation artefact, not the ~1.3-point bug this regression-tests.
     assert abs(result["vote_share_pct"]["IND"]["real"] - combined_real) < 0.01
+
+
+# --------------------------------------------- Phase 2: persuasion bridge
+def test_persuadable_fraction_derived_from_real_margin():
+    from attrition.election import build_constituency, real_margin_pct, persuadable_fraction_from_margin
+    ahmedabad = build_constituency("Ahmedabad East")
+    margin = real_margin_pct(ahmedabad)
+    assert 38.0 < margin < 40.0, f"real BJP-INC margin should be ~38.9pp, got {margin}"
+    frac = persuadable_fraction_from_margin(ahmedabad)
+    assert abs(frac - (1 - margin / 100.0)) < 1e-9
+
+
+def test_persuadable_fraction_varies_meaningfully_across_real_constituencies():
+    """Not a constant -- real margin data must actually move S0, or the
+    'anchored to real data' claim is empty."""
+    from attrition.election import PHASE1_PERSUADABLE_FRACTIONS
+    values = list(PHASE1_PERSUADABLE_FRACTIONS.values())
+    assert max(values) - min(values) > 0.2, (
+        f"expected real variation across constituencies, got {values}")
+
+
+def test_zero_regret_ruin_survives_real_margin_variation():
+    """The abstract campaign-persuasion theorem (FINDINGS.md#28) connected
+    to real constituency margins (FINDINGS.md#29): does the pattern hold
+    for every real constituency, or only the engine's synthetic default?
+    Checked for all ten, not sampled."""
+    from attrition import ConsumableBandit, Greedy, ECI, compare
+    from attrition.election import (ALL_PHASE1_CONSTITUENCIES,
+                                    derive_persuasion_parameters_from_constituency)
+    for c in ALL_PHASE1_CONSTITUENCIES:
+        v, p, e, intensity, s0 = derive_persuasion_parameters_from_constituency(c.name)
+        result = compare(lambda s: ConsumableBandit(v, p, e, delta=0.35,
+                                                     horizon=9, seed=s),
+                         [Greedy(), ECI()], seeds=100)
+        assert result["greedy"]["regret"] == 0.0, f"{c.name}: greedy must be zero-regret"
+        assert result["eci"]["value"] > result["greedy"]["value"], (
+            f"{c.name}: ECI must beat greedy despite greedy's zero regret "
+            f"(S0={s0:.3f})")

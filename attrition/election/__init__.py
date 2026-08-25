@@ -22,8 +22,14 @@ from .lokdhaba import SOURCE, load_constituencies, get_constituency
 from .population import (SyntheticVoter, Constituency, build_constituency,
                          synthetic_voter_population, validate_population,
                          ALL_PHASE1_CONSTITUENCIES)
+from .persuasion import (real_margin_pct, persuadable_fraction_from_margin,
+                         derive_persuasion_parameters_from_constituency,
+                         PHASE1_PERSUADABLE_FRACTIONS)
 
 __all__ = ["SOURCE", "load_constituencies", "get_constituency",
           "SyntheticVoter", "Constituency", "build_constituency",
           "synthetic_voter_population", "validate_population",
-          "ALL_PHASE1_CONSTITUENCIES"]
+          "ALL_PHASE1_CONSTITUENCIES",
+          "real_margin_pct", "persuadable_fraction_from_margin",
+          "derive_persuasion_parameters_from_constituency",
+          "PHASE1_PERSUADABLE_FRACTIONS"]

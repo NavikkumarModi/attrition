@@ -1045,3 +1045,40 @@ persuadability, contact-response, and saturation parameters from real
 constituency data (turnout, margin, ENOP) instead of the engine's default
 dynamics, the same step `docs/amr-stewardship-extension.md#5` took for
 `rho` via the real `leak` parameter. Not attempted in this pass.
+
+## 29. Election track, Phase 2: connecting real margins to the persuasion theorem
+
+The step §28 explicitly left undone: anchoring one real quantity from the
+Phase-1 population (FINDINGS.md#27) into the abstract persuasion-commons
+engine, the same scope discipline `docs/amr-stewardship-extension.md#5`
+used for AMR's `rho` -- anchor what's honestly derivable, state plainly
+what still isn't, rather than either skipping the connection or overclaiming
+a full recalibration.
+
+**The anchor.** `attrition/election/persuasion.py`: a constituency's real
+**margin** (winner share minus runner-up share, both real 2019 vote shares
+from `attrition.election.lokdhaba`) sets the campaign-persuasion engine's
+initial persuadable-fraction parameter, `S0 = 1 - margin/100` (clipped away
+from the 0/1 boundary the engine is degenerate at). Reasoning stated as a
+proxy claim, not a measured one: a close contest plausibly means more of
+the electorate was still genuinely contestable; a landslide plausibly means
+most had already settled. Nothing else about the engine (`R0`, growth-rate
+asymmetry, cross-competition, contact-effectiveness ceiling) is anchored to
+real data -- still the synthetic defaults, stated as such in the module and
+example script, not left implicit.
+
+**Result.** Real margins vary from 9.89 points (Thiruvananthapuram) to
+47.01 points (Mumbai North), giving `S0` from 0.53 to 0.90 -- genuine
+variation, checked (`test_persuadable_fraction_varies_meaningfully_across_
+real_constituencies`), not assumed. Across all ten real constituencies with
+that real variation actually driving the engine, greedy stays exactly
+zero-regret and loses 26.3-29.6% of real persuasion value to ECI at every
+single one (`examples/12_real_persuasion.py`,
+`test_zero_regret_ruin_survives_real_margin_variation`). The theorem's
+qualitative shape does not depend on which real seat supplies `S0` -- a
+real, if partial, robustness result in the same spirit as the AMR
+extension's `rho` anchor, for the same reason: it is evidence the pattern
+isn't an artifact of one convenient default, not evidence the model
+predicts anything about real campaigns.
+
+188/188 tests passing (was 185).

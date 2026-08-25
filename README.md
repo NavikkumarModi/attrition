@@ -12,7 +12,7 @@ real ones.*
 **Bandits with Consumable Action Sets**
 
 [![tests](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml/badge.svg)](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml)
-[![tests](https://img.shields.io/badge/tests-185%20passing-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/tests-188%20passing-brightgreen)](tests/)
 [![theorems](https://img.shields.io/badge/theorems-11%20proven-blue)](THEORY.md)
 [![python](https://img.shields.io/badge/python-3.9%E2%80%933.12-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
@@ -342,9 +342,12 @@ campaigns contacting one shared, finite persuadable-voter segment reuses
 the same competitive-release engine already relabelled once for
 antibiotics, and reproduces the same zero-regret-ruin result with no new
 theorem-proving code (`examples/11_campaign_persuasion.py`). The two are
-not yet connected — no LLM calls, no real constituency data feeding the
-persuasion model, no theorem claim about actual Indian elections. See
-`FINDINGS.md` sections 27–28.
+now partially connected: each real constituency's margin sets the
+persuasion engine's initial persuadable-fraction parameter
+(`examples/12_real_persuasion.py`), and the zero-regret-ruin pattern
+survives that real variation at all ten seats — one real anchor, stated as
+one anchor, not a full recalibration. Still no LLM calls and no theorem
+claim about actual Indian elections. See `FINDINGS.md` sections 27–29.
 
 ### Scale with concurrent calls
 
