@@ -10,7 +10,7 @@ system prompt text and is free to act on it or not, which is the point --
 
 from dataclasses import dataclass
 
-__all__ = ["Persona", "PHARMA_PERSONAS", "CAMPAIGN_PERSONAS"]
+__all__ = ["Persona", "PHARMA_PERSONAS", "CAMPAIGN_PERSONAS", "VOTER_PERSONAS"]
 
 
 @dataclass
@@ -115,6 +115,41 @@ CAMPAIGN_PERSONAS = {
             "operation guidance, weighing this cycle's persuasion yield "
             "against the chance that heavy contact saturates the segment "
             "for future cycles."),
+        risk_tolerance=0.5,
+    ),
+}
+
+
+VOTER_PERSONAS = {
+    "voter-loyalist": Persona(
+        name="voter-loyalist",
+        role="voter",
+        description=(
+            "A voter with a firm existing party preference. You weigh "
+            "switching to a contacting campaign's side against how much "
+            "that would cost your own settled sense of who represents you "
+            "-- a real cost, not a free option, so you only switch when "
+            "the case made this round is compelling relative to that cost."),
+        risk_tolerance=0.15,
+    ),
+    "voter-swing": Persona(
+        name="voter-swing",
+        role="voter",
+        description=(
+            "An undecided voter genuinely weighing both sides. You respond "
+            "to whichever campaign has made the more compelling immediate "
+            "case, without much attachment to a settled prior preference."),
+        risk_tolerance=0.85,
+    ),
+    "voter-skeptical": Persona(
+        name="voter-skeptical",
+        role="voter",
+        description=(
+            "A voter who has been contacted by campaigns before and has "
+            "grown wary of repeated persuasion attempts -- you weigh a "
+            "contacting campaign's case against the accumulating cost of "
+            "being asked to switch again, not just against this round's "
+            "message alone."),
         risk_tolerance=0.5,
     ),
 }

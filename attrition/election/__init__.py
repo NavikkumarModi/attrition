@@ -26,6 +26,9 @@ from .persuasion import (real_margin_pct, persuadable_fraction_from_margin,
                          derive_persuasion_parameters_from_constituency,
                          PHASE1_PERSUADABLE_FRACTIONS)
 from .identification import identification_floor, PHASE1_IDENTIFICATION_FLOORS
+from .agents import (BehaviouralVoter, simulate_level1_contact,
+                     simulate_level2_contact)
+from .network import simulate_level1_contact_with_network
 
 __all__ = ["SOURCE", "load_constituencies", "get_constituency",
           "SyntheticVoter", "Constituency", "build_constituency",
@@ -34,4 +37,6 @@ __all__ = ["SOURCE", "load_constituencies", "get_constituency",
           "real_margin_pct", "persuadable_fraction_from_margin",
           "derive_persuasion_parameters_from_constituency",
           "PHASE1_PERSUADABLE_FRACTIONS",
-          "identification_floor", "PHASE1_IDENTIFICATION_FLOORS"]
+          "identification_floor", "PHASE1_IDENTIFICATION_FLOORS",
+          "BehaviouralVoter", "simulate_level1_contact", "simulate_level2_contact",
+          "simulate_level1_contact_with_network"]

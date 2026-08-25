@@ -1175,3 +1175,81 @@ choices this time, not the heaviest-contact arm, but the module docstring
 is explicit this is a single-run illustration, not a directional claim; see
 `examples/06_peer_influence.py`'s equivalent AMR caveat for why the sign
 isn't the point. 193/193 tests passing (was 192).
+
+## 32. Election track: Level 1/2 agents and the voter-to-voter social network
+
+Closes the two items FINDINGS.md#31 named as genuinely open, requiring
+real design rather than a transplant of something already proven --
+designed and built this session, not deferred again.
+
+**Level 1 (`attrition/election/agents.py`, `BehaviouralVoter`).** No LLM,
+the tier meant to scale. Each voter accrues persuasion pressure toward a
+contacting campaign using the identical rho-decay update rule already
+proven for `DegradingPool` (FINDINGS.md#25), reused for the same reason
+`derive_campaign_parameters` reuses `LotkaVolterraTumour`: it is the
+correct mechanism relabelled, not invented fresh for this tier. Switch
+probability is `pressure * (1 - switch_resistance)`, with
+`switch_resistance` drawn per voter from a Beta distribution centred on
+`1 - persuadable_fraction_from_margin(constituency)` -- so Level 1 inherits
+the same real margin anchor the persuasion theorem does
+(FINDINGS.md#29), not a second, disconnected one. Checked, not assumed:
+Thiruvananthapuram (persuadable_fraction=0.901) switches faster than Mumbai
+North (0.530) under an identical contact sequence
+(`test_level1_persuadable_fraction_drives_switching_speed`).
+
+**Level 2 (`attrition/election/agents.py`, `VOTER_PERSONAS` +
+`simulate_level2_contact`).** LLM-driven, the tier meant to be deep, not
+wide. Reuses `LLMPolicy`/`State`/`MockLLMClient` completely unmodified --
+the voter's stay/switch decision is framed as a genuine two-arm choice, so
+`MockLLMClient` (which parses `LLMPolicy`'s specific prompt shape) works
+with no API key required, the same default every other LLM-driven piece of
+this repo has. `v_hat`, `p`, `e` are given an explicit, stated
+reinterpretation for what a voter's decision means (stay's baseline
+utility, switch's value scaling with contact intensity, `e` standing in
+for a loyalist persona's cost of over-committing) -- not left implicit,
+since bandit-domain vocabulary doesn't literally describe a voter's
+psychology. On one seeded run, `voter-swing` switches at round 6,
+`voter-loyalist` at round 7, `voter-skeptical` at round 8 -- personas
+genuinely diverge, which is the actual justification for paying for a
+second tier at all (`test_level2_personas_diverge_by_disposition`).
+
+**Voter-to-voter social network (`attrition/election/network.py`).**
+Reuses `attrition.network.AgentGraph` (already proven for campaign/
+prescriber peer visibility) as the graph structure over a few hundred
+Level-1 voters -- a demonstration scale, stated as such, not the
+population engine's "millions" Level-0 aspiration. Adds one new mechanism:
+a voter who switches has probability `peer_conversion_prob` of converting
+each graph neighbour, independent of whether that neighbour was directly
+contacted -- a distinct causal channel (word-of-mouth) from direct contact,
+reported separately rather than folded into one number. On one seeded run
+at Ahmedabad East (n=500), direct contact alone reaches 88.2% switched;
+with propagation, 98.2% -- a +10.0 point marginal lift, isolated by
+re-running the identical voters and contact sequence with propagation
+disabled, not inferred by comparing across differently-seeded runs.
+
+**Scope, stated precisely rather than left to be inferred:** this is a
+*voter* social network, distinct from the *campaign* network closed last
+session (FINDINGS.md#31's update) -- the two are separate causal channels
+in this model (campaigns herding toward each other's contact choices;
+voters propagating switches to their neighbours) and are not combined into
+one simulation in this pass.
+
+197/197 tests passing (was 193).
+
+---
+
+## 33. Election track: remaining open items, narrowed
+
+Of FINDINGS.md#31's four open items, two are now closed (Level 1/2 agents,
+voter-to-voter network -- above) and two remain, unchanged, deliberately
+not attempted this session for the reasons already on record there:
+
+- **Scale past ten constituencies** -- a data-engineering and compute
+  exercise, not a research question, without a new question attached.
+- **A real trained-policy checkpoint for campaigns** -- no external,
+  independently-trained campaign policy exists to transplant the way
+  FINDINGS.md#24.4 did for AMR; training one from scratch is a materially
+  different, larger undertaking.
+
+Nothing about closing the first two changes the honest status of these
+last two -- recorded again rather than left to go stale by omission.

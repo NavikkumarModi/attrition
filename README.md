@@ -12,7 +12,7 @@ real ones.*
 **Bandits with Consumable Action Sets**
 
 [![tests](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml/badge.svg)](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml)
-[![tests](https://img.shields.io/badge/tests-193%20passing-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/tests-197%20passing-brightgreen)](tests/)
 [![theorems](https://img.shields.io/badge/theorems-11%20proven-blue)](THEORY.md)
 [![python](https://img.shields.io/badge/python-3.9%E2%80%933.12-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
@@ -358,10 +358,18 @@ is possible the floor is real, strictly positive, and un-improvable by more
 campaign time (`examples/14_identification_cost.py`). Campaign-to-campaign
 peer visibility is wired in too, reusing `attrition.network.AgentGraph`
 proven elsewhere in this repo (`examples/15_campaign_peer_influence.py`) —
-precisely scoped as campaign-to-campaign, not voter-to-voter propagation,
-which remains open along with Level 1/2 agents, a real trained campaign
-checkpoint, and scale past ten constituencies. Recorded as open rather than
-implied done. See `FINDINGS.md` sections 27–31.
+precisely scoped as campaign-to-campaign, not voter-to-voter propagation.
+Both are now built: Level 1 behavioural voters (no LLM, the rho-decay
+pressure rule already proven for `DegradingPool`, reused not reinvented)
+and Level 2 LLM-driven voter personas (the same `LLMPolicy`/`MockLLMClient`
+machinery proven for campaigns, no API key required) respond to campaign
+contact and diverge by disposition; a voter-to-voter social network
+(`attrition.network.AgentGraph` again, this time over voters) adds a
+separately-reported word-of-mouth effect on top of direct contact
+(`examples/16_voter_social_network.py`). A real trained campaign-policy
+checkpoint and scale past ten constituencies remain open, for reasons on
+record in `FINDINGS.md` sections 31 and 33 — recorded as open rather than
+implied done. See `FINDINGS.md` sections 27–33.
 
 ### Scale with concurrent calls
 

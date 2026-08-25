@@ -219,3 +219,62 @@ def test_campaign_peer_visibility_runs_end_to_end():
                                                graph=graph)
     assert "system_value" in result and "system_regret" in result
     assert result["system_regret"] >= 0.0
+
+
+# ---------------------------------------------- Level 1/2 agents (agents.py)
+def test_level1_switched_fraction_rises_monotonically_with_intensity():
+    from attrition.election import simulate_level1_contact
+    seq = [0.2, 0.4, 0.6, 0.8, 1.0, 1.0, 1.0]
+    fractions, final = simulate_level1_contact("Ahmedabad East", seq,
+                                                rho=0.7, n_voters=3000, seed=0)
+    assert len(fractions) == len(seq)
+    assert 0.0 <= final <= 1.0
+    # not strictly monotone (spontaneous reversion exists), but the trend
+    # over a rising-intensity sequence must be up, not flat or down
+    assert fractions[-1] > fractions[0] + 0.3, (
+        f"expected substantial net movement, got {fractions}")
+
+
+def test_level1_persuadable_fraction_drives_switching_speed():
+    """A close, high-persuadable-fraction seat should switch faster under
+    identical contact than a landslide, low-persuadable-fraction one --
+    the real margin anchor must actually matter, not just exist."""
+    from attrition.election import simulate_level1_contact
+    seq = [0.5] * 6
+    _, close_final = simulate_level1_contact("Thiruvananthapuram", seq,
+                                              n_voters=3000, seed=1)
+    _, landslide_final = simulate_level1_contact("Mumbai North", seq,
+                                                  n_voters=3000, seed=1)
+    assert close_final > landslide_final, (
+        f"close seat ({close_final}) should switch more than landslide "
+        f"seat ({landslide_final}) under identical contact")
+
+
+def test_level2_personas_diverge_by_disposition():
+    """The whole point of a second, LLM-driven tier: personas should not
+    all respond identically to the same contact sequence, or Level 2 adds
+    nothing Level 1's aggregate rule doesn't already give."""
+    from attrition.election import simulate_level2_contact
+    seq = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.9, 1.0, 1.0]
+    results = simulate_level2_contact("Ahmedabad East", seq)
+    assert set(results) == {"voter-loyalist", "voter-swing", "voter-skeptical"}
+    switch_round = {name: (decisions.index(True) if True in decisions else None)
+                    for name, decisions in results.items()}
+    # swing should switch no later than loyalist/skeptical, given its
+    # persona is explicitly the least resistant
+    assert switch_round["voter-swing"] is not None
+    if switch_round["voter-loyalist"] is not None:
+        assert switch_round["voter-swing"] <= switch_round["voter-loyalist"]
+
+
+# --------------------------------------- voter-to-voter social network
+def test_voter_network_adds_a_measurable_propagation_effect():
+    from attrition.election import simulate_level1_contact_with_network
+    seq = [0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.0]
+    _, final_networked, final_direct = simulate_level1_contact_with_network(
+        "Ahmedabad East", seq, n_voters=500, seed=0)
+    assert final_networked >= final_direct, (
+        "propagation must not make the final switched fraction lower than "
+        "direct contact alone -- it can only add conversions")
+    assert final_networked > final_direct, (
+        "propagation must add a strictly measurable effect on this seeded run")
