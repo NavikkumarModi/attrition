@@ -17,6 +17,14 @@ vote share, party, margin, reservation category, not synthetic. See
 `attrition/election/lokdhaba.py`'s module docstring for the observed-vs-
 synthetic-latent distinction this feeds into.
 
+Also captures real candidate-biography fields the archive already carries
+but the original fetch discarded: sex, MyNeta-affidavit education tier,
+TCPD-coded profession, incumbency, terms served, and turncoat/recontest
+status. These are observed facts about the real candidates, not invented
+individual-voter latents -- the same observed/aggregate-constrained
+discipline `population.py` already enforces, just extended to who the
+real candidates were, not just how many votes they got.
+
 **All 543 real Lok Sabha constituencies**, 2019 General Election (the most
 recent full general election in the archive) -- not the original ten
 hand-picked "deliberately different environments" seats from this
@@ -93,6 +101,12 @@ def main():
         key = (r["State_Name"], r["Constituency_Name"])
         by_seat.setdefault(key, []).append(r)
 
+    def _bool(v):
+        return v == "TRUE" if v in ("TRUE", "FALSE") else None
+
+    def _int(v):
+        return int(v) if v else None
+
     snapshot = []
     for (state, name), candidates in sorted(by_seat.items()):
         candidates = sorted(candidates, key=lambda r: int(r["Position"]))
@@ -103,6 +117,7 @@ def main():
             "note": PILOT_NOTES.get(name, ""),
             "year": TARGET_YEAR,
             "constituency_type": top["Constituency_Type"],  # GEN / SC / ST
+            "sub_region": top["Sub_Region"] or None,
             "electors": int(top["Electors"]),
             "turnout_pct": float(top["Turnout_Percentage"]),
             "n_candidates": int(top["N_Cand"]),
@@ -113,6 +128,14 @@ def main():
                     "party": c["Party"],
                     "votes": int(c["Votes"]),
                     "vote_share_pct": float(c["Vote_Share_Percentage"]),
+                    "sex": c["Sex"] or None,
+                    "education": c["MyNeta_education"] or None,
+                    "profession": c["TCPD_Prof_Main"] or None,
+                    "profession_desc": c["TCPD_Prof_Main_Desc"] or None,
+                    "incumbent": _bool(c["Incumbent"]),
+                    "no_terms": _int(c["No_Terms"]),
+                    "turncoat": _bool(c["Turncoat"]),
+                    "recontest": _bool(c["Recontest"]),
                 }
                 for c in candidates
             ],

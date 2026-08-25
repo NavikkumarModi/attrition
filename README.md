@@ -379,10 +379,47 @@ that the original code had incorrectly claimed didn't exist. A real,
 checked property survived both fixes and is reported as a limitation, not
 tuned away: sustained near-maximum contact still saturates the population
 regardless of resistance, so magnitudes here are illustrative of the
-pipeline's mechanics, not calibrated forecasts. A real trained
-campaign-policy checkpoint and scale past ten constituencies remain open,
-for reasons on record in `FINDINGS.md` sections 31 and 33 — recorded as
-open rather than implied done. See `FINDINGS.md` sections 27–36.
+pipeline's mechanics, not calibrated forecasts. The track now runs at full
+national scale — all 543 real 2019 Lok Sabha constituencies, not the
+original ten-seat pilot (`examples/18_national_election_scan.py`), which
+surfaced five more real bugs (an O(N²) import cost, ambiguous constituency
+names across states, a false test bound, independents wrongly merged into
+one pseudo-candidate, and two per-seat tests rescaled deliberately) and,
+separately, that Level 2's persona decisions had been constituency-
+independent the whole time — fixed to inherit the same real margin anchor
+Level 1 already used. A first real calibration anchor is in too: 2014→2019
+winner vote-share swing, the same archive one election cycle earlier, puts
+real historical swings at roughly half this project's example campaign
+sequences' tipping-point requirement (`scripts/calibrate_campaign_
+magnitudes.py`) — a checkable order-of-magnitude signal, not a fit. A
+dedicated frontend now exists (`frontend/`, Vite + React + TypeScript,
+over a new `election_api.py` FastAPI layer) with a real interactive
+national map — actual India boundary polygons (DataMeet, CC BY 4.0), not
+a scatter-plot stand-in — that surfaced three more real bugs across three
+different data-handling layers (a name-matching gap between the two real
+sources, a whitespace typo in the raw TCPD data itself, and one
+constituency's polygon wound backwards, which a naive render turned into
+a solid rectangle swallowing the whole map). Two agent-level additions
+round out the track: incumbency now informs Level 1's resistance
+(`INCUMBENCY_RESISTANCE_BONUS`), and a national campaign-strategist agent
+(`attrition/election/strategist.py`) compares funding the cheapest real
+seats first against spreading the same budget evenly — greedy flips 50
+real seats at a 30-point national budget where even spreading flips zero.
+The persuasion mechanism's magnitude is calibrated against a real number
+now too, not just illustrative: `REALISTIC_PERSUASION_CEILING_PCT` caps
+Level 1's switched fraction at 2%, the upper edge of Kalla & Broockman's
+(2018, *APSR*) real field-experiment confidence interval for campaign
+contact's persuasive effect in a general election — dropping the fixed
+campaign sequence's national flip count from 504/543 to a far more
+honest 67/543. And a genuinely separate capability now exists alongside
+the mechanism model: `attrition/election/forecast.py`, a real uniform-
+national-swing forecasting baseline, honestly backtested with leave-one-
+state-out cross-validation on the real 2014→2019 transition (69.2%
+accuracy vs. a 66.1% naive baseline; only 12.4% recall on real flips,
+reported plainly, not softened). A real trained campaign-policy
+checkpoint remains open, for reasons on record in `FINDINGS.md` section
+31 — recorded as open rather than implied done. See `FINDINGS.md`
+sections 27–42.
 
 ### Scale with concurrent calls
 

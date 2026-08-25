@@ -1,0 +1,20 @@
+{
+ "prior_year": 2014,
+ "current_year": 2019,
+ "n_seats": 543,
+ "n_matched_same_party": 351,
+ "n_flipped_party": 184,
+ "n_missing_prior_year": 5,
+ "n_ambiguous": 3,
+ "real_swing_electorate_fraction_pct": {
+  "min": 0.006116000000003129,
+  "p10": 0.7737930000000025,
+  "median": 4.094468000000003,
+  "p90": 10.242192000000005,
+  "max": 18.845418
+ },
+ "tipping_point_required_pct": {
+  "median": 8.500000000000005,
+  "p90": 18.500000000000014
+ }
+}

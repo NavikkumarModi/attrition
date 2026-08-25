@@ -46,10 +46,21 @@ class Constituency:
     note: str                  # non-empty only for the original ten pilot seats
     year: int
     constituency_type: str     # GEN / SC / ST
+    sub_region: str | None     # real sub-region label where the archive has one (e.g. "AVADH"), else None
     electors: int
     turnout_pct: float
     parties: tuple             # party codes, ordered by real vote share (desc)
     vote_share_pct: tuple      # matching real vote share, sums to <= 100
+    # Real candidate-biography facts, winner then runner-up then the rest,
+    # same order as `parties` -- observed from the archive's affidavit and
+    # incumbency-derived fields, not invented. `None` where the archive
+    # itself had no value for that candidate, not silently defaulted.
+    candidate_sex: tuple
+    candidate_education: tuple
+    candidate_profession: tuple
+    candidate_incumbent: tuple
+    candidate_no_terms: tuple
+    candidate_turncoat: tuple
 
 
 def _constituency_from_row(row):
@@ -57,9 +68,16 @@ def _constituency_from_row(row):
     return Constituency(
         state=row["state"], name=row["constituency"], note=row["note"],
         year=row["year"], constituency_type=row["constituency_type"],
+        sub_region=row.get("sub_region"),
         electors=row["electors"], turnout_pct=row["turnout_pct"],
         parties=tuple(c["party"] for c in cands),
         vote_share_pct=tuple(c["vote_share_pct"] for c in cands),
+        candidate_sex=tuple(c.get("sex") for c in cands),
+        candidate_education=tuple(c.get("education") for c in cands),
+        candidate_profession=tuple(c.get("profession") for c in cands),
+        candidate_incumbent=tuple(c.get("incumbent") for c in cands),
+        candidate_no_terms=tuple(c.get("no_terms") for c in cands),
+        candidate_turncoat=tuple(c.get("turncoat") for c in cands),
     )
 
 

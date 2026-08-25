@@ -10,3 +10,7 @@ dist/
 *.log
 *.out
 *.synctex.gz
+
+# frontend/ (Vite + React election dashboard)
+frontend/node_modules/
+frontend/dist/

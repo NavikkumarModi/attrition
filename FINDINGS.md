@@ -1457,3 +1457,369 @@ seats for their printed tables (`c.note` is non-empty only for those) --
 underlying data and functions operate at full national scale regardless.
 
 206/206 tests passing.
+
+## 37. Level 2 was constituency-independent -- found by scaling it, not by inspection
+
+Level 1 (`BehaviouralVoter`) inherits the real, margin-anchored persuadable
+fraction (FINDINGS.md #29's anchor, via `persuadable_fraction_from_margin`).
+Running Level 2 (`simulate_level2_contact`, the LLM-driven persona tier)
+across all 543 real constituencies the same way #35/#36 scaled Level 1 --
+not just Ahmedabad East, the only seat any example or test had ever passed
+it -- surfaced that Level 2 had no such anchor at all: `mean_round`, the
+average round at which each persona switched, was identical to the decimal
+across every one of the 543 real seats. Checking directly: Ahmedabad East
+(38.9pp real margin), Thiruvananthapuram (9.89pp), and Mumbai North (47.0pp,
+the widest real landslide in the pilot set) produced byte-identical
+per-round decisions for all three voter personas.
+
+The cause: `simulate_level2_contact` resolved its `constituency` argument
+via `build_constituency` (to support passing a name) and then never read
+it again -- `v_hat=[0.5, float(intensity)]` depends only on the round's
+contact intensity, the same for every seat regardless of how contestable
+it really is. `MockLLMClient`'s score, `value - (1 - risk) * charge`, is
+consequently a pure function of `(intensity, persona.risk_tolerance,
+remaining)`, with no real-data input at all -- Level 2 was, despite its
+docstring's framing, not actually anchored to anything real.
+
+**Fix:** the switch arm's `v_hat` is now `float(intensity) * persuadable`,
+where `persuadable = persuadable_fraction_from_margin(constituency)` --
+the exact same real anchor Level 1 already uses, not a new one invented
+for this tier. Re-checked after the fix: Thiruvananthapuram's swing voter
+now switches earlier than Ahmedabad East's, which switches earlier than
+Mumbai North's (which no longer switches at all under a modest sequence)
+-- the same directional pattern already proven for Level 1
+(`test_level1_persuadable_fraction_drives_switching_speed`), now true of
+Level 2 as well. `examples/16_voter_social_network.py`'s printed Level-2
+line for Ahmedabad East changed as a direct, expected consequence (a
+38.9pp-margin seat is now genuinely harder to move than before the fix,
+not a regression). New regression test:
+`test_level2_decisions_depend_on_real_constituency_margin`.
+
+207/207 tests passing (was 206).
+
+## 38. A real, checkable anchor for the campaign-magnitude calibration gap
+
+FINDINGS.md #35/#36 both state, as a limitation rather than a result, that
+campaign-intensity magnitudes are "illustrative of the pipeline's
+mechanics, not calibrated forecasts" -- not fit to any survey or
+field-experiment data, because no such dataset was available. There still
+isn't one, but the same archive already checked into this repo
+(`scripts/fetch_election_data.py`'s source, TCPD LokDhaba) also holds the
+2014 Lok Sabha general election -- one real cycle earlier, at the same
+post-2008 delimitation, so 2014 and 2019 are directly comparable seats,
+not a redistricting-confounded pair. That gives one real anchor this
+project didn't have before: how much a real winner's vote share actually
+moved between two real elections, in seats that didn't change hands.
+
+`scripts/calibrate_campaign_magnitudes.py` fetches 2014's results
+(network, same archive, same code path as `fetch_election_data.py`) and,
+for the 351 of 543 seats where the SAME party won both in 2014 and 2019,
+computes each seat's real winner vote-share swing, converted to a fraction
+of the total electorate via that seat's own real turnout (this project's
+unit throughout, vs. vote-share swing being a fraction of valid votes --
+stated as a proxy conversion, not assumed exact). 184/543 seats flipped to
+a different party outright (2019 was an unusually large pro-BJP wave
+election) and are excluded from the swing distribution since "the same
+party's own vote share moved by X" isn't defined when the party changed;
+5 seats had no 2014 match (renamed/reorganised) and 3 were ambiguous
+three-way name collisions state-matching couldn't resolve, both reported
+rather than silently dropped.
+
+**Result:** real median electorate-fraction swing across those 351 seats
+is 4.09%, against a median `tipping_point` requirement (computed
+independently, all 543 seats) of 8.50% -- real historical swing is about
+**48% of what a typical seat needs to flip.** At the 90th percentile:
+10.24% real vs. 18.50% required, the same roughly-half relationship. This
+is directionally exactly what the real world looks like -- most seats do
+not flip most elections, so a real median swing smaller than a typical
+seat's flip requirement is the expected, checkable pattern, not a
+surprise; the *number* (real swings run at roughly half the model's
+tipping-point requirement, seat for seat) is the new, real information
+this investigation adds.
+
+**What this does and does not establish.** It does NOT calibrate any
+individual campaign's persuasion contribution -- a seat's real 2014->2019
+swing reflects national mood, local candidates, and countless factors, no
+single campaign's contact effort in isolation. What it DOES give is an
+order-of-magnitude check for `examples/17`/`18`'s example campaign
+sequences: `examples/18_national_election_scan.py`'s modest
+`[0.15, 0.2, 0.25, 0.3, 0.35]` sequence flips 504/543 seats and saturates
+razor-thin-margin seats near 96% switched -- an order of magnitude above
+the real ~4-10% swings this investigation just measured. The honest
+reading is not that the mechanism is wrong (FINDINGS.md #35/#36 already
+show it's mechanistically sound and directionally sensible), but that
+example campaign sequences calibrated by feel (examples/17's docstring:
+"stays well below the ceiling") still run hot relative to what real
+elections actually exhibit -- the natural next step, not attempted here,
+would be tuning the `rho`/intensity defaults so a "modest" sequence lands
+its final switched fraction near this real ~4-10% band instead of at
+whatever the un-anchored default happened to produce.
+
+No new test added to the suite: this investigation depends on a live
+network fetch of 2014 data (the same policy `fetch_election_data.py`
+already follows for 2019), which the offline-only test suite explicitly
+does not do (`tests/test_election.py`'s module docstring: "Offline only").
+The result is recorded here, reproducibly, by re-running
+`scripts/calibrate_campaign_magnitudes.py` directly.
+
+207/207 tests passing (unchanged -- this entry adds an investigation
+script, not a package change).
+
+## 39. A real interactive national map -- and two real data bugs it took building to find
+
+Built a dedicated frontend (`frontend/`, Vite + React + TypeScript) over a
+new `election_api.py` (FastAPI), including a real choropleth map of all
+543 real constituencies by tipping point -- not a scatter/table proxy for
+"geographic," an actual India outline built from real boundary polygons.
+
+**Boundary source:** DataMeet (India's open-mapping community),
+`datameet/maps`' "simplified" (<2MB) 2019 parliamentary-constituency
+GeoJSON -- MIT-licensed repo, CC BY 4.0 data, attribution given in the
+map's own caption. `scripts/fetch_constituency_boundaries.py` fetches it
+the same way `fetch_election_data.py` fetches election results; the
+checked-in snapshot is `attrition/data/india_pc_2019_boundaries.geojson`.
+
+**The join isn't free -- two real sources, two real gaps, found by
+attempting it, not assumed to line up (`attrition/election/geo.py`):**
+
+1. A direct case-insensitive name+state match only closed 506/543. The
+  other 37 break into three real categories: reservation-category
+  suffixes TCPD carries and DataMeet doesn't (`"GAYA (SC)"` vs `"Gaya"`),
+  genuine spelling variants between the two real sources for the same
+  real seat (`"BELGAUM"` vs `"Belagavi"`, `"HARDWAR"` vs `"Haridwar"`,
+  21 more), and one confirmed data bug in the boundary file itself:
+  Maharashtra pc_no 31 is labelled `"Mumbai South"` -- identical name AND
+  wikidata_qid to pc_no 30 -- when it's really Mumbai South Central.
+  Fixed by an explicit alias table plus one pc_no-keyed override, all
+  543 real seats now resolve (`test_geo_join_matches_all_543_real_seats`).
+
+2. Joining by name also surfaced a real bug in `lokdhaba.get_constituency`
+  itself, one level down: the raw TCPD source has a genuine double-space
+  typo in one constituency name (`"MUMBAI   SOUTH"`), and the lookup only
+  stripped leading/trailing whitespace, not internal -- so `get_
+  constituency("Mumbai South")` raised `KeyError` for a real, present
+  seat. Fixed to collapse internal whitespace before comparing, leaving
+  the stored value exactly as the source has it.
+
+3. Rendering the joined geometry (not just parsing it) surfaced a THIRD
+  real bug: Rajasthan/Bharatpur has several MultiPolygon parts wound
+  clockwise instead of counter-clockwise (per GeoJSON/RFC 7946
+  convention). Under a Mercator projection this doesn't just look wrong --
+  it renders as a solid rectangle covering the ENTIRE map, because a
+  clockwise-wound single-ring "polygon" is interpreted as "everything
+  except this sliver." Confirmed by rendering (a screenshot showed one
+  giant yellow rectangle swallowing all 542 other seats), diagnosed by
+  computing each feature's projected bounding area in Node/d3-geo and
+  finding the one outlier at exactly the canvas size, and root-caused by
+  checking the planar (shoelace) signed area of every single-ring part
+  across all 543 features -- Bharatpur is the ONLY constituency affected.
+  `geo.py`'s `_fix_polygon_winding` reverses just those inverted rings.
+
+Three real, independent bugs, in three different real data-handling
+layers (name matching, whitespace normalisation, ring orientation), each
+found by actually using the data for something (a join, a lookup, a
+render) rather than by inspecting it -- the same pattern as every other
+bug this project's election track has surfaced by connecting components,
+not designing them in isolation (FINDINGS.md #35-#37).
+
+The frontend itself: three views (national overview with the map and a
+searchable table, a constituency-level campaign simulator reusing
+`simulate_level1_contact`/`simulate_level2_contact`/`recompute_outcome`
+unchanged, and the calibration comparison from #38) plus a fourth added
+in #40. `frontend/README.md` has run instructions.
+
+220/220 tests passing (was 213 before this session's other additions;
+the geo-join and winding-fix regression tests are new).
+
+## 40. Two agent-level additions: real incumbency, and a national strategist
+
+Two improvements to the election track's AGENTS specifically (not new
+data or a new surface), aimed at the track being read by people outside
+this project, not just exercised by its own test suite.
+
+**Incumbency now informs Level 1's resistance, not just the real margin.**
+`attrition/election/agents.py`'s `mean_resistance_for` pulls a
+constituency's mean switch-resistance `INCUMBENCY_RESISTANCE_BONUS`
+(0.15, a stated, round modelling choice, not fit to any incumbency-effect
+study -- same illustrative-not-calibrated status as every other campaign
+magnitude in this project) of the remaining way toward 1.0 when the real
+2019 winner was a real incumbent (`Constituency.candidate_incumbent`,
+added when the data pipeline started keeping candidate-biography fields
+it had been discarding). A real, well-documented electoral effect
+(name recognition, constituency service, media exposure) the margin alone
+doesn't capture. Checked on a real matched pair, not just the unit
+function: holding persuadable fraction near-fixed (0.03 apart), a real
+incumbent seat switches no faster under an identical campaign than a real
+non-incumbent one
+(`test_incumbency_bonus_increases_resistance_and_slows_switching`).
+
+**A new national campaign-strategist agent (`attrition/election/
+strategist.py`) -- a genuinely new decision problem, not a re-application
+of Theorems 1-6, stated as such to avoid overclaiming.** Those theorems
+are about one shared, depleting pool consumed round by round; this is a
+one-shot portfolio choice across 543 INDEPENDENT real seats, each with
+its own fixed real cost (`tipping_point`). Two policies, both real
+baselines rather than one asserted-correct optimiser:
+
+- `greedy_allocation` -- fund the cheapest real seats to flip first,
+  stop when the budget runs out (the same greedy-by-marginal-value
+  philosophy as `attrition.policies.Greedy`, reused for a seat-targeting
+  decision instead of an arm pull).
+- `even_allocation` -- spread the identical budget equally across every
+  seat within reach (tipping point <= 20%, a stated scope choice); a
+  seat only flips if its equal share actually clears its own real
+  tipping point.
+
+At a 30-point national budget: greedy fully funds and flips 50 real
+seats; even, spread across the same 496 in-scope seats, flips ZERO --
+every seat's ~0.06-point equal share falls short of even the cheapest
+seat's 0.1-point requirement. Not a contrived example: `greedy_allocation`
+strictly dominates `even_allocation` at every budget tested
+(`test_greedy_beats_even_allocation_at_the_same_budget`, budgets 10/30/60).
+Wired into the frontend's new "Strategist" tab.
+
+220/220 tests passing.
+
+## 41. Level 1's magnitude, finally calibrated against a real number -- not a proxy
+
+Every prior entry on campaign magnitudes (FINDINGS.md #35, #36, #38) was
+honest about a real gap: the switched-fraction numbers were "illustrative
+of the pipeline's mechanics, not calibrated forecasts," because no real
+persuasion-effect dataset had been brought in. #38 closed part of that gap
+with a real but indirect anchor (aggregate 2014->2019 vote-share swing,
+confounded by everything an election moves on, not just campaign
+contact). This entry closes it directly, with the actual real number the
+gap was waiting for.
+
+**Kalla & Broockman (2018, American Political Science Review), "The
+Minimal Persuasive Effects of Campaign Contact in General Elections:
+Evidence from 49 Field Experiments"** meta-analysed 49 real field
+experiments measuring whether campaign contact (canvassing, calls, mail,
+ads) changes vote CHOICE -- not turnout -- in a general election. Their
+central, since widely-cited finding: the average persuasive effect across
+these real experiments is statistically indistinguishable from zero.
+Their subgroup of 8 studies measuring personal canvassing within two
+months of a general election (the closest real analogue to this
+project's "contact intensity") found an average effect of -1.9
+percentage points, SE 1.7 points -- a real 95% CI of roughly
+[-5.3, +1.5], i.e. genuinely could be a backfire, not reliably a gain at
+all.
+
+**Applied:** `REALISTIC_PERSUASION_CEILING_PCT = 2.0`
+(`attrition/election/agents.py`) -- the rounded upper, most-favourable-to-
+persuasion edge of that real CI, not the (statistically zero) point
+estimate, so the mechanism still shows a directional, non-degenerate
+effect while never claiming more real movement than field experiments
+have actually found achievable in their best real case. `simulate_level1_
+contact`'s raw pressure/resistance mechanism is unchanged -- it still
+decides who's RELATIVELY easier to move (a close seat, a non-incumbent,
+per #35 and #40) -- but its output is now rescaled by
+`ceiling_pct / 100` before being returned, so the ABSOLUTE magnitude is
+capped at a real, cited number instead of whatever the raw mechanism
+would otherwise produce.
+
+**Before/after, `examples/18_national_election_scan.py`'s same fixed
+campaign sequence, all 543 real seats:**
+
+| | before #41 | after #41 |
+|---|---|---|
+| seats flipped | 504/543 | 67/543 |
+| razor-thin-margin seats' switched fraction | ~96% (near-total saturation) | ~1.4-1.9% (capped near the real ceiling) |
+
+**What this does and does not establish.** It does not mean campaigns
+never move any votes -- Kalla & Broockman's own CI admits up to +1.5
+points in the best real case they measured, which is exactly what
+`REALISTIC_PERSUASION_CEILING_PCT` uses. What it does mean, read plainly:
+against a median real seat's ~8.5% tipping-point requirement, even a
+maximally-effective real campaign's ~2% ceiling isn't close -- consistent
+with the real, well-established political-science consensus that most
+general-election seats are not decided by campaign persuasion contact
+specifically (turnout, partisanship, and national conditions dominate).
+The 67 seats that still flip here are all seats with a real margin under
+~1.4pp, where the tipping point itself is small enough for even a
+real-world-bounded effect to clear it -- the model is not broken by the
+recalibration, it is finally telling the truth about how narrow that
+lever really is.
+
+**Not yet recalibrated:** Level 2 (LLM persona decisions, `simulate_
+level2_contact`) still uses its own uncalibrated `v_hat` scaling
+(FINDINGS.md #37's fix only added constituency-dependence, not a real
+magnitude anchor). Left open rather than silently assumed fixed by
+association.
+
+One test's threshold updated (`test_level1_switched_fraction_rises_
+monotonically_with_intensity`, now checked proportionally to
+`REALISTIC_PERSUASION_CEILING_PCT` rather than an absolute
+pre-calibration magnitude) -- the qualitative claim (rising intensity ->
+rising switched fraction) is unchanged, only the real scale is.
+
+220/220 tests passing (unchanged -- this recalibrates a constant and one
+test's threshold, not the test count).
+
+## 42. A real, honestly-backtested prediction baseline -- a different question, asked directly
+
+Every entry so far in the election track asks a mechanism question: "if a
+campaign contacts voters this much, what happens?" A user reviewing the
+track asked a different, entirely fair question: does any of this
+actually predict a real election, for anyone? The persuasion simulator
+never claimed to (FINDINGS.md #35/#36/#41 all say so explicitly) -- so
+rather than stretch the mechanism to answer a question it isn't built
+for, this entry adds a genuinely separate module that asks the real
+prediction question directly, with no campaign, no LLM, and no
+persuasion mechanism at all: `attrition/election/forecast.py`.
+
+**A second real historical snapshot, checked in.**
+`scripts/fetch_election_data_historical.py` fetches 2014 (the general
+election immediately before 2019, same post-2008 delimitation) from the
+same TCPD archive, same schema as the 2019 snapshot, and checks it in as
+`attrition/data/tcpd_lokdhaba_ge_2014.json` -- needed because the offline
+test suite (`tests/test_election.py`'s stated policy) can't depend on a
+live fetch. `lokdhaba.load_constituencies`/`get_constituency` gained an
+optional `year=` parameter to read it, defaulting to `None` (the
+original 2019 file) so every existing caller is unaffected.
+
+**Uniform national swing**, a real, standard political-science
+forecasting technique, not invented for this project: estimate each
+party's average real vote-share change from 2014 to 2019
+(`national_swing`, excluding the generic "IND" label and any party with
+fewer than `MIN_SEATS_FOR_SWING`=15 real matched seats, too noisy a
+sample to trust), then predict a seat's 2019 winner as "2014 share +
+that party's national swing" (`predict_seat_winner`).
+
+**Backtested honestly, the part that makes this a real result and not
+just a fitted claim:** `leave_one_state_out_backtest` recomputes the
+national swing excluding EACH state's own real seats before predicting
+that state -- a state's own 2019 outcome never leaks into the number
+used to forecast it
+(`test_leave_one_state_out_backtest_never_uses_a_states_own_data_for_its_swing`
+checks this directly, not just trusts the code). 522/543 real seats
+matched across both years (21 renamed/reorganised, reported not dropped).
+
+**The honest result, all real, matched seats:**
+
+| | accuracy |
+|---|---|
+| naive "incumbent retains" baseline | 66.1% |
+| uniform national swing model | 69.2% |
+| swing model's recall on the 177 real seats that actually flipped | 12.4% |
+
+Reported plainly, not softened: the swing model beats the naive baseline
+by only 3.1 points overall, because the naive baseline is already strong
+(most seats don't change hands in any single election). Far more telling
+is the 12.4% flip-recall -- 2019 was a large, geographically UNEVEN wave
+(BJP's gains were far from uniform across states), and a single national
+swing number cannot capture that unevenness by construction. This is not
+a failure to hide; it's the real, honest limit of the simplest real
+forecasting technique, reported the same way every other result in this
+project is.
+
+**What this does and does not establish.** It does not mean this project
+can predict elections -- one baseline technique, two real cross-
+sections, one backtest. It establishes that a real, separate, honestly-
+validated prediction capability now exists alongside the persuasion
+simulator, answering the "is this useful for prediction" question
+directly rather than by stretching the mechanism model to do a job it
+was never calibrated for. Wired into the frontend's new "Forecast" tab
+(`GET /api/forecast`).
+
+225/225 tests passing (was 220).

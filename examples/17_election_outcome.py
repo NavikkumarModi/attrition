@@ -29,14 +29,16 @@ def main():
           f"{tp*100:.1f}% of the total electorate to the runner-up "
           f"to flip this seat (all else equal).\n")
 
-    # A modest, bounded campaign -- NOT ramped to maximum intensity.
-    # Sustaining intensity=1.0 for many rounds drives accumulated pressure
-    # toward 1.0 for nearly every voter regardless of resistance, which
-    # saturates the whole population near 100% switched (checked, not
-    # assumed -- see FINDINGS.md's election-track sections). That's a real
-    # property of sustained-maximum contact, not obviously a bug, but it
-    # makes a poor default demonstration: every seat flips, by an
-    # unrealistic margin. This sequence stays well below the ceiling.
+    # A modest, rising-intensity campaign. The switched fraction Level 1
+    # reports is now calibrated (FINDINGS.md #41) against Kalla &
+    # Broockman (2018)'s real field-experiment finding that campaign
+    # contact's average persuasive effect on vote choice in a general
+    # election is statistically indistinguishable from zero -- the
+    # raw pressure/resistance mechanism still decides who's relatively
+    # easier to move (a close seat, a non-incumbent), but the reported
+    # magnitude is capped at REALISTIC_PERSUASION_CEILING_PCT (2.0%),
+    # the rounded upper edge of that real study's confidence interval,
+    # not an unconstrained mechanism total.
     seq = [0.15, 0.2, 0.25, 0.3, 0.35]
     fractions, final = simulate_level1_contact(name, seq, n_voters=5000, seed=0)
     print(f"Level 1 simulated campaign (n=5000, {len(seq)} rounds of "

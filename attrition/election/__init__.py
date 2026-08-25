@@ -27,9 +27,13 @@ from .persuasion import (real_margin_pct, persuadable_fraction_from_margin,
                          PHASE1_PERSUADABLE_FRACTIONS)
 from .identification import identification_floor, PHASE1_IDENTIFICATION_FLOORS
 from .agents import (BehaviouralVoter, simulate_level1_contact,
-                     simulate_level2_contact)
+                     simulate_level2_contact, REALISTIC_PERSUASION_CEILING_PCT)
 from .network import simulate_level1_contact_with_network
 from .outcome import Outcome, recompute_outcome, tipping_point
+from .geo import load_boundaries, geojson_feature_collection
+from .strategist import greedy_allocation, even_allocation, AllocationResult
+from .forecast import (match_seats, national_swing, predict_seat_winner,
+                       leave_one_state_out_backtest, MIN_SEATS_FOR_SWING)
 
 __all__ = ["SOURCE", "load_constituencies", "get_constituency",
           "SyntheticVoter", "Constituency", "build_constituency",
@@ -40,5 +44,10 @@ __all__ = ["SOURCE", "load_constituencies", "get_constituency",
           "PHASE1_PERSUADABLE_FRACTIONS",
           "identification_floor", "PHASE1_IDENTIFICATION_FLOORS",
           "BehaviouralVoter", "simulate_level1_contact", "simulate_level2_contact",
+          "REALISTIC_PERSUASION_CEILING_PCT",
           "simulate_level1_contact_with_network",
-          "Outcome", "recompute_outcome", "tipping_point"]
+          "Outcome", "recompute_outcome", "tipping_point",
+          "load_boundaries", "geojson_feature_collection",
+          "greedy_allocation", "even_allocation", "AllocationResult",
+          "match_seats", "national_swing", "predict_seat_winner",
+          "leave_one_state_out_backtest", "MIN_SEATS_FOR_SWING"]

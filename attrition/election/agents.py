@@ -22,7 +22,25 @@ switch_resistance)`, where `switch_resistance` is drawn per voter from a
 Beta distribution centred on the constituency's real, margin-anchored
 persuadable fraction (`attrition.election.persuasion`) -- so a voter
 population inherits the same real anchor the persuasion theorem does, not
-a second, disconnected one.
+a second, disconnected one. Mean resistance also incorporates whether the
+real 2019 winner was a real incumbent (`Constituency.candidate_incumbent`,
+added by scaling the election-track data pipeline) -- incumbents carry a
+real, well-documented electoral advantage (name recognition, constituency
+service record, media exposure) that isn't captured by the margin alone;
+`INCUMBENCY_RESISTANCE_BONUS` states the size of that adjustment as the
+modelling choice it is, not a fitted or calibrated number (same
+illustrative-not-calibrated status as every other campaign-magnitude
+parameter in this module -- see FINDINGS.md #35/#36).
+
+Level 1's ABSOLUTE magnitude is now calibrated against a real, cited
+number, not left illustrative (see `REALISTIC_PERSUASION_CEILING_PCT`
+below and FINDINGS.md #41) -- the mechanism's own raw pressure/resistance
+dynamics still set who is relatively easier or harder to move (a close
+seat vs. a landslide, a challenger vs. an incumbent), but the resulting
+switched fraction is rescaled into the real range field experiments have
+actually found campaign contact can achieve in a general election, not
+however large the raw threshold-crossing mechanism would otherwise
+produce.
 
 Level 2 -- CognitiveVoter (LLM-driven, small numbers, the tier meant to be
 deep, not wide)
@@ -48,7 +66,61 @@ from .persuasion import persuadable_fraction_from_margin
 from .population import build_constituency
 
 __all__ = ["BehaviouralVoter", "simulate_level1_contact",
-          "simulate_level2_contact"]
+          "simulate_level2_contact", "INCUMBENCY_RESISTANCE_BONUS",
+          "mean_resistance_for", "REALISTIC_PERSUASION_CEILING_PCT"]
+
+# A real incumbent's electorate is modelled as harder to move: mean
+# resistance is pulled a fixed fraction of the way from the margin-implied
+# value toward 1.0 (full resistance), not toward any absolute number, so
+# it still scales with how persuadable the seat already was. 0.15 is a
+# stated, round modelling choice -- not fit to any incumbency-effect
+# study -- picked to be a real, checkable effect (see
+# `test_incumbency_bonus_increases_resistance_and_slows_switching`) without
+# swamping the real margin anchor it's layered on top of.
+INCUMBENCY_RESISTANCE_BONUS = 0.15
+
+# The real academic ceiling Level 1's raw switched fraction is rescaled
+# against, replacing the earlier "illustrative, not calibrated" status
+# with an actual cited number (FINDINGS.md #41).
+#
+# Kalla & Broockman (2018, American Political Science Review, "The
+# Minimal Persuasive Effects of Campaign Contact in General Elections:
+# Evidence from 49 Field Experiments") meta-analysed 49 real field
+# experiments on whether campaign contact (canvassing, calls, mail, ads)
+# changes vote CHOICE in a general election -- not turnout, the specific
+# quantity Level 1's "switched fraction" represents. Their headline
+# result: the average persuasive effect across these real experiments is
+# statistically indistinguishable from zero. Their subgroup of 8 studies
+# measuring personal canvassing within two months of a general election
+# (the closest real analogue to sustained "contact intensity" here) found
+# an average effect of -1.9 percentage points, SE 1.7 points -- a 95% CI
+# of roughly [-5.3, +1.5] points, i.e. genuinely could be anywhere from a
+# real backfire to a small real gain, not reliably positive at all.
+#
+# REALISTIC_PERSUASION_CEILING_PCT takes 2.0 -- the rounded upper,
+# most-favourable-to-persuasion edge of that real confidence interval,
+# not the (statistically zero) point estimate -- as a CEILING on the
+# switched fraction a campaign can realistically achieve, so this module
+# still shows a directional, non-degenerate effect (persuadable/
+# incumbent-adjusted, per the mechanism above) while never claiming more
+# real movement than field experiments have actually found achievable in
+# their best real case. This replaces the old, much larger, un-anchored
+# magnitudes examples/17 and /18 reported before this recalibration (see
+# FINDINGS.md #41 for the before/after numbers).
+REALISTIC_PERSUASION_CEILING_PCT = 2.0
+
+
+def mean_resistance_for(persuadable_fraction, incumbent):
+    """Mean switch-resistance for a constituency's Level-1 population:
+    `1 - persuadable_fraction`, pulled `INCUMBENCY_RESISTANCE_BONUS` of
+    the remaining way to 1.0 if the real 2019 winner was a real
+    incumbent. Factored out from `simulate_level1_contact` so the
+    incumbency effect itself is directly unit-testable, not only visible
+    through a full population simulation."""
+    resistance = 1.0 - float(persuadable_fraction)
+    if incumbent:
+        resistance = resistance + INCUMBENCY_RESISTANCE_BONUS * (1.0 - resistance)
+    return resistance
 
 
 class BehaviouralVoter:
@@ -73,19 +145,28 @@ def simulate_level1_contact(constituency, intensity_sequence, rho=0.7,
     here, this function only consumes the sequence).
 
     `switch_resistance` per voter is drawn from Beta(a, b) centred on
-    `1 - persuadable_fraction_from_margin(constituency)` -- so a
-    constituency with a real close margin (high persuadable fraction, low
-    average resistance) produces a population that is, on average,
-    genuinely easier to move, and a landslide seat produces one that
-    isn't, without hand-tuning per constituency.
+    `mean_resistance_for(persuadable_fraction_from_margin(constituency),
+    constituency.candidate_incumbent[0])` -- so a constituency with a real
+    close margin (high persuadable fraction, low average resistance)
+    produces a population that is, on average, genuinely easier to move,
+    a landslide seat produces one that isn't, and a real incumbent's seat
+    is harder still to move than the margin alone implies -- all without
+    hand-tuning per constituency.
 
     Returns the per-round switched fraction (list, one entry per round)
-    and the final switched fraction.
+    and the final switched fraction -- both rescaled by
+    `REALISTIC_PERSUASION_CEILING_PCT` (module-level docstring, FINDINGS.md
+    #41): the raw mechanism decides who is RELATIVELY easier to move (a
+    close seat, a non-incumbent), the ceiling caps how much ANY of that
+    can amount to in real percentage-point terms, so a value of e.g. 0.008
+    means 0.8% of the electorate switched, not 0.8% of some already-tiny
+    pool -- the same total-electorate-fraction unit `tipping_point`
+    already uses throughout this project.
     """
     if isinstance(constituency, str):
         constituency = build_constituency(constituency)
     persuadable = persuadable_fraction_from_margin(constituency)
-    mean_resistance = 1.0 - persuadable
+    mean_resistance = mean_resistance_for(persuadable, constituency.candidate_incumbent[0])
     rng = np.random.default_rng(seed)
     # Beta(a, b) with mean = mean_resistance, concentration held fixed at 8
     # (moderate spread around the mean, not degenerate) -- a modelling
@@ -115,8 +196,9 @@ def simulate_level1_contact(constituency, intensity_sequence, rho=0.7,
             # resistance, and un-switches cleanly if pressure decays back
             # below it.
             v.switched = v.pressure > v.switch_resistance
+        raw_fraction = sum(v.switched for v in voters) / n_voters
         switched_fraction_by_round.append(
-            sum(v.switched for v in voters) / n_voters)
+            raw_fraction * REALISTIC_PERSUASION_CEILING_PCT / 100.0)
 
     return switched_fraction_by_round, switched_fraction_by_round[-1]
 
@@ -144,11 +226,25 @@ def simulate_level2_contact(constituency, intensity_sequence, personas=None,
                        reinterpretation, not a literal bandit-arm-death
                        claim about voters -- see module docstring.
 
+    The switch arm's `v_hat` is scaled by the SAME real, margin-anchored
+    `persuadable_fraction_from_margin(constituency)` Level 1 uses to set
+    `switch_resistance` -- not left constituency-independent. An earlier
+    version passed `v_hat=[0.5, float(intensity)]` with the constituency
+    argument resolved but never otherwise read, so every real seat --
+    Ahmedabad East (38.9pp margin) and Mumbai North (47.0pp landslide)
+    alike -- produced byte-identical persona decisions (found by running
+    this at national scale, not by inspection: `mean_round` was identical
+    across all 543 real seats to the decimal). A close, high-persuadable
+    seat now makes a genuinely stronger real case for switching than a
+    landslide one, the same real anchor Level 1 already inherits, rather
+    than Level 2 quietly not depending on the real data it's named after.
+
     Returns {persona_name: [switch_decision_per_round]} where each entry
     is True (switched this round) or False (stayed).
     """
     if isinstance(constituency, str):
         constituency = build_constituency(constituency)
+    persuadable = persuadable_fraction_from_margin(constituency)
     personas = list(VOTER_PERSONAS.values()) if personas is None else personas
     client = client if client is not None else MockLLMClient(seed=0)
 
@@ -160,7 +256,7 @@ def simulate_level2_contact(constituency, intensity_sequence, personas=None,
         for t, intensity in enumerate(intensity_sequence):
             state = State(
                 available=[0, 1], t=t, horizon=horizon,
-                v_hat=[0.5, float(intensity)],
+                v_hat=[0.5, float(intensity) * persuadable],
                 p=[0.0, float(intensity)],
                 e=[0.0, float(persona.risk_tolerance)],
                 delta=1.0,
