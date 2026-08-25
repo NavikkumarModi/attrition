@@ -41,44 +41,62 @@ class Outcome:
 
 def recompute_outcome(constituency, switched_fraction, challenger_party=None):
     """Real baseline shares, shifted by `switched_fraction` (in [0, 1], a
-    fraction of the total electorate) moving to `challenger_party`
+    fraction of the total electorate) moving to the challenger candidate
     (defaults to the real runner-up). See module docstring for the
     reallocation rule.
+
+    Accounted per REAL CANDIDATE (by position), not per party label --
+    a real bug caught scaling to all 543 seats: several independents can
+    each carry the generic "IND" label, and an earlier version summed
+    their votes into one pseudo-candidate, which could exceed the actual
+    winner's real share (found at Ladakh and Mizoram, both real BJP/MNF
+    wins an aggregated recount misreported as "IND" winning). Real
+    political parties field exactly one candidate per seat, so
+    per-candidate accounting changes nothing for them; it only matters for
+    generic multi-candidate labels, which is exactly where aggregation was
+    wrong.
     """
     if isinstance(constituency, str):
         constituency = build_constituency(constituency)
-    parties = list(constituency.parties)
-    shares = {p: 0.0 for p in parties}
-    for p, s in zip(constituency.parties, constituency.vote_share_pct):
-        shares[p] += s   # sum, not overwrite -- duplicate labels (IND) exist
+    parties = constituency.parties
+    vshares = constituency.vote_share_pct
+    n = len(parties)
 
-    real_winner = max(shares, key=shares.get)
     if challenger_party is None:
-        challenger_party = sorted(shares, key=shares.get, reverse=True)[1]
+        challenger_idx = 1                     # the real runner-up candidate
+    else:
+        matches = [i for i, p in enumerate(parties) if p == challenger_party]
+        if not matches:
+            raise ValueError(f"{challenger_party!r} is not a candidate in "
+                             f"{constituency.name}")
+        # if the label matches more than one real candidate (independents),
+        # anchor on whichever of them polled highest -- stated as the
+        # deliberate choice it is, not left ambiguous.
+        challenger_idx = max(matches, key=lambda i: vshares[i])
 
-    remaining_total = 100.0 - shares[challenger_party]
+    remaining_total = 100.0 - vshares[challenger_idx]
     # A switched_fraction of the WHOLE electorate cannot claim more than
-    # the share every other party currently holds -- clamped here, not
-    # left to silently zero every other party out and hand the challenger
-    # a fabricated ~100% (a real degenerate case caught by actually
-    # running this against a high Level-1 switched_fraction, not assumed
-    # away).
+    # the share every other candidate currently holds -- clamped here, not
+    # left to silently zero every other candidate out and hand the
+    # challenger a fabricated ~100% (a real degenerate case caught by
+    # actually running this against a high Level-1 switched_fraction, not
+    # assumed away).
     gain = min(100.0 * float(switched_fraction), remaining_total)
     scale = max(remaining_total - gain, 0.0) / remaining_total if remaining_total > 0 else 0.0
-    new_shares = {}
-    for p, s in shares.items():
-        new_shares[p] = s * scale if p != challenger_party else s + gain
-    # renormalise for float drift
-    total = sum(new_shares.values())
-    new_shares = {p: 100.0 * s / total for p, s in new_shares.items()}
 
-    ranked = sorted(new_shares.items(), key=lambda kv: kv[1], reverse=True)
-    winner, winner_share = ranked[0]
-    runner_up, runner_up_share = ranked[1]
+    new_shares = [s * scale for s in vshares]
+    new_shares[challenger_idx] = vshares[challenger_idx] + gain
+    total = sum(new_shares)
+    new_shares = [100.0 * s / total for s in new_shares]
+
+    ranked = sorted(range(n), key=lambda i: new_shares[i], reverse=True)
+    win_i, run_i = ranked[0], ranked[1]
+    winner, winner_share = parties[win_i], new_shares[win_i]
+    runner_up, runner_up_share = parties[run_i], new_shares[run_i]
     return Outcome(winner=winner, winner_share_pct=winner_share,
                   runner_up=runner_up, runner_up_share_pct=runner_up_share,
                   margin_pct=winner_share - runner_up_share,
-                  flipped=(winner != real_winner))
+                  flipped=(win_i != 0))
 
 
 def tipping_point(constituency, challenger_party=None, resolution=0.001,

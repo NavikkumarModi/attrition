@@ -12,18 +12,33 @@ from attrition.election import (ALL_PHASE1_CONSTITUENCIES, build_constituency,
 from attrition.election.lokdhaba import load_constituencies
 
 
-def test_ten_constituencies_loaded():
-    assert len(ALL_PHASE1_CONSTITUENCIES) == 10
+def test_all_543_constituencies_loaded():
+    """Scaled up from the original ten-seat pilot -- 543 is the real,
+    checked count of main-poll 2019 Lok Sabha seats (see
+    scripts/fetch_election_data.py's own run output), not assumed."""
+    assert len(ALL_PHASE1_CONSTITUENCIES) == 543
     names = {c.name for c in ALL_PHASE1_CONSTITUENCIES}
-    assert "AHMEDABAD EAST" in names
+    assert "AHMEDABAD EAST" in names          # original pilot seat, still present
     assert "AZAMGARH" in names
+    states = {c.state for c in ALL_PHASE1_CONSTITUENCIES}
+    assert len(states) == 36                  # all states/UTs as they existed in 2019
+    n_reserved = sum(1 for c in ALL_PHASE1_CONSTITUENCIES if c.constituency_type != "GEN")
+    assert n_reserved == 131                  # real: 84 SC + 47 ST seats in 2019
 
 
 def test_constituencies_are_real_not_synthetic():
     """Every field is either a real elector/turnout/vote-share number or an
     explicit note about why the seat was picked -- nothing invented."""
     for c in ALL_PHASE1_CONSTITUENCIES:
-        assert c.electors > 100_000          # a real Lok Sabha seat, not a toy number
+        # Lakshadweep (55,189 electors, India's smallest Lok Sabha seat)
+        # is real, not a data error -- an earlier version of this test
+        # assumed >100,000 from the ten hand-picked mainland pilot seats,
+        # which broke the moment national scale included a real UT
+        # constituency far smaller than any of them. Fixed to a floor low
+        # enough to admit Lakshadweep but still rule out a genuine zero/
+        # placeholder value.
+        assert c.electors > 10_000
+        assert c.electors < 5_000_000         # sanity ceiling, not a tight guess (checked real max: 3,150,313)
         assert 0.0 < c.turnout_pct <= 100.0
         assert sum(c.vote_share_pct) <= 100.5  # real shares, minor float slack
         assert c.year == 2019                # Phase 1's single real cross-section
@@ -106,13 +121,23 @@ def test_persuadable_fraction_varies_meaningfully_across_real_constituencies():
 def test_zero_regret_ruin_survives_real_margin_variation():
     """The abstract campaign-persuasion theorem (FINDINGS.md#28) connected
     to real constituency margins (FINDINGS.md#29): does the pattern hold
-    for every real constituency, or only the engine's synthetic default?
-    Checked for all ten, not sampled."""
+    across real constituencies, or only the engine's synthetic default?
+
+    Sampled, not exhaustive, since scaling to 543 real seats
+    (FINDINGS.md's election-track sections): this property is a
+    consequence of the proven isomorphism to derive_antibiotic_parameters
+    (test_derive_campaign_parameters_isomorphism_claim), which already
+    holds for any S0 in the engine's stable range -- re-running the full
+    seeds=100 comparison at all 543 seats would cost real minutes for a
+    property that doesn't need national-scale re-verification to stay
+    credible. Every 15th constituency (~36 seats, spanning most states)
+    is still checked, not just one.
+    """
     from attrition import ConsumableBandit, Greedy, ECI, compare
     from attrition.election import (ALL_PHASE1_CONSTITUENCIES,
                                     derive_persuasion_parameters_from_constituency)
-    for c in ALL_PHASE1_CONSTITUENCIES:
-        v, p, e, intensity, s0 = derive_persuasion_parameters_from_constituency(c.name)
+    for c in ALL_PHASE1_CONSTITUENCIES[::15]:
+        v, p, e, intensity, s0 = derive_persuasion_parameters_from_constituency(c)
         result = compare(lambda s: ConsumableBandit(v, p, e, delta=0.35,
                                                      horizon=9, seed=s),
                          [Greedy(), ECI()], seeds=100)
@@ -309,10 +334,11 @@ def test_behavioural_voter_direct_construction():
 
 # --------------------------------------------------------- Election Layer
 def test_recompute_outcome_matches_real_result_at_zero_switched():
-    """No persuasion effect must reproduce the real winner exactly."""
+    """No persuasion effect must reproduce the real winner exactly -- cheap
+    (no simulation), so checked for all 543 real seats, not sampled."""
     from attrition.election import recompute_outcome, ALL_PHASE1_CONSTITUENCIES
     for c in ALL_PHASE1_CONSTITUENCIES:
-        outcome = recompute_outcome(c.name, 0.0)
+        outcome = recompute_outcome(c, 0.0)
         assert not outcome.flipped
         assert outcome.winner == c.parties[0]
 

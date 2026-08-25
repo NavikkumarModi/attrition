@@ -70,5 +70,11 @@ def derive_persuasion_parameters_from_constituency(constituency, intensity=None,
 
 
 PHASE1_PERSUADABLE_FRACTIONS = {
-    c.name: persuadable_fraction_from_margin(c) for c in ALL_PHASE1_CONSTITUENCIES
+    (c.state, c.name): persuadable_fraction_from_margin(c)
+    for c in ALL_PHASE1_CONSTITUENCIES
 }
+# Keyed by (state, name), not name alone: three real names are ambiguous
+# across states at national scale (see lokdhaba.get_constituency's
+# docstring) -- a name-only key would silently drop one state's entry in
+# favour of the other's, found by checking, not assumed safe once this
+# stopped being ten hand-picked, individually-unique seats.

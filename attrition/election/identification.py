@@ -63,5 +63,12 @@ def identification_floor(constituency, sigma=0.05, intensity=None):
 
 
 PHASE1_IDENTIFICATION_FLOORS = {
-    c.name: identification_floor(c.name) for c in ALL_PHASE1_CONSTITUENCIES
+    (c.state, c.name): identification_floor(c) for c in ALL_PHASE1_CONSTITUENCIES
 }
+# Passes the Constituency OBJECT, not c.name, and keys by (state, name):
+# three real names are ambiguous across states at national scale (see
+# lokdhaba.get_constituency's docstring) -- resolving through a name-only
+# lookup here crashed the whole package import the first time this ran at
+# full scale (AURANGABAD exists in both Maharashtra and Bihar). Passing
+# the already-disambiguated object sidesteps the lookup instead of trying
+# to make the lookup smarter than it needs to be.

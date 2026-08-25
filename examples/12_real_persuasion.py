@@ -30,9 +30,17 @@ def main():
     print(f"{'constituency':22} {'margin':>8} {'S0':>6} {'greedy':>8} "
           f"{'eci':>8} {'shortfall':>10}")
     print("-" * 68)
-    for c in ALL_PHASE1_CONSTITUENCIES:
+    # The original ten hand-picked "deliberately different environments"
+    # pilot seats -- election track now covers all 543 real 2019 seats
+    # (see FINDINGS.md's election-track sections), but a 543-row table
+    # would defeat this script's point (a compact, readable comparison),
+    # and c.name alone is ambiguous for 3 real seats at national scale
+    # (see lokdhaba.get_constituency's docstring) -- passing the
+    # constituency object, not its name, sidesteps that regardless.
+    pilot_seats = [c for c in ALL_PHASE1_CONSTITUENCIES if c.note]
+    for c in pilot_seats:
         margin = real_margin_pct(c)
-        v, p, e, intensity, s0 = derive_persuasion_parameters_from_constituency(c.name)
+        v, p, e, intensity, s0 = derive_persuasion_parameters_from_constituency(c)
         result = compare(lambda s: ConsumableBandit(v, p, e, delta=0.35,
                                                      horizon=9, seed=s),
                          [Greedy(), ECI()], seeds=150)

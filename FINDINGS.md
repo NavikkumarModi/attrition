@@ -1368,3 +1368,92 @@ the widest real landslide in the Phase-1 set), the same campaign produces
 8.3% switched against a 24.2% tipping point -- a clear, unthreatened hold.
 
 206/206 tests passing (was 202).
+
+## 36. Scaling to all 543 real constituencies -- and five real bugs it surfaced
+
+Scaling was explicitly deprioritized earlier this session for having "no
+new question attached." That changed once the Election Layer (FINDINGS.md
+#35) existed: at national scale, "what does the real distribution of
+tipping points look like, and how many seats would a given campaign
+intensity actually flip" is a genuine question, not a bigger number for
+its own sake. `scripts/fetch_election_data.py` now pulls the archive's own
+combined national file (`All_States/All_States_GE.csv.gz`) instead of the
+original ten hand-picked states, filtered to `Year == 2019`, `Election_Type
+== "Lok Sabha Election (GE)"`, `Poll_No == "0"` (the main poll, excluding
+scattered later by-elections sharing the GE code) -- **543 real seats
+across 36 states/UTs, checked against the well-known real figures, not
+assumed: 131 reserved (84 SC + 47 ST) seats, matching the actual 2019
+count.**
+
+Every one of the five bugs below was found by actually running the scaled
+pipeline, not by inspection -- the same pattern as FINDINGS.md#35.
+
+**1. O(N^2) import cost.** `ALL_PHASE1_CONSTITUENCIES` built each
+`Constituency` via `build_constituency` -> `get_constituency` ->
+`load_constituencies()`, re-reading and re-parsing the whole ~1MB JSON file
+543 times. Negligible at ten rows, real at 543. Fixed: `load_constituencies`
+cached (`functools.lru_cache`), and `ALL_PHASE1_CONSTITUENCIES` built
+directly from one already-loaded pass.
+
+**2. Ambiguous constituency names crashed the package import.** Three real
+names exist in more than one state -- Aurangabad (Maharashtra, Bihar),
+Maharajganj (Uttar Pradesh, Bihar), Hamirpur (Uttar Pradesh, Himachal
+Pradesh) -- found by checking, not assumed absent. `get_constituency`
+resolved by name alone, silently returning whichever row came first; the
+eager `PHASE1_IDENTIFICATION_FLOORS` dict then crashed the whole package
+import trying to resolve Aurangabad by name. Fixed: `get_constituency`
+(and `build_constituency`) take an optional `state=` and raise, listing the
+matching states, on a genuine ambiguity instead of guessing; eager
+dictionaries are now built from and keyed by `(state, name)`, not name
+alone, and callers that had `c.name`-only call sites (two tests, two
+example scripts) now pass the constituency object directly, sidestepping
+the ambiguous lookup rather than trying to make the lookup smarter than it
+needs to be.
+
+**3. A false lower bound in a test.** `test_constituencies_are_real_not_
+synthetic` asserted every seat has over 100,000 electors, true for the ten
+hand-picked mainland pilot seats and false for Lakshadweep (55,189
+electors, India's real smallest Lok Sabha constituency). Fixed to a floor
+that admits it plus a sanity ceiling checked against the real max (a
+second near-miss: an initial 3,000,000 ceiling would have failed the real
+maximum of 3,150,313).
+
+**4. The important one -- independents wrongly merged into one
+pseudo-candidate.** `recompute_outcome`'s first version summed vote shares
+by party label, which is a no-op for real parties (exactly one candidate
+each) but silently merged every independent candidate under the generic
+"IND" label into one composite entity. At Ladakh, two real independents
+(25.30% and 23.23%) summed to 48.53%, exceeding the real winner BJP's
+33.94% -- the function reported IND "winning" a seat BJP actually won, at
+*zero* simulated persuasion effort. Same failure at Mizoram. Fixed by
+re-deriving the function to work per real candidate (indexed by position),
+not per party label -- real parties are unaffected since aggregation was
+always a no-op for them; a default challenger now anchors on the specific
+runner-up candidate's own real share, and an explicitly-requested
+multi-candidate label anchors on whichever of its candidates polled
+highest, stated as the deliberate choice it is. `flipped` is now determined
+by whether the position-0 candidate is still ranked first, not by
+label-string comparison, which is the more correct definition regardless
+of label collisions. Verified zero mismatches across all 543 real seats at
+zero switched_fraction, not just the two seats that surfaced the bug.
+
+**5. Two of the heaviest per-constituency tests were rescaled, not
+silently slowed.** Full-suite runtime rose from 46s to 84s. The population-
+reproduction check (`test_population_reproduces_real_turnout_and_vote_
+share`) stays at all 543 -- the single most important claim in the whole
+election track, worth the ~31s. The zero-regret-ruin check
+(`test_zero_regret_ruin_survives_real_margin_variation`) now samples every
+15th constituency (~36 seats): it verifies a property already proven to be
+mechanism-invariant (the isomorphism to `derive_antibiotic_parameters`),
+so it doesn't need national-scale re-verification to stay credible, and
+re-running a `seeds=100` comparison at all 543 would cost real minutes for
+no additional confidence.
+
+Every example script (12, 13, 14, 15, 16, 17) re-verified clean end to end
+after all five fixes. `examples/12_real_persuasion.py` and
+`examples/14_identification_cost.py` now filter to the original ten pilot
+seats for their printed tables (`c.note` is non-empty only for those) --
+543 rows would defeat the point of a compact, readable comparison; the
+underlying data and functions operate at full national scale regardless.
+
+206/206 tests passing.

@@ -330,12 +330,15 @@ rule's own persistence assumption). Full findings in `FINDINGS.md` sections
 
 A second domain track, elections, is under construction alongside AMR, in
 two deliberately separate halves. `attrition.election` (Phase 1) is a
-population engine over ten real Lok Sabha constituencies (2019 General
-Election, Trivedi Centre for Political Data / LokDhaba, deliberately
-different environments — urban/rural/Northeast, not a representative
-sample), with statistical voters sampled to reproduce each constituency's
-real turnout and vote share, not synthetic individual-level attributes —
-see the module docstrings in `attrition/election/` and
+population engine now scaled to **all 543 real Lok Sabha constituencies**
+(2019 General Election, Trivedi Centre for Political Data / LokDhaba —
+started from ten hand-picked "deliberately different environments" seats,
+scaled up once the Election Layer below gave scaling a real question to
+answer; see `FINDINGS.md`#36 for the five real bugs scaling surfaced,
+including independents being wrongly merged into one pseudo-candidate at
+Ladakh and Mizoram), with statistical voters sampled to reproduce each
+constituency's real turnout and vote share, not synthetic individual-level
+attributes — see the module docstrings in `attrition/election/` and
 `scripts/fetch_election_data.py` for scope and provenance. Separately, the
 `campaign-persuasion` scenario is the abstract theorem step: several
 campaigns contacting one shared, finite persuadable-voter segment reuses
@@ -379,7 +382,7 @@ regardless of resistance, so magnitudes here are illustrative of the
 pipeline's mechanics, not calibrated forecasts. A real trained
 campaign-policy checkpoint and scale past ten constituencies remain open,
 for reasons on record in `FINDINGS.md` sections 31 and 33 — recorded as
-open rather than implied done. See `FINDINGS.md` sections 27–35.
+open rather than implied done. See `FINDINGS.md` sections 27–36.
 
 ### Scale with concurrent calls
 

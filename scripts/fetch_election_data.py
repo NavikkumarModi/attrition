@@ -2,7 +2,7 @@
 from the live public source, and overwrite attrition/data/tcpd_lokdhaba_ge.json.
 
 Source: Trivedi Centre for Political Data, Ashoka University -- LokDhaba,
-mirrored as per-state gzipped CSVs at
+mirrored as gzipped CSVs at
     https://github.com/tcpd/tcpd-ld-data-archive
 ("LD data as on June 2023"). The live lokdhaba.ashoka.edu.in site has its
 own query API (POST /api/data/api/v2.0/getDerivedData) but it was returning
@@ -17,14 +17,24 @@ vote share, party, margin, reservation category, not synthetic. See
 `attrition/election/lokdhaba.py`'s module docstring for the observed-vs-
 synthetic-latent distinction this feeds into.
 
-Ten constituencies, Phase 1 of the election-track population engine plan:
-deliberately different environments, not a representative sample -- see
-CONSTITUENCIES below and attrition/election/lokdhaba.py.
+**All 543 real Lok Sabha constituencies**, 2019 General Election (the most
+recent full general election in the archive) -- not the original ten
+hand-picked "deliberately different environments" seats from this
+project's Phase 1 pilot. `downloads/All_States/All_States_GE.csv.gz` is
+the archive's own combined national file (one fetch instead of 36
+per-state ones); filtering to `Year == 2019`, `Election_Type == "Lok Sabha
+Election (GE)"`, `Poll_No == "0"` (the main poll, excluding scattered
+later by-elections that share the GE election-type code) gives exactly
+543 seats across all 36 states/UTs as they existed in 2019 -- checked, not
+assumed; see `scripts/fetch_election_data.py`'s own run output.
 
-Only the most recent Lok Sabha (General Election, "GE") row per candidate in
-each selected constituency is kept, not every historical election -- Phase 1
-needs one real, current cross-section per constituency, not a time series
-(that is Phase 5, temporal validation, and is not attempted here).
+The original ten seats keep their hand-written diversity note (urban/
+rural/northeast, a curatorial label, not a data claim); every other seat's
+note is left empty rather than guessed.
+
+Only the 2019 cross-section is kept, not every historical election -- a
+time series is a different, unattempted piece of the plan (temporal
+validation), not this one.
 
 stdlib only (urllib, gzip, csv, json) -- same policy as fetch_real_data.py.
 
@@ -43,56 +53,55 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 
 ARCHIVE_BASE = ("https://raw.githubusercontent.com/tcpd/tcpd-ld-data-archive"
                 "/main/downloads")
+NATIONAL_FILE = f"{ARCHIVE_BASE}/All_States/All_States_GE.csv.gz"
 
-# (state, constituency name as it appears in the CSV, one-line note on why
-# this seat, out of the state's full list, was picked for Phase 1 diversity)
-CONSTITUENCIES = [
-    ("Gujarat", "AHMEDABAD EAST", "urban"),
-    ("Maharashtra", "MUMBAI NORTH", "urban"),
-    ("Uttar_Pradesh", "LUCKNOW", "urban"),
-    ("Uttar_Pradesh", "AZAMGARH", "rural"),
-    ("West_Bengal", "KOLKATA DAKSHIN", "urban"),
-    ("Tamil_Nadu", "CHENNAI CENTRAL", "urban"),
-    ("Karnataka", "BANGALORE RURAL", "rural"),
-    ("Bihar", "PATNA SAHIB", "urban"),
-    ("Kerala", "THIRUVANANTHAPURAM", "urban"),
-    ("Assam", "GAUHATI", "northeast"),
-]
+TARGET_YEAR = 2019
+
+# The original Phase-1 pilot's ten seats, kept as hand-written diversity
+# notes on top of the full 543 -- a curatorial label, not a data claim.
+PILOT_NOTES = {
+    "AHMEDABAD EAST": "urban",
+    "MUMBAI NORTH": "urban",
+    "LUCKNOW": "urban",
+    "AZAMGARH": "rural",
+    "KOLKATA DAKSHIN": "urban",
+    "CHENNAI CENTRAL": "urban",
+    "BANGALORE RURAL": "rural",
+    "PATNA SAHIB": "urban",
+    "THIRUVANANTHAPURAM": "urban",
+    "GAUHATI": "northeast",
+}
 
 
-def _fetch_state_ge_rows(state):
-    url = f"{ARCHIVE_BASE}/{state}/{state}_GE.csv.gz"
-    with urllib.request.urlopen(url, timeout=30) as resp:
+def _fetch_national_rows():
+    with urllib.request.urlopen(NATIONAL_FILE, timeout=60) as resp:
         raw = resp.read()
     with gzip.GzipFile(fileobj=io.BytesIO(raw)) as gz:
         text = gz.read().decode("utf-8")
     return list(csv.DictReader(io.StringIO(text)))
 
 
-def _latest_year_for(rows, constituency_name):
-    years = {int(r["Year"]) for r in rows
-             if r["Constituency_Name"] == constituency_name
-             and r["Election_Type"] == "Lok Sabha Election (GE)"}
-    if not years:
-        raise ValueError(f"no GE rows found for {constituency_name!r}")
-    return max(years)
-
-
 def main():
+    rows = _fetch_national_rows()
+    main_poll_2019 = [r for r in rows
+                     if int(r["Year"]) == TARGET_YEAR
+                     and r["Election_Type"] == "Lok Sabha Election (GE)"
+                     and r["Poll_No"] == "0"]
+
+    by_seat = {}
+    for r in main_poll_2019:
+        key = (r["State_Name"], r["Constituency_Name"])
+        by_seat.setdefault(key, []).append(r)
+
     snapshot = []
-    for state, name, note in CONSTITUENCIES:
-        rows = _fetch_state_ge_rows(state)
-        year = _latest_year_for(rows, name)
-        candidates = [r for r in rows
-                     if r["Constituency_Name"] == name and int(r["Year"]) == year
-                     and r["Election_Type"] == "Lok Sabha Election (GE)"]
-        candidates.sort(key=lambda r: int(r["Position"]))
+    for (state, name), candidates in sorted(by_seat.items()):
+        candidates = sorted(candidates, key=lambda r: int(r["Position"]))
         top = candidates[0]
         snapshot.append({
             "state": state.replace("_", " "),
             "constituency": name,
-            "note": note,
-            "year": year,
+            "note": PILOT_NOTES.get(name, ""),
+            "year": TARGET_YEAR,
             "constituency_type": top["Constituency_Type"],  # GEN / SC / ST
             "electors": int(top["Electors"]),
             "turnout_pct": float(top["Turnout_Percentage"]),
@@ -108,14 +117,15 @@ def main():
                 for c in candidates
             ],
         })
-        print(f"{state}/{name}: {year}, {top['Electors']} electors, "
-              f"{top['Turnout_Percentage']}% turnout, "
-              f"{len(candidates)} candidates")
 
     out = os.path.join(DATA_DIR, "tcpd_lokdhaba_ge.json")
     with open(out, "w") as f:
         json.dump(snapshot, f, indent=1)
-    print(f"\nwrote {out} ({len(snapshot)} constituencies)")
+    print(f"wrote {out}")
+    print(f"  {len(snapshot)} constituencies, {len(main_poll_2019)} candidate rows")
+    print(f"  {len(set(s['state'] for s in snapshot))} states/UTs")
+    n_reserved = sum(1 for s in snapshot if s["constituency_type"] != "GEN")
+    print(f"  {n_reserved} reserved (SC/ST) seats")
 
 
 if __name__ == "__main__":

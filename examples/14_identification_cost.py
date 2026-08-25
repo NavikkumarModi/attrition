@@ -22,8 +22,13 @@ def main():
     print(f"{'constituency':22} {'S0':>6} {'identifiable':>13} "
           f"{'E[N]':>8} {'SE floor':>10}")
     print("-" * 63)
-    for c in ALL_PHASE1_CONSTITUENCIES:
-        r = PHASE1_IDENTIFICATION_FLOORS[c.name]
+    # Original ten pilot seats only, for a readable table -- see
+    # examples/12's comment for why (543 real seats now exist; the dict
+    # is keyed (state, name), not name alone, since 3 real names are
+    # ambiguous across states -- see lokdhaba.get_constituency).
+    pilot_seats = [c for c in ALL_PHASE1_CONSTITUENCIES if c.note]
+    for c in pilot_seats:
+        r = PHASE1_IDENTIFICATION_FLOORS[(c.state, c.name)]
         en = f"{r['expected_N']:.1f}" if r["expected_N"] is not None else "n/a"
         floor = f"{r['se_floor']:.5f}" if r["se_floor"] is not None else "n/a"
         print(f"{c.name:22} {r['s0']:6.3f} "

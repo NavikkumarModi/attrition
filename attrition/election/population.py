@@ -43,7 +43,7 @@ class Constituency:
     nothing is synthesised."""
     state: str
     name: str
-    note: str                  # why this seat was picked for Phase 1 diversity
+    note: str                  # non-empty only for the original ten pilot seats
     year: int
     constituency_type: str     # GEN / SC / ST
     electors: int
@@ -52,9 +52,7 @@ class Constituency:
     vote_share_pct: tuple      # matching real vote share, sums to <= 100
 
 
-def build_constituency(name):
-    """Load one real constituency by name, e.g. build_constituency('Ahmedabad East')."""
-    row = get_constituency(name)
+def _constituency_from_row(row):
     cands = row["candidates"]
     return Constituency(
         state=row["state"], name=row["constituency"], note=row["note"],
@@ -65,8 +63,20 @@ def build_constituency(name):
     )
 
 
-ALL_PHASE1_CONSTITUENCIES = [build_constituency(r["constituency"])
-                             for r in load_constituencies()]
+def build_constituency(name, state=None):
+    """Load one real constituency by name, e.g. build_constituency('Ahmedabad East').
+    Three real names are ambiguous across states at national scale -- pass
+    `state=` to disambiguate; see `lokdhaba.get_constituency`."""
+    return _constituency_from_row(get_constituency(name, state=state))
+
+
+# Built directly from one already-loaded pass over the snapshot, not via
+# 543 individual build_constituency/get_constituency calls -- at national
+# scale that would mean 543 linear scans over the same 543-row list (and,
+# before load_constituencies() was cached, 543 full file re-reads). Real
+# cost once this stopped being ten rows, not a hypothetical one.
+ALL_PHASE1_CONSTITUENCIES = [_constituency_from_row(row)
+                             for row in load_constituencies()]
 
 
 @dataclass(frozen=True)
