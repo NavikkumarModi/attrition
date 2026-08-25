@@ -44,6 +44,23 @@ A fourth result (§4) relaxes the model's own permanence assumption and asks
 whether the finding survives — honestly, including where it changes sign
 rather than just shrinking.
 
+## 0. The variable mapping
+
+Stated once, explicitly, rather than left implicit in code comments — this
+is what makes §1–§4 an instance of ATTRITION's model, not a loose analogy:
+
+| ATTRITION | AMR |
+|---|---|
+| `arm` | antibiotic / prescribing option |
+| `v_a` | immediate treatment benefit |
+| `p_a` | probability / strength of resistance impact |
+| `e_a` | resistance externality |
+| `κ_a = p_a·e_a` | expected future harm |
+| consumption | resistance accumulation / loss of efficacy |
+| surviving pool | effective treatment options |
+| private reward | immediate patient-level benefit |
+| system value | aggregate treatment + future efficacy |
+
 ## 1. Transplant: their dial, under real decentralisation
 
 Their model has exactly one decision-maker, so there is nothing for it to
@@ -166,6 +183,41 @@ option-removal, and are not nested). And an earlier informal write-up of
 this extension had `ρ`'s persistence direction backwards; corrected in
 `DegradingPool`'s docstring rather than silently fixed.
 
+## 5. Is §4's ρ sweep arbitrary, or does it bracket their real system?
+
+§4 sweeps ρ ∈ {0, 0.25, 0.5, 0.75, 0.95, 0.99} without reference to any real
+antibiotic. Their `AMR_LeakyBalloon` dynamics give a principled, if partial,
+anchor: `leak` is exactly a per-step decay rate on accrued pressure, the
+same role `1-ρ` plays in `DegradingPool`. Reading `leak` directly from their
+default environment config (`environment/default.yaml`):
+
+| antibiotic | their `leak` | implied ρ = 1 − leak |
+|---|---:|---:|
+| A | 0.20 | 0.80 |
+| B | 0.10 | 0.90 |
+
+Both fall inside the interior of the range already swept in §4 (between the
+`ρ=0.75` and `ρ=0.95` rows), not outside it — the sign-flip and floor
+findings were already checked at ρ values bracketing their real system's
+implied persistence, not only at the extremes. This is a partial robustness
+check, not a full one: it validates ρ against their real decay rate, not
+`v_a`, `p_a`, or `e_a` against their reward/dose formulas, which is left
+open below.
+
+## 6. Sequential vs. simultaneous, for this rule specifically
+
+Not run as a new experiment. `attrition`'s existing Theorem 6 (see
+`THEORY.md`, `tests/test_theorems.py`'s
+`test_sequential_agents_equal_single_learner`) is a structural equivalence —
+under turn-taking with full information, `m` agents over `T` rounds behave
+exactly like one learner over `m·T` pulls, independent of which per-round
+scoring rule they use. It was proved generally, not re-derived per rule, so
+it applies to `lambda_weighted` without needing a dedicated turn-taking run.
+What §1–§4 study — collision and blindness under *simultaneous* action — is
+precisely the regime that equivalence does not cover, which is why it is
+the regime worth studying. Noted here as a reasoned closure, not an
+executed experiment, so the distinction is visible.
+
 ## Limitations, collected
 
 - No exact planner exists for `DegradingPool` — its state is continuous, not
@@ -173,13 +225,21 @@ this extension had `ρ`'s persistence direction backwards; corrected in
   can enumerate. §4's comparisons are decentralised-only.
 - §3's sequential-within-round stepping is not identical to
   `SimultaneousPool`'s blindness assumption (see caveat in §3).
-- §1–§3 all use `derive_antibiotic_parameters()` — this repo's own
-  synthetic antibiotic-competition engine — for §1's arms; §2 and §3 use
-  their environment's real dynamics directly. The two are not yet unified
-  into a single run using one shared parameterisation throughout.
+- §1–§4 use `derive_antibiotic_parameters()` — this repo's own synthetic
+  antibiotic-competition engine — for `v_a`, `p_a`, `e_a`; §2 and §3 use
+  their environment's real dynamics directly for everything. §5 anchors
+  `ρ` against their real `leak` parameter, but `v_a`, `p_a`, and `e_a` are
+  not yet re-derived from their reward/dose formulas — the two halves
+  share a validated `ρ`, not a single shared parameterisation throughout.
+- No single table has all five policies (private/greedy, ECI,
+  λ-weighted, their trained RL baseline, planner) compared side by side in
+  one environment — the RL baseline only appears in §2/§3, in their
+  environment; the other four only appear together in §1/§4, in this
+  repo's engine.
 - All results here are single-configuration point estimates (one horizon,
   one budget, one patient count), not a sweep across their full config
-  space. Robustness to their other environment settings is untested.
+  space. Robustness to their other environment settings beyond `leak`
+  (§5) is untested.
 
 ## Scope
 

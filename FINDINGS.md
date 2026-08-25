@@ -875,3 +875,44 @@ finite alive/dead subset the existing DP construction can enumerate), so
 these are decentralised-only comparisons against each other, not against a
 system optimum -- a real, stated limitation, not one that undermines the
 sign-flip finding, which does not depend on a planner ceiling.
+
+## 26. Closing the gaps an audit found in sections 24-25
+
+A direct audit against everything agreed across the AMR discussion turns
+turned up four items planned but not delivered. Two are closed here; two
+are closed by explaining why no further experiment is needed, not by
+running one -- recorded as such rather than quietly marked done.
+
+**Closed: the variable mapping.** Stated as an explicit table in
+`docs/amr-stewardship-extension.md#0` (arm/v_a/p_a/e_a/kappa_a -> antibiotic/
+benefit/impact/externality/expected harm). Previously only implicit in
+docstrings and prose.
+
+**Partially closed: the robustness leg.** The original plan was to re-derive
+`(v, p, e)` from their `AMR_LeakyBalloon` sigmoid dynamics and re-run
+sections 24.1/25's sweeps against it. What's actually defensible without
+reverse-engineering their full reward/dose formula: `leak` is exactly a
+per-step decay rate on accrued pressure, the same role `1-rho` plays in
+`DegradingPool`. Reading it directly from their config: antibiotic A
+(`leak=0.20`) implies `rho=0.80`, antibiotic B (`leak=0.10`) implies
+`rho=0.90` -- both inside the interior of section 25's already-swept range,
+not outside it. So the sign-flip and floor findings were already checked at
+`rho` values bracketing their real system, not only at convenient extremes.
+`v_a`, `p_a`, and `e_a` are not yet re-derived from their formulas -- see
+`docs/amr-stewardship-extension.md#5` for the precise scope of what this
+does and doesn't establish.
+
+**Closed by explanation, not experiment: sequential vs. simultaneous for
+`lambda_weighted`.** Theorem 6 is a structural equivalence (m agents over T
+rounds under turn-taking = one learner over m*T pulls) proved independent of
+which per-round scoring rule agents use, so it covers `lambda_weighted`
+without a rule-specific re-derivation. Simultaneous action -- collision,
+blindness -- is precisely the regime that equivalence excludes, which is why
+sections 24-25 study that regime and not turn-taking. See
+`docs/amr-stewardship-extension.md#6`.
+
+**Still open: one unified five-policy table.** Private/greedy, ECI,
+lambda-weighted, and the planner appear together in sections 24.1/25, in
+this repo's engine. The trained RL baseline appears only in sections
+24.2/24.4, in their environment. No single run has all five side by side on
+common ground. Recorded as open, not attempted here.
