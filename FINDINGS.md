@@ -687,3 +687,189 @@ Two runs at modest seed count is real progress, not a large-sample claim.
 The next honest step, if this matters more precisely, is more seeds at the
 same clean settings, not a different model or scenario chosen because it
 might look more dramatic.
+
+## 24. AMR domain extension — the divergence transplants, and their own dial checks out
+
+Two separate results, run together because they answer the same question from
+opposite ends: does the regret-harm divergence survive contact with a domain
+ATTRITION didn't build, and is the nearest independent competitor's proposed
+fix (`abx_amr_simulator`, Lee & Blumberg 2026, arXiv:2603.11369) actually a
+fix, or does it just relocate the problem?
+
+### 24.1 In-repo: their reward dial, transplanted into genuine multi-agent play
+
+`abx_amr_simulator` internalises the resistance externality with one number on
+one policy: `R_overall = (1-lambda)*individual + lambda*community`. Their
+model has exactly one decision-maker, so there is nothing to coordinate.
+`attrition.simultaneous.decentralised_value_simultaneous` now has
+`rule="lambda_weighted"` (exact transplant of their dial, `lam=1,
+obs_noise=0` reduces to the existing `eci` rule bit-for-bit — verified in
+`tests/test_theorems.py`), run against `m=3` simultaneously-acting prescribers
+sharing `derive_antibiotic_parameters()`'s pool (`experiments/
+exp62_amr_lambda_sweep.py`).
+
+Result: the gap between what each prescriber's own score reports and the
+true damage to the pool falls from 5.71 (lam=0) to 0.64 (lam=1) at zero
+observation noise -- reward-shaping genuinely helps, by a lot -- but price of
+anarchy against the planner optimum bottoms out at 1.07, not 1.00. Add
+observation noise (their own partial-observability knob, transplanted) and
+the lam=1 floor rises to 2.20 at noise = 2*std(kappa), more than 3x the
+noise-free floor. The residual is exactly what Theorem 6 predicts: a
+coordination cost a single-agent reward dial cannot remove, because their
+environment has no second agent to collide with.
+
+### 24.2 External: reproduced their own environment, their dial checks out on its own terms
+
+Cloned `jl56923/abx_amr_simulator` (BSD-3-Clause, commit as of 2026-08-24),
+installed under Python 3.11 (their pinned `torch==2.2.2` has no wheel for
+3.13), trained their default PPO config (2 antibiotics, 5 patients/step, 500
+steps/episode, 25 training episodes -- their own tutorial default, ~18s
+wall-clock each) at both dial extremes, no other changes:
+
+| lambda | mean training reward (reported) | final AMR level, antibiotic A | final AMR level, antibiotic B | patient clinical benefit only |
+|---|---:|---:|---:|---:|
+| 0.0 | -370.95 | 0.9997 | 0.9933 | -1854.7 |
+| 1.0 | -244.07 | 0.7461 | 0.2506 | -1850.1 |
+
+Reproduction commands (from a clean checkout):
+
+```bash
+git clone --depth 1 https://github.com/jl56923/abx_amr_simulator.git
+python3.11 -m venv venv && venv/bin/pip install -e abx_amr_simulator
+venv/bin/python -c "from abx_amr_simulator.utils import setup_config_folders_with_defaults; \
+  from pathlib import Path; setup_config_folders_with_defaults(Path('experiments'))"
+venv/bin/python -m abx_amr_simulator.training.train \
+  --umbrella-config "$(pwd)/experiments/configs/umbrella_configs/base_experiment.yaml" \
+  -p training.run_name=lambda0
+venv/bin/python -m abx_amr_simulator.training.train \
+  --umbrella-config "$(pwd)/experiments/configs/umbrella_configs/base_experiment.yaml" \
+  -p training.run_name=lambda1 -p reward_calculator.lambda_weight=1.0
+```
+
+Final AMR levels and clinical benefit are read from each run's
+`results/<run_name>_*/eval_logs/eval_0004_step_12500.npz` (`actual_amr_levels`
+and `individual_rewards`).
+
+At lambda=0 (pure private reward) both antibiotics saturate to near-total
+resistance by episode's end. At lambda=1, antibiotic B's resistance is cut
+from 99.3% to 25.1% -- and patient clinical benefit is statistically
+unchanged (-1850.1 vs -1854.7, well inside the run-to-run noise a single
+seed carries). Their claimed mechanism is real: in a single centralised
+policy, the dial buys real stewardship at close to zero clinical cost. This
+is a genuine, independently-produced confirmation of their result, not a
+takedown of it -- worth stating plainly, since 24.1 is not a rebuttal of
+24.2, it is the next question 24.2's own environment cannot ask.
+
+### 24.3 What 24.1 and 24.2 don't, by themselves, establish
+
+24.1 and 24.2 are run on two different environments (this repo's antibiotic-
+competition engine vs. theirs) -- independently-supported halves of one
+argument, not yet a single unified head-to-head run. The strongest version
+would take the *literal trained checkpoint from 24.2* and embed it as
+several decentralised agents inside their own environment, not this repo's
+abstraction of it. That turned out to be tractable without an adapter --
+see 24.4.
+
+### 24.4 The literal checkpoint, decentralised, inside their own environment
+
+`ABXAMREnv.__init__` already accepts a pre-built `amr_dynamics_instances`
+dict, flagged in its own docstring as "OWNERSHIP (for future multi-agent
+refactor)" -- unused by their training/CLI code, but a real seam. That's
+enough to run `m=3` independent copies of the actual trained lambda=1.0
+checkpoint from 24.2, each with its own patient generator and reward
+calculator, sharing one injected pair of `AMR_LeakyBalloon` objects instead
+of each getting its own (`scripts/amr_decentralize_checkpoint.py`, run in a
+separate environment against the cloned package -- not part of this
+package's own dependency tree, see that script's header for exact setup).
+No adapter between action spaces was needed: each decentralised copy sees
+the same 5-patient, MultiDiscrete observation/action shape it was trained
+on, so `model.predict(obs)` works unmodified. Only the AMR dynamics object
+is shared.
+
+Two conditions, same checkpoint, 12 episodes each, only one thing differing
+(a private balloon pair per prescriber vs. one shared pair):
+
+| condition | total reward (3 agents) | final AMR, antibiotic A | final AMR, antibiotic B |
+|---|---:|---:|---:|
+| siloed (no externality) | -1109.72 | 0.7461 | 0.2506 |
+| shared (real externality) | -1151.15 | 0.9691 | 0.1993 |
+
+The siloed row exactly reproduces 24.2's single-agent lambda=1.0 result
+(0.7461 / 0.2506), which is itself a useful consistency check that the
+harness is wired correctly. Under sharing, antibiotic A's resistance climbs
+from 74.6% back to 96.9% -- most of the way to the *no-stewardship* (lambda=0)
+level of 99.97% from 24.2 -- using a policy that was, by 24.2's own numbers,
+buying real stewardship at close to zero clinical cost when run alone. The
+policy was never trained to know other copies of itself exist; decentralising
+it erases most of what its own community-reward term bought. Antibiotic B
+moves the other way (0.2506 -> 0.1993), plausibly reallocation pressure
+through the crossresistance matrix, not dug into further here -- reported as
+observed, not explained away.
+
+One caveat stated plainly, not smoothed over: within a round the three
+environments are stepped sequentially (`env0.step()`, then `env1`, then
+`env2`), so a little within-round information leaks between them -- this is
+not bit-for-bit `SimultaneousPool`'s BLINDNESS assumption (burden visible
+only from the *next* round). Decentralised and non-coordinating either way,
+but the distinction is real. This closes the gap 24.3 flagged: 24.1's
+transplanted-rule finding, 24.2's confirmation their dial works alone, and
+24.4's demonstration that the same real policy loses most of that benefit
+once decentralised, are now three converging, mutually load-bearing results
+rather than two independent halves and an open question.
+
+## 25. Partial recovery breaks the divergence's sign, not just its size
+
+The plan for the AMR extension (see the domain-extension proposal) flagged
+that calling AMR "irreversible arm consumption" overclaims: real resistance
+accumulates and decays, it does not binary-flip. `DegradingPool`
+(`attrition.simultaneous`) generalises `SimultaneousPool`'s permanent
+destruction into a continuous, partially-recoverable state, `s_a(t+1) =
+rho*s_a(t) + (1-rho)*e_a*hit_a(t)`, and `experiments/
+exp63_partial_recovery.py` asks the planned question directly: does the
+regret-harm divergence from exp62 survive when consumption is no longer
+permanent?
+
+**It does not survive unchanged -- it survives with the sign flipped,
+depending on the scoring rule.** At `lam=0` (greedy, blind to burden) the
+gap stays positive at every `rho` but shrinks toward 0 as `rho -> 1`, because
+at this horizon (T=9) high-persistence harm has not had time to build to its
+ceiling. At `lam=1` (eci-style pricing, which charges an arm's full
+externality the instant it is hit, as ECI's `delta*p*e*(T-t)` term assumes
+permanence) the gap is **negative at every rho tested** -- the policy
+*overcharges* relative to realised harm, because its pricing formula was
+built for a permanence assumption partial recovery breaks. Concretely (T=9,
+delta=0.35, m=3, `derive_antibiotic_parameters()`):
+
+```
+lam=0.0                          lam=1.0
+ rho  system  reported  gap       rho  system  reported   gap
+0.00   11.640   15.383  3.743    0.00   13.399   13.114  -0.285
+0.50   12.106   15.383  3.277    0.50   13.505   13.114  -0.392
+0.99   15.219   15.383  0.165    0.99   13.932   13.114  -0.819
+```
+
+Two things worth stating plainly rather than smoothing over:
+
+- The exp62 headline ("reward-shaping narrows a positive gap to a positive
+  floor") does not transfer here as a template. Partial recovery is a
+  qualitatively different regime, not exp62 with smaller numbers, and it was
+  checked rather than assumed to pattern-match.
+- **`DegradingPool` does NOT reduce to `SimultaneousPool` as rho -> 1**,
+  checked empirically (a long-horizon run at rho=0.999 clears more than 2x
+  the value of the permanent-destruction model at the same horizon, not a
+  converging one -- see `test_degrading_pool_does_not_reduce_to_
+  simultaneous_pool_at_rho_one`). The two formalise different notions of
+  irreversibility: `SimultaneousPool` permanently removes an arm from the
+  *choice set*; `DegradingPool` permanently prices an arm at its full
+  externality once saturated, but the arm stays selectable throughout. Real
+  antimicrobial resistance is closer to the second -- a resistant antibiotic
+  can still be prescribed, it is just costly to. An earlier informal write-up
+  of this extension also had rho's persistence direction backwards (labelled
+  rho=0 "permanent"); corrected in `DegradingPool`'s docstring rather than
+  silently fixed.
+
+No exact planner exists for `DegradingPool` (state is continuous, not a
+finite alive/dead subset the existing DP construction can enumerate), so
+these are decentralised-only comparisons against each other, not against a
+system optimum -- a real, stated limitation, not one that undermines the
+sign-flip finding, which does not depend on a planner ceiling.

@@ -65,6 +65,12 @@ def _cmd_run(args):
             dec = decentralised_value_simultaneous(v, p, e, meta["delta"], rounds,
                                                     m, rule=rule)
             print(f"  {'decentralised ' + rule:>20}  value={dec:.3f}")
+        for lam in (0.25, 0.5, 0.75):
+            d = decentralised_value_simultaneous(
+                v, p, e, meta["delta"], rounds, m, rule="lambda_weighted",
+                lam=lam, return_details=True)
+            print(f"  {'lambda='+str(lam):>20}  system={d['system_value']:.3f}  "
+                  f"reported={d['reported_value']:.3f}  gap={d['gap']:.3f}")
         if baselines:
             print("  (baselines: config only compares against classical "
                   "policies in mode='turn-taking'; simultaneous mode "

@@ -91,3 +91,18 @@ def test_cli_run_simultaneous_with_trace(tmp_path, capsys):
     assert trace_path.exists()
     out = capsys.readouterr().out
     assert "planner (optimum)" in out
+
+
+def test_cli_run_simultaneous_reports_lambda_weighted_gap(tmp_path, capsys):
+    """The simultaneous-mode CLI output must surface the lambda_weighted
+    rows (reported-vs-true regret/harm divergence, not just greedy/eci),
+    since that comparison is now a first-class part of any registered
+    simultaneous-action domain, not a one-off script -- see exp62 and
+    FINDINGS.md#24."""
+    path = tmp_path / "cfg.json"
+    path.write_text(json.dumps(_inline_config(mode="simultaneous")))
+    rc = cli.main(["run", str(path)])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "lambda=0.5" in out
+    assert "gap=" in out

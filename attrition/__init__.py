@@ -30,7 +30,8 @@ from .envs import ConsumableBanditEnv, MultiAgentConsumableEnv
 from .scenarios import (SCENARIOS, load, describe, ScenarioRegistry, from_arrays,
                         get_arrays)
 from .simultaneous import (SimultaneousPool, planner_value_simultaneous,
-                           decentralised_value_simultaneous, price_of_anarchy)
+                           decentralised_value_simultaneous, price_of_anarchy,
+                           DegradingPool, decentralised_value_degrading)
 from .commitment import (TerminalCommitment, optimal_commitment_policy,
                          expand_outward_policy, greedy_commitment_policy,
                          edge_first_policy, evaluate_commitment_policy)
@@ -71,6 +72,7 @@ __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
            "evaluate_commitment_policy",
            "SimultaneousPool", "planner_value_simultaneous",
            "decentralised_value_simultaneous", "price_of_anarchy",
+           "DegradingPool", "decentralised_value_degrading",
            "LLMClient", "MockLLMClient", "CallableLLMClient",
            "Persona", "PHARMA_PERSONAS", "LLMPolicy",
            "Population", "simulate_population",

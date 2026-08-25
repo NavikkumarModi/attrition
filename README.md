@@ -12,7 +12,7 @@ real ones.*
 **Bandits with Consumable Action Sets**
 
 [![tests](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml/badge.svg)](https://github.com/NavikkumarModi/attrition/actions/workflows/tests.yml)
-[![tests](https://img.shields.io/badge/tests-169%20passing-brightgreen)](tests/)
+[![tests](https://img.shields.io/badge/tests-175%20passing-brightgreen)](tests/)
 [![theorems](https://img.shields.io/badge/theorems-11%20proven-blue)](THEORY.md)
 [![python](https://img.shields.io/badge/python-3.9%E2%80%933.12-blue)](pyproject.toml)
 [![license](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
@@ -313,6 +313,18 @@ pip install -e .        # registers the `attrition` command
 attrition list-domains
 attrition run examples/antibiotic-stewardship.json --trace run.sqlite3
 ```
+
+Any registered simultaneous-mode domain also prints a `lambda_weighted`
+comparison alongside `greedy`/`eci` — the reward-shaping dial from the
+independently developed `abx_amr_simulator` (Lee & Blumberg 2026), transplanted
+into this repo's genuinely multi-agent, simultaneous-action setting, showing
+both what each decentralised agent's own score reports and what actually
+happened to the shared pool. See `experiments/exp62_amr_lambda_sweep.py`
+(does reward-shaping close the gap under permanent consumption? it narrows it
+to a floor, not to zero) and `experiments/exp63_partial_recovery.py`
+(`DegradingPool`: does the same divergence survive when consumption is only
+partially permanent? the sign of the gap flips depending on the scoring
+rule's own persistence assumption) — findings in `FINDINGS.md`, sections 24–25.
 
 ### Scale with concurrent calls
 

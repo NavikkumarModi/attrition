@@ -1682,3 +1682,101 @@ def test_heterogeneous_gap_geometric():
     import numpy as np
     err = verify_gap_distribution(np.array([0.1, 0.25, 0.4, 0.6]), n_sims=100_000, seed=2)
     assert err < 0.01, f"gap distribution mismatch, max error={err:.4f}"
+
+
+# --------------------------------------- lambda-weighted community reward
+def test_lambda_weighted_matches_eci_at_lambda_one():
+    """rule="lambda_weighted" with lam=1, obs_noise=0 must reduce to exactly
+    the existing "eci" rule -- both score v - delta*kappa*(T-t). This is the
+    transplant of abx_amr_simulator's R_overall = (1-lambda)*individual +
+    lambda*community dial into the genuinely multi-agent simultaneous-action
+    setting (see experiments/exp62_amr_lambda_sweep.py)."""
+    from attrition import decentralised_value_simultaneous
+    from attrition.engines import derive_antibiotic_parameters
+    v, p, e, _ = derive_antibiotic_parameters()
+    eci = decentralised_value_simultaneous(v, p, e, 0.35, 9, 3, rule="eci",
+                                           seeds=400)
+    lam1 = decentralised_value_simultaneous(v, p, e, 0.35, 9, 3,
+                                            rule="lambda_weighted", lam=1.0,
+                                            obs_noise=0.0, seeds=400)
+    assert abs(eci - lam1) < 1e-9, f"lam=1 must equal eci exactly: {lam1} != {eci}"
+
+
+def test_lambda_weighted_gap_shrinks_but_does_not_vanish():
+    """As lambda -> 1 (fully-informed, no noise), the gap between what each
+    decentralised prescriber's own score reports and the true realised system
+    value should shrink -- reward-shaping genuinely helps -- but should not
+    reach zero, because collision/blindness under simultaneous action
+    (Theorem 6) is a coordination failure a single-agent reward dial cannot
+    remove. This is the central empirical claim of exp62: a policy that looks
+    locally optimal can still be doing real, unreported harm."""
+    from attrition import decentralised_value_simultaneous
+    from attrition.engines import derive_antibiotic_parameters
+    v, p, e, _ = derive_antibiotic_parameters()
+    gaps = []
+    for lam in [0.0, 0.5, 1.0]:
+        d = decentralised_value_simultaneous(v, p, e, 0.35, 9, 3,
+                                             rule="lambda_weighted", lam=lam,
+                                             obs_noise=0.0, seeds=500,
+                                             return_details=True)
+        gaps.append(d["gap"])
+    assert gaps[0] > gaps[1] > gaps[2] > 0.0, (
+        f"gap must shrink monotonically toward a strictly positive floor, "
+        f"got {gaps}")
+
+
+# ------------------------------------------- partial recovery / degrading pools
+def test_degrading_pool_bounds_state_by_e():
+    """DegradingPool's accrued-harm state is a convex combination of its
+    previous value and e_a, so it can never exceed e_a -- unlike
+    SimultaneousPool's binary destruction, there is no way to overshoot the
+    arm's own externality magnitude."""
+    from attrition import DegradingPool
+    import numpy as np
+    v, p, e = np.array([1.0, 0.8]), np.array([0.9, 0.9]), np.array([2.0, 3.0])
+    pool = DegradingPool(v, p, e, rho=0.5, delta=0.2, horizon=30, n_agents=2,
+                         seed=0)
+    for _ in range(30):
+        pool.step([0, 1])
+        assert np.all(pool.state <= e + 1e-9), (
+            f"state must never exceed e: {pool.state} vs {e}")
+
+
+def test_degrading_pool_does_not_reduce_to_simultaneous_pool_at_rho_one():
+    """rho -> 1 makes DegradingPool's harm persist, but does not make it
+    equivalent to SimultaneousPool's permanent arm removal -- the two model
+    different kinds of irreversibility (value degradation vs. option
+    removal) and are not nested. Checked, not assumed -- see DegradingPool's
+    docstring."""
+    from attrition import decentralised_value_degrading, decentralised_value_simultaneous
+    from attrition.engines import derive_antibiotic_parameters
+    v, p, e, _ = derive_antibiotic_parameters()
+    T = 60
+    permanent = decentralised_value_simultaneous(v, p, e, 0.35, T, 3,
+                                                 rule="greedy", seeds=300)
+    degrading = decentralised_value_degrading(v, p, e, 0.999, 0.35, T, 3,
+                                              rule="greedy", seeds=300)
+    assert degrading > 2.0 * permanent, (
+        f"degrading (arms stay selectable) must clear far more value than "
+        f"permanent removal at the same horizon: {degrading} vs {permanent}")
+
+
+def test_eci_style_pricing_overcharges_under_partial_recovery():
+    """The eci-style (lam=1) score prices an arm's externality as if it
+    were permanent the instant it is hit. Under any positive recovery this
+    overcharges relative to realised harm, so the reported-vs-true gap
+    should be negative (reported < true system value) at every rho -- the
+    opposite sign from the blind (lam=0) score's gap, which is always
+    positive. This is exp63's central, non-obvious finding."""
+    from attrition import decentralised_value_degrading
+    from attrition.engines import derive_antibiotic_parameters
+    v, p, e, _ = derive_antibiotic_parameters()
+    for rho in [0.0, 0.5, 0.95]:
+        d = decentralised_value_degrading(v, p, e, rho, 0.35, 9, 3,
+                                          rule="lambda_weighted", lam=1.0,
+                                          seeds=500, return_details=True)
+        assert d["gap"] < 0.0, f"rho={rho}: expected negative gap, got {d['gap']}"
+        d0 = decentralised_value_degrading(v, p, e, rho, 0.35, 9, 3,
+                                           rule="lambda_weighted", lam=0.0,
+                                           seeds=500, return_details=True)
+        assert d0["gap"] > 0.0, f"rho={rho}: expected positive gap, got {d0['gap']}"
