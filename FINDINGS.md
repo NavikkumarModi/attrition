@@ -690,6 +690,8 @@ might look more dramatic.
 
 ## 24. AMR domain extension — the divergence transplants, and their own dial checks out
 
+*(Readable summary of this section and §25: `docs/amr-stewardship-extension.md`.)*
+
 Two separate results, run together because they answer the same question from
 opposite ends: does the regret-harm divergence survive contact with a domain
 ATTRITION didn't build, and is the nearest independent competitor's proposed

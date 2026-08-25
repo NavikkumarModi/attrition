@@ -324,7 +324,9 @@ happened to the shared pool. See `experiments/exp62_amr_lambda_sweep.py`
 to a floor, not to zero) and `experiments/exp63_partial_recovery.py`
 (`DegradingPool`: does the same divergence survive when consumption is only
 partially permanent? the sign of the gap flips depending on the scoring
-rule's own persistence assumption) — findings in `FINDINGS.md`, sections 24–25.
+rule's own persistence assumption). Full findings in `FINDINGS.md` sections
+24–25; the readable summary is
+[`docs/amr-stewardship-extension.md`](docs/amr-stewardship-extension.md).
 
 ### Scale with concurrent calls
 
