@@ -1253,3 +1253,49 @@ not attempted this session for the reasons already on record there:
 
 Nothing about closing the first two changes the honest status of these
 last two -- recorded again rather than left to go stale by omission.
+
+## 34. AMR extension: the last audit item, closed by reframing rather than forcing
+
+FINDINGS.md#26 left one item explicitly open: "no single run has all five
+policies (private/greedy, ECI, lambda-weighted, the trained RL baseline,
+planner) compared side by side in one environment." Closed this session --
+by showing that literal framing asks for something that doesn't exist, and
+building the thing that actually answers the underlying question instead
+of forcing a misleading merge.
+
+**Why a literal five-in-one-environment table isn't available.** There is
+no exact planner for `abx_amr_simulator`'s continuous, multi-patient
+dynamics -- the same reason `DegradingPool` has none (FINDINGS.md#25's
+state is continuous, not a finite alive/dead subset the DP construction
+enumerates). Building all five onto one numeric scale would require either
+inventing an unvalidated approximate planner for their environment, or
+translating their trained policy's behaviour into this repo's discrete-arm
+abstraction through some adapter -- both would manufacture false precision,
+not report it.
+
+**What's honestly comparable instead** (`experiments/
+exp64_cross_environment_comparison.py`): the cost of decentralisation
+relative to the best available reference *within* each environment,
+computed separately, never merged into one reward scale.
+
+| environment | reference | decentralised | cost |
+|---|---:|---:|---:|
+| this repo's engine (exact planner) | 12.899 | eci: 12.080 | 6.4% |
+| this repo's engine (exact planner) | 12.899 | greedy: 8.003 | 38.0% |
+| `abx_amr_simulator` (no exact planner; siloed is the closest proxy) | -1109.72 | shared: -1151.15 | 3.7% |
+
+A real sign bug was caught building this (the "cost" formula's sign was
+backwards for the negative-reward convention, giving -3.7% instead of
++3.7%) -- fixed and regression-tested
+(`test_cross_environment_decentralisation_cost_signs_are_positive`), not
+silently corrected.
+
+**The actual finding:** both floors are real and strictly positive,
+independently, from the same mechanism (Theorem 6). The magnitudes are
+deliberately not read as "one environment is worse" -- the reward scales,
+action spaces, and reference-point meanings differ (our planner is a
+proven optimum; their siloed baseline is only the closest available proxy
+for one). What FINDINGS.md#26 actually needed established -- that the
+floor isn't an artefact of one convenient environment -- is established.
+
+202/202 tests passing (was 201).

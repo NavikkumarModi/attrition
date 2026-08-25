@@ -218,6 +218,35 @@ precisely the regime that equivalence does not cover, which is why it is
 the regime worth studying. Noted here as a reasoned closure, not an
 executed experiment, so the distinction is visible.
 
+## 7. The five-policy table, reframed
+
+An earlier draft of this project's audit asked for one table with all five
+policies — private/greedy, ECI, λ-weighted, the trained RL baseline
+(§2/§3), and a planner — on one numeric scale. That request turns out to
+ask for something that doesn't exist: there is no exact planner for
+`abx_amr_simulator`'s continuous, multi-patient dynamics, for the same
+reason `DegradingPool` (§4) has none. Forcing all five together would mean
+inventing an unvalidated approximate planner for their environment, or
+translating their trained policy into this repo's discrete-arm abstraction
+through some adapter — both manufacture precision rather than report it.
+
+What's honestly comparable instead (`experiments/
+exp64_cross_environment_comparison.py`): the cost of decentralisation
+relative to the best available reference *within* each environment,
+reported side by side, never merged into one scale.
+
+| environment | reference | decentralised | cost |
+|---|---:|---:|---:|
+| this repo's engine (exact planner) | 12.899 | eci: 12.080 | 6.4% |
+| this repo's engine (exact planner) | 12.899 | greedy: 8.003 | 38.0% |
+| `abx_amr_simulator` (siloed = closest available proxy, not a proven optimum) | -1109.72 | shared: -1151.15 | 3.7% |
+
+Both floors are real and strictly positive, independently, from the same
+mechanism (Theorem 6). Not read as "one environment is worse" — the reward
+scales and what the reference points mean differ. What needed establishing
+was that the floor isn't an artefact of one convenient environment, and it
+isn't.
+
 ## Limitations, collected
 
 - No exact planner exists for `DegradingPool` — its state is continuous, not
@@ -231,11 +260,12 @@ executed experiment, so the distinction is visible.
   `ρ` against their real `leak` parameter, but `v_a`, `p_a`, and `e_a` are
   not yet re-derived from their reward/dose formulas — the two halves
   share a validated `ρ`, not a single shared parameterisation throughout.
-- No single table has all five policies (private/greedy, ECI,
-  λ-weighted, their trained RL baseline, planner) compared side by side in
-  one environment — the RL baseline only appears in §2/§3, in their
-  environment; the other four only appear together in §1/§4, in this
-  repo's engine.
+- No single table has all five policies on one numeric scale — and, per
+  §6 below, that's not an oversight to fix but a request that turned out
+  to ask for something that doesn't exist (no exact planner for their
+  environment). What's reported instead is the honestly comparable
+  quantity: decentralisation cost relative to each environment's own best
+  reference, computed separately, never merged.
 - All results here are single-configuration point estimates (one horizon,
   one budget, one patient count), not a sweep across their full config
   space. Robustness to their other environment settings beyond `leak`

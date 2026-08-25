@@ -1850,3 +1850,30 @@ def test_derive_campaign_parameters_isomorphism_claim():
     assert not np.allclose(v1, v3), (
         "a different intensity grid must actually change v -- the function "
         "must be genuinely parameterised, not hardcoded")
+
+
+def test_cross_environment_decentralisation_cost_signs_are_positive():
+    """Regression test for a real sign bug caught while building exp64: the
+    'cost of decentralisation' in both environments must be a positive
+    number when the decentralised/shared condition is worse than its
+    reference, in both this repo's (positive-reward) and
+    abx_amr_simulator's (negative-reward) conventions -- computed
+    independently here, not just trusted from the experiment script."""
+    from experiments.exp64_cross_environment_comparison import (
+        our_environment_costs, their_environment_costs)
+
+    ours = our_environment_costs()
+    ref = ours["planner (reference ceiling)"]
+    greedy_cost = 100 * (1 - ours["decentralised greedy"] / ref)
+    eci_cost = 100 * (1 - ours["decentralised eci (= lambda_weighted, lam=1)"] / ref)
+    assert greedy_cost > 0.0
+    assert eci_cost > 0.0
+    assert greedy_cost > eci_cost, (
+        "greedy must lose strictly more than eci relative to the planner")
+
+    theirs = their_environment_costs()
+    siloed = theirs["siloed (reference: no shared externality)"]
+    shared = theirs["shared (real decentralised externality)"]
+    their_cost = 100 * (siloed - shared) / abs(siloed)
+    assert their_cost > 0.0, (
+        f"decentralising must cost something positive here, got {their_cost}")
