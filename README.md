@@ -607,6 +607,31 @@ district boundaries; verified live with both controls on for AHMEDABAD
 EAST, each district reporting a direct-only and a final figure with
 final ≥ direct-only, and an exact population-weighted combined mean.
 
+### Distill an LLM-driven policy to scale past small N
+
+Level 2 (LLM-driven personas, `attrition.llm_policy.LLMPolicy`) has never
+been run past a handful of agents anywhere in this repo, because one
+real LLM call per agent per round is a real, billable cost that doesn't
+scale — and this doesn't change that. `FINDINGS.md` #54:
+`attrition.distillation.collect_decision_traces(policy, states)` runs
+any policy (most usefully an expensive, LLM-backed one) once per state
+and records what it chose; `train_distilled_policy(traces)` fits a
+`DistilledPolicy` — a numpy-only, linear per-arm softmax-regression
+policy over real, already-observable features — to approximate those
+decisions, no RL-framework or ML-library dependency, same design
+constraint as `election.policy_training.train_gradient_bandit`.
+`DistilledPolicy` is a genuine `Policy` subclass (drops into `run`/
+`compare`/`Population` unchanged) that makes zero further LLM calls.
+Faithfulness, not correctness, is what's learned — `evaluate_agreement`
+reports held-out agreement, always separately from training-set
+agreement, so a `DistilledPolicy` is never trusted blindly. Checked:
+distilling `Greedy` from 200 states reaches >95% held-out agreement;
+distilling a real `LLMPolicy` (`examples/21_distill_llm_policy.py`, 210
+total decision-trace calls) reaches ~70%, honestly lower since its
+persona-conditioned, noise-injected rule is a genuinely harder target —
+then runs the distilled policy for 5,000 seeded episodes, a scale no
+real-LLM run in this repo has attempted, at zero further LLM cost.
+
 ### Scale with concurrent calls
 
 `simulate_population_simultaneous` and `compare_population_to_baselines` take

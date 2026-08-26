@@ -54,6 +54,8 @@ from .dashboard import render_dashboard
 from .real_data import (SOURCES, derive_real_amr_parameters,
                         derive_real_cmc_parameters, derive_real_fisheries_parameters,
                         derive_real_cve_parameters)
+from .distillation import (DecisionTrace, collect_decision_traces, DistilledPolicy,
+                           train_distilled_policy, evaluate_agreement)
 
 __version__ = "0.2.0"
 __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
@@ -84,4 +86,6 @@ __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
            "load_config", "build_from_config",
            "AgentGraph", "render_dashboard",
            "SOURCES", "derive_real_amr_parameters", "derive_real_cmc_parameters",
-           "derive_real_fisheries_parameters", "derive_real_cve_parameters"]
+           "derive_real_fisheries_parameters", "derive_real_cve_parameters",
+           "DecisionTrace", "collect_decision_traces", "DistilledPolicy",
+           "train_distilled_policy", "evaluate_agreement"]

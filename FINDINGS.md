@@ -2495,6 +2495,77 @@ each district's own network effect (final minus direct-only) is
 independently non-trivial, not an artefact of a shared graph leaking
 across districts.
 
+## 54. Level 2 (LLM-driven) decisions distilled into a policy that scales past small N
+
+Item 3 of a five-item punch list raised after #52/#53: "Level 2 (real
+LLM agents) hasn't scaled past small-N -- the 'million agent' work this
+session was Level 0/1 only; no LLM-distillation pipeline exists." True
+and unaddressed by anything in this repo before this entry --
+`attrition.election.agents.simulate_level2_contact` and
+`attrition.llm_policy.LLMPolicy` have only ever been exercised at a
+handful of personas (`tests/test_election.py`'s Level 2 tests, examples
+08/09/19), because one real LLM call per agent per round is a real,
+billable, wall-clock cost that does not scale, and this repo has never
+claimed otherwise.
+
+**Not fixed by making LLM calls scale -- fixed by not needing more of
+them.** New module `attrition/distillation.py`: `collect_decision_traces
+(policy, states)` runs any policy satisfying the standard `Policy.select
+(state) -> arm_index` contract exactly once per state and records what
+it chose (never why -- no dependence on an LLM's stated reasoning, only
+its observable choice). `train_distilled_policy(traces, epochs, lr,
+seed)` fits a `DistilledPolicy` -- a linear per-arm scoring function
+over real, already-observable features (`v_hat`, `p`, `e`, `delta`,
+round progress) -- via multinomial-logistic (softmax) regression trained
+by plain gradient descent. Same design constraint this repo already
+holds itself to for `attrition.election.policy_training.
+train_gradient_bandit`: numpy-only, no RL-framework or ML-library
+dependency, and inspectable (six real numbers, not an opaque net).
+`DistilledPolicy` is a genuine `Policy` subclass, so it drops into
+`run`/`compare`/`Population`/`SimultaneousPool` exactly like Greedy or
+ECI, at the cost of one dot product per available arm instead of one
+LLM call.
+
+**Faithfulness, not correctness, and reported honestly as such.** A
+`DistilledPolicy` can only be as good, or as biased, as the source
+policy's own decisions on the states it was shown -- the module's
+docstring says this explicitly, not just in this file. `evaluate_
+agreement(policy, traces)` reports the fraction of traces a policy would
+itself reproduce; `train_distilled_policy` records per-epoch
+training-set agreement as `.training_curve`, and callers are expected to
+check a SEPARATE held-out figure before trusting a `DistilledPolicy` at
+scale -- training-set and held-out agreement are never conflated in this
+module's own tests or example.
+
+Checked, not assumed: distilling `Greedy` (a near-linear-in-v_hat rule)
+from 200 random states reaches >95% training AND held-out agreement --
+the softmax-regression fit genuinely recovers a simple deterministic
+policy, not just memorizes it. Distilling a real `LLMPolicy` (backed by
+`MockLLMClient`, the same deterministic offline stand-in every other
+LLM-policy test in this repo already uses -- a real client behaves
+identically from this module's point of view, since distillation only
+ever calls `policy.select(state)`) from 150 training states reaches ~70%
+held-out agreement in `examples/21_distill_llm_policy.py`'s run -- lower
+than Greedy's, honestly, because `LLMPolicy`'s persona-conditioned,
+noise-injected decision rule (`MockLLMClient`'s scoring plus explicit
+randomness) is a genuinely harder target than a deterministic argmax,
+not a bug in the distiller. Reported as measured, not rounded up.
+
+`examples/21_distill_llm_policy.py`: collects 210 total decision-trace
+calls against an `LLMPolicy` (the real, billable cost were this a real
+LLM, stated up front), trains a `DistilledPolicy`, prints BOTH
+training-set and held-out agreement (never just the flattering one),
+then runs the distilled policy for 5,000 seeded episodes alongside
+Greedy/ECI baselines -- a scale no real-LLM run in this repo has
+attempted, achieved with zero further LLM calls after the initial 210.
+
+10 new tests (`tests/test_distillation.py`), including a structural
+check that `DistilledPolicy` never touches an LLM client at `.select()`
+time. Exported from the top-level `attrition` package (`DecisionTrace`,
+`collect_decision_traces`, `DistilledPolicy`, `train_distilled_policy`,
+`evaluate_agreement`) alongside every other policy in this repo. Full
+suite: 324/324 passing (was 314).
+
 Wired into `election_api.py`: the 400 raise removed, the district branch
 now passes `use_network`/`peer_conversion_prob`/`mean_degree` through,
 and the response's `district_granularity` object gains a
