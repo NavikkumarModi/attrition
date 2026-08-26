@@ -40,6 +40,7 @@ from .assembly import (ASSEMBLY_YEAR_BY_STATE, assembly_rollup_for_seat,
 from .census import (census_rollup_for_seat, all_census_rollups,
                      census_rollup_coverage)
 from .granularity import simulate_level1_contact_by_district
+from .shrug import shrug_rollup_for_seat, all_shrug_rollups, shrug_rollup_coverage
 
 __all__ = ["SOURCE", "load_constituencies", "get_constituency",
           "SyntheticVoter", "Constituency", "build_constituency",
@@ -61,4 +62,5 @@ __all__ = ["SOURCE", "load_constituencies", "get_constituency",
           "ASSEMBLY_YEAR_BY_STATE", "assembly_rollup_for_seat",
           "all_assembly_rollups", "assembly_rollup_coverage",
           "census_rollup_for_seat", "all_census_rollups", "census_rollup_coverage",
-          "simulate_level1_contact_by_district"]
+          "simulate_level1_contact_by_district",
+          "shrug_rollup_for_seat", "all_shrug_rollups", "shrug_rollup_coverage"]

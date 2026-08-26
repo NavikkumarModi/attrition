@@ -4,9 +4,10 @@ import {
 } from "recharts";
 import {
   fetchConstituencies, simulate, fetchAssemblyRollup, fetchAssemblyRollupCoverage,
-  fetchCensusRollup, fetchCensusRollupCoverage,
+  fetchCensusRollup, fetchCensusRollupCoverage, fetchShrugRollup, fetchShrugRollupCoverage,
   type SeatSummary, type SimulateResult, type AssemblyRollupResponse, type AssemblyRollupCoverage,
   type CensusRollupResponse, type CensusRollupCoverage,
+  type ShrugRollupResponse, type ShrugRollupCoverage,
 } from "./api";
 
 const DEFAULT_SEQUENCE = [0.15, 0.2, 0.25, 0.3, 0.35];
@@ -38,10 +39,13 @@ export default function ConstituencyLab({
   const [assemblyCoverage, setAssemblyCoverage] = useState<AssemblyRollupCoverage | null>(null);
   const [censusRollup, setCensusRollup] = useState<CensusRollupResponse | null>(null);
   const [censusCoverage, setCensusCoverage] = useState<CensusRollupCoverage | null>(null);
+  const [shrugRollup, setShrugRollup] = useState<ShrugRollupResponse | null>(null);
+  const [shrugCoverage, setShrugCoverage] = useState<ShrugRollupCoverage | null>(null);
 
   useEffect(() => { fetchConstituencies().then(setSeats).catch(() => {}); }, []);
   useEffect(() => { fetchAssemblyRollupCoverage().then(setAssemblyCoverage).catch(() => {}); }, []);
   useEffect(() => { fetchCensusRollupCoverage().then(setCensusCoverage).catch(() => {}); }, []);
+  useEffect(() => { fetchShrugRollupCoverage().then(setShrugCoverage).catch(() => {}); }, []);
 
   useEffect(() => {
     if (initialState && initialName) { setState(initialState); setName(initialName); }
@@ -52,6 +56,8 @@ export default function ConstituencyLab({
     fetchAssemblyRollup(state, name).then(setAssemblyRollup).catch(() => {});
     setCensusRollup(null);
     fetchCensusRollup(state, name).then(setCensusRollup).catch(() => {});
+    setShrugRollup(null);
+    fetchShrugRollup(state, name).then(setShrugRollup).catch(() => {});
   }, [state, name]);
 
   const seat = seats.find((s) => s.state === state && s.name === name);
@@ -266,6 +272,87 @@ export default function ConstituencyLab({
             No constituent district matched for this seat — a real, disclosed gap in the district-to-PC join (
             {censusCoverage
               ? `${censusCoverage.n_real_seats_with_rollup} of ${censusCoverage.n_real_seats_total} real seats have rollup data`
+              : "loading coverage…"}
+            ).
+          </p>
+        )}
+      </div>
+
+      <div className="card">
+        <h2>Real SHRUG socioeconomic indicators for this seat</h2>
+        <p className="muted" style={{ fontSize: 12, marginBottom: 12, maxWidth: 760 }}>
+          Real demographic (Census 2011), economic (2012 SECC consumption/poverty — the first genuinely economic
+          indicator in this repo), satellite-derived wealth (2021 Facebook Relative Wealth Index), and infrastructure
+          (PMGSY rural road connectivity) data, joined via the SAME real AC-to-PC crosswalk, restricted to
+          post-2008-delimitation Assembly Constituencies specifically (SHRUG's own boundary vintage — a stricter,
+          disclosed filter than the Assembly/Census rollups above use). Source:{" "}
+          <a href="https://devdatalab.org/shrug_download/" target="_blank" rel="noreferrer">
+            Development Data Lab, SHRUG v2.2
+          </a>{" "}
+          (CC BY-NC-SA 4.0). See FINDINGS.md #57.
+        </p>
+        {shrugRollup?.rollup ? (
+          <>
+            <div className="grid cols-2">
+              <div className="stat">
+                <div className="value">{shrugRollup.rollup.n_constituent_acs_matched}</div>
+                <div className="label">constituent real Assembly Constituency/Constituencies</div>
+              </div>
+              <div className="stat">
+                <div className="value">
+                  {shrugRollup.rollup.population_total?.toLocaleString() ?? "—"}
+                </div>
+                <div className="label">total real population (Census 2011, summed across constituent ACs)</div>
+              </div>
+              <div className="stat">
+                <div className="value">
+                  {shrugRollup.rollup.secc_pov_rate_rural != null
+                    ? `${(shrugRollup.rollup.secc_pov_rate_rural * 100).toFixed(1)}%`
+                    : "—"}
+                </div>
+                <div className="label">rural poverty rate (2012 SECC, population-weighted)</div>
+              </div>
+              <div className="stat">
+                <div className="value">
+                  {shrugRollup.rollup.pmgsy_pct_villages_connected != null
+                    ? `${(shrugRollup.rollup.pmgsy_pct_villages_connected * 100).toFixed(1)}%`
+                    : "—"}
+                </div>
+                <div className="label">villages with a completed PMGSY road</div>
+              </div>
+            </div>
+            <table className="seat-table" style={{ marginTop: 12 }}>
+              <thead>
+                <tr>
+                  <th>Assembly Constituency</th><th>Population</th><th>Rural poverty %</th>
+                  <th>Urban poverty %</th><th>Facebook wealth index</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shrugRollup.rollup.constituent_acs.map((ac) => (
+                  <tr key={ac.ac08_id}>
+                    <td>{ac.ac_name}</td>
+                    <td>{ac.population_total?.toLocaleString() ?? "—"}</td>
+                    <td>{ac.secc_pov_rate_rural != null ? `${(ac.secc_pov_rate_rural * 100).toFixed(1)}%` : "—"}</td>
+                    <td>{ac.secc_pov_rate_urban != null ? `${(ac.secc_pov_rate_urban * 100).toFixed(1)}%` : "—"}</td>
+                    <td>{ac.facebook_mean_rwi != null ? ac.facebook_mean_rwi.toFixed(3) : "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="muted" style={{ fontSize: 11, marginTop: 8 }}>
+              Rural and urban poverty rates are never combined into one figure — a constituency's missing segment
+              (e.g. a fully rural AC with no urban SECC row) shows as "—", not zero or an average of the other
+              segment. The wealth index is zero-centred with no fixed unit — useful for comparing constituencies
+              against each other, not as an absolute rupee figure.
+            </p>
+          </>
+        ) : (
+          <p className="muted" style={{ fontSize: 13 }}>
+            No constituent post-2008-delimitation Assembly Constituency matched for this seat — a real, disclosed
+            gap in the join (
+            {shrugCoverage
+              ? `${shrugCoverage.n_real_seats_with_rollup} of ${shrugCoverage.n_real_seats_total} real seats have rollup data`
               : "loading coverage…"}
             ).
           </p>

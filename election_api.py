@@ -42,7 +42,8 @@ from attrition.election import (ALL_PHASE1_CONSTITUENCIES, build_constituency,
                                 assembly_rollup_for_seat, assembly_rollup_coverage,
                                 ASSEMBLY_YEAR_BY_STATE,
                                 census_rollup_for_seat, census_rollup_coverage,
-                                simulate_level1_contact_by_district)
+                                simulate_level1_contact_by_district,
+                                shrug_rollup_for_seat, shrug_rollup_coverage)
 from experiments.exp65_amr_five_policy_reference_table import (
     in_repo_half, EXTERNAL_SILOED, EXTERNAL_SHARED)
 
@@ -176,6 +177,31 @@ def constituency_census_rollup(state: str, name: str):
 def census_rollup_coverage_endpoint():
     """Real, checked coverage numbers for the district-to-PC join."""
     return census_rollup_coverage()
+
+
+@app.get("/api/constituencies/{state}/{name}/shrug-rollup")
+def constituency_shrug_rollup(state: str, name: str):
+    """Real SHRUG (Socioeconomic High-resolution Rural-Urban Geographic
+    platform) indicators for this real seat's constituent 2008-
+    delimitation Assembly Constituency/Constituencies -- demographic
+    (Census 2011), economic (2012 SECC consumption/poverty, the first
+    genuinely economic indicator in this repo), a 2021 satellite-derived
+    wealth proxy, and PMGSY rural road connectivity
+    (`attrition.election.shrug`). Population counts are real sums;
+    rate/index fields are population-weighted means -- see that module's
+    docstring. `null` for real seats with no matched post-2008-
+    delimitation AC (a stricter, disclosed filter than assembly-rollup/
+    census-rollup use, see FINDINGS.md #57)."""
+    _resolve(state, name)
+    rollup = shrug_rollup_for_seat(state, name)
+    return {"seat": {"state": state, "name": name}, "rollup": rollup}
+
+
+@lru_cache(maxsize=1)
+@app.get("/api/shrug-rollup/coverage")
+def shrug_rollup_coverage_endpoint():
+    """Real, checked coverage numbers for the SHRUG AC-to-PC join."""
+    return shrug_rollup_coverage()
 
 
 class SimulateRequest(BaseModel):

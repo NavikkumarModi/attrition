@@ -675,6 +675,34 @@ the first time in this repo: the transfer step holds up; whether
 Conservative is the right policy for a given domain remains a separate,
 per-domain question.
 
+### A fourth real data source: SHRUG socioeconomic indicators
+
+`FINDINGS.md` #57. The first genuinely ECONOMIC indicator anywhere in
+this repo: real 2012 SECC consumption/poverty estimates from
+[SHRUG](https://devdatalab.org/shrug_download/) (Socioeconomic
+High-resolution Rural-Urban Geographic platform for India, CC BY-NC-SA
+4.0), alongside real Census 2011 demographics at a finer grain than the
+existing district-level table, a 2021 Facebook-derived wealth proxy, and
+PMGSY rural road connectivity. Joined to real constituencies through the
+SAME real DataMeet AC-to-PC crosswalk `assembly.py`/`census.py` already
+use, one layer finer: shrid (village) -> 2008-delimitation Assembly
+Constituency (SHRUG's own published weights) -> PC/seat (the existing
+crosswalk) — three of four indicator modules ship already aggregated to
+AC by SHRUG itself; only PMGSY needed shrid-to-AC aggregation here, done
+with SHRUG's own population-fragment weights, not an invented scheme.
+A real correctness issue caught before it could cause a silent mismatch:
+DataMeet's crosswalk mixes pre- and post-2008-delimitation AC rows (a
+`status` field flags 524 of 4,182); SHRUG's data assumes 2008-
+delimitation boundaries specifically, so `attrition/election/shrug.py`
+excludes the pre-delimitation rows — a stricter, disclosed filter than
+the other two rollups use (455/543 real seats matched, vs. 493 and 486).
+`scripts/process_shrug_data.py` processes the real, manually-downloaded
+raw CSVs (SHRUG serves signed, expiring links, not a stable API — same
+"raw manual download" convention Census 2011 uses) into a small, checked-
+in snapshot; `GET /api/constituencies/{state}/{name}/shrug-rollup` and a
+matching `ConstituencyLab.tsx` card follow the same pattern the
+Assembly/Census rollups established.
+
 ### Scale with concurrent calls
 
 `simulate_population_simultaneous` and `compare_population_to_baselines` take

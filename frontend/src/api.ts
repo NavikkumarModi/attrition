@@ -365,6 +365,59 @@ export interface CensusRollupCoverage {
 export const fetchCensusRollupCoverage = () =>
   getJSON<CensusRollupCoverage>("/api/census-rollup/coverage");
 
+export interface ShrugAc {
+  ac08_id: string;
+  ac_name: string;
+  state: string;
+  population_total: number | null;
+  n_households: number | null;
+  population_male: number | null;
+  population_female: number | null;
+  population_sc: number | null;
+  population_st: number | null;
+  population_literate: number | null;
+  population_illiterate: number | null;
+  population_working: number | null;
+  secc_cons_pc_rural: number | null;
+  secc_pov_rate_rural: number | null;
+  secc_cons_pc_urban: number | null;
+  secc_pov_rate_urban: number | null;
+  facebook_mean_rwi: number | null;
+  pmgsy_pct_villages_connected: number | null;
+  pmgsy_n_villages_matched: number | null;
+}
+export interface ShrugRollup {
+  n_constituent_acs_matched: number;
+  constituent_acs: ShrugAc[];
+  population_total: number | null;
+  n_households: number | null;
+  population_sc: number | null;
+  population_st: number | null;
+  population_literate: number | null;
+  secc_cons_pc_rural: number | null;
+  secc_pov_rate_rural: number | null;
+  secc_cons_pc_urban: number | null;
+  secc_pov_rate_urban: number | null;
+  facebook_mean_rwi: number | null;
+  pmgsy_pct_villages_connected: number | null;
+}
+export interface ShrugRollupResponse {
+  seat: { state: string; name: string };
+  rollup: ShrugRollup | null;
+}
+export const fetchShrugRollup = (state: string, name: string) =>
+  getJSON<ShrugRollupResponse>(
+    `/api/constituencies/${encodeURIComponent(state)}/${encodeURIComponent(name)}/shrug-rollup`,
+  );
+
+export interface ShrugRollupCoverage {
+  n_acs_total: number;
+  n_real_seats_total: number;
+  n_real_seats_with_rollup: number;
+}
+export const fetchShrugRollupCoverage = () =>
+  getJSON<ShrugRollupCoverage>("/api/shrug-rollup/coverage");
+
 export async function simulate(
   state: string,
   name: string,

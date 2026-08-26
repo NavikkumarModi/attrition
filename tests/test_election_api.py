@@ -418,3 +418,28 @@ def test_census_rollup_coverage_endpoint():
     assert resp.status_code == 200
     data = resp.json()
     assert data["n_districts_total"] == 640
+
+
+# ------------------------------------------------------ shrug rollup (FINDINGS.md#57)
+def test_shrug_rollup_endpoint_returns_real_shape():
+    resp = client.get("/api/constituencies/Gujarat/AHMEDABAD EAST/shrug-rollup")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["seat"] == {"state": "Gujarat", "name": "AHMEDABAD EAST"}
+    assert data["rollup"]["n_constituent_acs_matched"] >= 1
+    assert "secc_pov_rate_rural" in data["rollup"]
+    assert "facebook_mean_rwi" in data["rollup"]
+    assert "pmgsy_pct_villages_connected" in data["rollup"]
+
+
+def test_shrug_rollup_endpoint_404s_on_unknown_seat():
+    resp = client.get("/api/constituencies/Nowhere/Nothing/shrug-rollup")
+    assert resp.status_code == 404
+
+
+def test_shrug_rollup_coverage_endpoint():
+    resp = client.get("/api/shrug-rollup/coverage")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["n_acs_total"] == 4120
+    assert data["n_real_seats_total"] == 543

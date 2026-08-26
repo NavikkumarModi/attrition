@@ -2733,3 +2733,97 @@ AgentGraph's core adjacency construction (#53), network propagation +
 population granularity combined (#53), Level 2 distillation past small N
 (#54), cybersecurity/fisheries persona and population layer (#55), and
 this cross-world benchmark (#56).
+
+## 57. A fourth real data source: SHRUG socioeconomic indicators, including the first genuinely economic one
+
+Asked to explore devdatalab.org's SHRUG (Socioeconomic High-resolution
+Rural-Urban Geographic platform for India) for demographic, economic,
+and other real indicators, and join them to real constituencies. Every
+real data source in this repo before this entry was demographic or
+electoral (Assembly results #49, Census 2011 district demographics #50,
+CVE/fisheries #52-56's own real data) -- SHRUG's SECC consumption/
+poverty tables are the first genuinely ECONOMIC indicator anywhere in
+this repo.
+
+**Explored before downloading anything.** SHRUG v2.2 ("pakora") has 52
+core modules; checked real file sizes (S3 range-GET, since presigned
+URLs 403 on HEAD) before proposing a scope, rather than downloading
+everything. Selected four categories, confirmed with the user: 2011
+Population Census Abstract (demographic, 67.6MB), SECC Consumption
+rural+urban (economic, 19.5MB), Facebook Relative Wealth Index 2021
+(satellite-derived wealth proxy, 24.3MB), PMGSY rural roads
+(infrastructure, 4.4MB) -- plus the required crosswalk files
+(Constituency keys 17.6MB, 2008 AC weights 97KB). Deliberately excluded
+the three largest satellite-raster modules (VIIRS/DMSP night lights,
+PM2.5 pollution -- 250-572MB each) as disproportionate to what four
+already-diverse categories needed. Licensed CC BY-NC-SA 4.0, attribution
+given in the frontend.
+
+**A real, checked design win, not assumed:** SHRUG ships a `2008 AC
+weights` module -- shrid (village/town) level data pre-aggregated to
+2008-delimitation Assembly Constituencies. That is the SAME AC vintage
+DataMeet's crosswalk (already used by `assembly.py`/`census.py`) targets
+for the bulk of its rows, so SHRUG indicators join constituencies
+through the exact same real administrative fact those modules already
+established: shrid -> AC (SHRUG's own weights) -> PC/seat (existing
+crosswalk) -- a third layer on an already-real join, not a new
+approximation. Three of four selected modules (population, SECC,
+Facebook) ship ALREADY aggregated to AC by SHRUG itself -- nothing here
+re-derives what SHRUG already computed and QA'd. PMGSY is the one
+exception (shrid-level only): aggregated here using SHRUG's OWN
+`shrid_frag_con08_key.csv` population-fragment weights
+(`scripts/process_shrug_data.py`), the same weighting scheme SHRUG's own
+con08 tables are built with, not an invented one. The metric computed,
+`pmgsy_pct_villages_connected`, is a population-weighted village
+CONNECTIVITY COVERAGE rate (has at least one completed new-or-upgraded
+PMGSY road), not a summed road length -- a cleaner, more defensible real
+statistic than trying to interpret "total earliest-road km per
+constituency."
+
+**A real correctness issue found and fixed before it caused a silent
+mismatch, not after.** DataMeet's crosswalk carries a `status` field:
+524 of 4,182 rows are flagged `"Pre delimitation"` (older AC boundaries,
+for states the 2002 Delimitation Act's redraw reached on a different
+timeline -- J&K, Assam, Jharkhand, others). `assembly.py`/`census.py`
+don't filter on this field (a pre-existing, unrelated design choice of
+those modules, untouched here) -- but SHRUG's con08 data assumes 2008-
+delimitation boundaries SPECIFICALLY, so joining it against a pre-
+delimitation crosswalk row would match an AC NAME that may not even
+denote the same real boundary. `attrition/election/shrug.py`'s own
+crosswalk index excludes `"Pre delimitation"` rows -- a stricter filter
+than the other two modules use, reported honestly as a real coverage
+cost (455/543 real seats, 83.8% -- lower than assembly.py's 493/543 and
+census.py's 486/543), not smoothed into a looser join that would risk
+silently wrong boundaries for the affected states. Regression-tested
+(`test_pre_delimitation_crosswalk_rows_are_excluded`).
+
+**Real, disclosed per-field limitations, matching this repo's existing
+discipline, not smoothed over:** rural and urban SECC consumption/
+poverty are kept SEPARATE per constituency, never combined into one
+number without a real population-weighting justification -- the same
+choice `census.py`'s docstring states for its own district rollups.
+Population counts are real SUMS across a seat's constituent ACs (real,
+disjoint counts, unlike Census district data, which can double-count
+across seats -- see #50); rate/index fields (poverty rate, consumption
+per capita, wealth index, PMGSY connectivity) are population-weighted
+MEANS, never simple averages. SHRUG's own con08 population-census table
+itself only covers 3,573/4,120 real ACs (86.7%) -- a real gap in
+SHRUG's own aggregation (some ACs' population estimates were flagged
+uncertain in its own `con08_pop_area_key.csv`), propagated here as
+`null`, never defaulted to zero or silently backfilled.
+
+Wired into `election_api.py` (`GET /api/constituencies/{state}/{name}/
+shrug-rollup`, `GET /api/shrug-rollup/coverage`, mirroring the existing
+assembly-rollup/census-rollup endpoints exactly) and `ConstituencyLab.tsx`
+(a new card matching the existing Assembly/Census rollup cards' visual
+and disclosure style, with source attribution linked per the CC
+BY-NC-SA licence). Verified live in the browser: AHMEDABAD EAST (2
+matched ACs, Facebook wealth index present, no population/SECC/PMGSY
+match for those specific two ACs -- correctly rendered as "—", not
+zero) and VARANASI (4 matched ACs, population 863,515 summed, 33.6%
+population-weighted rural poverty rate, 21.1% PMGSY connectivity, wealth
+index ranging 0.162-1.223 across its four constituent ACs, urban poverty
+correctly blank for two rural-only ACs).
+
+9 new tests (`tests/test_shrug.py`), 3 new tests
+(`tests/test_election_api.py`). Full suite: 346/346 passing (was 334).
