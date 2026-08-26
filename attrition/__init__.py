@@ -41,7 +41,7 @@ from .engines import (LotkaVolterraTumour, derive_arm_parameters,
                       derive_antibiotic_parameters, derive_campaign_parameters)
 from .llm import LLMClient, MockLLMClient, CallableLLMClient
 from .persona import (Persona, PHARMA_PERSONAS, CAMPAIGN_PERSONAS, VOTER_PERSONAS,
-                      AGENT_PERSONAS)
+                      AGENT_PERSONAS, CYBERSECURITY_PERSONAS, FISHERIES_PERSONAS)
 from .llm_policy import LLMPolicy
 from .population import (Population, simulate_population,
                          simulate_population_simultaneous,
@@ -78,7 +78,8 @@ __all__ = ["ConsumableBandit", "run", "compare", "State", "Greedy", "ECI",
            "DegradingPool", "decentralised_value_degrading",
            "LLMClient", "MockLLMClient", "CallableLLMClient",
            "Persona", "PHARMA_PERSONAS", "CAMPAIGN_PERSONAS", "VOTER_PERSONAS",
-           "AGENT_PERSONAS", "LLMPolicy",
+           "AGENT_PERSONAS", "CYBERSECURITY_PERSONAS", "FISHERIES_PERSONAS",
+           "LLMPolicy",
            "Population", "simulate_population",
            "simulate_population_simultaneous",
            "compare_population_to_baselines", "TraceStore",

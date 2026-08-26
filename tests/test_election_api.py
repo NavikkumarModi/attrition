@@ -93,9 +93,23 @@ def test_scenario_personas_follows_world():
 
 
 def test_scenario_personas_empty_for_world_with_no_persona_set():
-    resp = client.get("/api/scenarios/fisheries-commons-real/personas")
+    resp = client.get("/api/scenarios/high-dispersion/personas")
     assert resp.status_code == 200
     assert resp.json() == []
+
+
+def test_scenario_personas_registered_for_environment_and_cybersecurity():
+    """FINDINGS.md #55: environment and cybersecurity used to be in the
+    no-persona-set list too -- confirm they no longer are."""
+    fisheries_personas = client.get(
+        "/api/scenarios/fisheries-commons-real/personas").json()
+    assert {p["name"] for p in fisheries_personas} == {
+        "fisher-conservative", "fisher-aggressive", "fisher-balanced"}
+
+    cve_personas = client.get(
+        "/api/scenarios/exploit-catalog-real/personas").json()
+    assert {p["name"] for p in cve_personas} == {
+        "patch-conservative", "patch-aggressive", "patch-balanced"}
 
 
 def test_llm_population_gracefully_reports_auth_failure_not_a_crash():

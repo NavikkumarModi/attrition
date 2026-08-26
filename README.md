@@ -632,6 +632,25 @@ persona-conditioned, noise-injected rule is a genuinely harder target —
 then runs the distilled policy for 5,000 seeded episodes, a scale no
 real-LLM run in this repo has attempted, at zero further LLM cost.
 
+### Cybersecurity and fisheries get a persona/population layer too
+
+`FINDINGS.md` #55: `exploit-catalog-real` (real CISA KEV + FIRST.org
+EPSS data) and `fisheries-commons-real` (real NOAA landings data) had
+scenarios but no registered persona set — a known, previously-documented
+gap (#45/#46). New `CYBERSECURITY_PERSONAS` (`patch-conservative`/
+`patch-aggressive`/`patch-balanced`, a security team's remediation-
+rollout risk appetite) and `FISHERIES_PERSONAS` (`fisher-conservative`/
+`fisher-aggressive`/`fisher-balanced`, a vessel captain's harvest-target
+risk appetite) in `attrition/persona.py`, same shape as every other
+persona set. `frontend/ScenarioLab.tsx` is genuinely generic — it
+fetches personas at runtime with no hardcoded world list — so the entire
+backend change needed was two new `WORLD_PERSONAS` entries in
+`election_api.py`; verified live that both worlds now render their
+persona checklist with zero frontend changes.
+`examples/22_cybersecurity_fisheries_population.py` runs the same
+turn-taking population-vs-baselines treatment examples/04 and
+examples/19 already give AMR and agent-ecosystem.
+
 ### Scale with concurrent calls
 
 `simulate_population_simultaneous` and `compare_population_to_baselines` take

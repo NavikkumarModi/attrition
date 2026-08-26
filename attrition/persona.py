@@ -11,7 +11,7 @@ system prompt text and is free to act on it or not, which is the point --
 from dataclasses import dataclass
 
 __all__ = ["Persona", "PHARMA_PERSONAS", "CAMPAIGN_PERSONAS", "VOTER_PERSONAS",
-          "AGENT_PERSONAS"]
+          "AGENT_PERSONAS", "CYBERSECURITY_PERSONAS", "FISHERIES_PERSONAS"]
 
 
 @dataclass
@@ -192,6 +192,79 @@ VOTER_PERSONAS = {
             "contacting campaign's case against the accumulating cost of "
             "being asked to switch again, not just against this round's "
             "message alone."),
+        risk_tolerance=0.5,
+    ),
+}
+
+
+CYBERSECURITY_PERSONAS = {
+    "patch-conservative": Persona(
+        name="patch-conservative",
+        role="security team lead",
+        description=(
+            "A security team lead prioritizing which known-exploited "
+            "vulnerability in a shared catalog to remediate next. You "
+            "favour testing and staging a fix carefully even when a "
+            "faster, less-tested rollout would clear the queue sooner, "
+            "because you are weighing the risk that a rushed patch "
+            "destabilizes shared production infrastructure the rest of "
+            "the organization depends on."),
+        risk_tolerance=0.15,
+    ),
+    "patch-aggressive": Persona(
+        name="patch-aggressive",
+        role="security team lead",
+        description=(
+            "A security team lead who pushes whichever fix clears the "
+            "highest-priority vulnerability fastest, this round. Whether "
+            "the rollout destabilizes shared infrastructure the rest of "
+            "the organization depends on is someone else's problem."),
+        risk_tolerance=0.9,
+    ),
+    "patch-balanced": Persona(
+        name="patch-balanced",
+        role="security team lead",
+        description=(
+            "A security team lead following standard change-management "
+            "cadence, weighing this round's remediation urgency against "
+            "the chance a rushed rollout disrupts shared systems."),
+        risk_tolerance=0.5,
+    ),
+}
+
+
+FISHERIES_PERSONAS = {
+    "fisher-conservative": Persona(
+        name="fisher-conservative",
+        role="vessel captain",
+        description=(
+            "A commercial fishing vessel captain choosing which species "
+            "in a shared regional stock to target this trip. You favour "
+            "species less vulnerable to being fished down, even when a "
+            "higher-value species would fill the hold faster, because "
+            "you are weighing the risk that heavy harvest this season "
+            "crashes a stock the rest of the fleet depends on for years "
+            "to come."),
+        risk_tolerance=0.15,
+    ),
+    "fisher-aggressive": Persona(
+        name="fisher-aggressive",
+        role="vessel captain",
+        description=(
+            "A commercial fishing vessel captain who targets whichever "
+            "species fills the hold with the highest-value catch this "
+            "trip. Whether the stock can sustain that harvest for the "
+            "rest of the fleet next season is someone else's problem."),
+        risk_tolerance=0.9,
+    ),
+    "fisher-balanced": Persona(
+        name="fisher-balanced",
+        role="vessel captain",
+        description=(
+            "A commercial fishing vessel captain following standard "
+            "fishery-management quota guidance, weighing this trip's "
+            "catch value against the chance heavy harvest depletes the "
+            "stock for future seasons."),
         risk_tolerance=0.5,
     ),
 }

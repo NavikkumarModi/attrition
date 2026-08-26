@@ -29,6 +29,7 @@ from attrition import (ConsumableBandit, Greedy, ECI, SECI, UCB, ThompsonSamplin
                        planner_value_simultaneous, decentralised_value_simultaneous,
                        derive_campaign_parameters, SCENARIOS, get_arrays, worlds,
                        WORLDS, PHARMA_PERSONAS, CAMPAIGN_PERSONAS, AGENT_PERSONAS,
+                       CYBERSECURITY_PERSONAS, FISHERIES_PERSONAS,
                        CallableLLMClient, AgentGraph)
 from attrition.llm_policy import _CHOICE
 from attrition.election import (ALL_PHASE1_CONSTITUENCIES, build_constituency,
@@ -616,6 +617,8 @@ WORLD_PERSONAS = {
     "clinical-amr": PHARMA_PERSONAS,
     "election": CAMPAIGN_PERSONAS,
     "agent-ecosystem": AGENT_PERSONAS,
+    "cybersecurity": CYBERSECURITY_PERSONAS,
+    "environment": FISHERIES_PERSONAS,
 }
 
 POLICY_FACTORIES = {
@@ -700,7 +703,8 @@ def _persona_list(world):
 def scenario_personas(name: str):
     """Which persona set (if any) makes sense to run a real LLM population
     against, for this scenario's world -- empty for worlds with no
-    registered persona set (environment, cybersecurity, synthetic)."""
+    registered persona set (synthetic; see FINDINGS.md #55 for
+    environment/cybersecurity, which now have one)."""
     if name not in SCENARIOS:
         raise HTTPException(status_code=404, detail=f"unknown scenario {name!r}")
     return _persona_list(SCENARIOS[name].get("world"))

@@ -7,11 +7,13 @@ objects -- no network access, no API key.
 import numpy as np
 import pytest
 
-from attrition import (State, Greedy, LLMPolicy, Persona, MockLLMClient,
+from attrition import (State, Greedy, ECI, LLMPolicy, Persona, MockLLMClient,
                        Population, simulate_population,
                        simulate_population_simultaneous, ConsumableBandit,
                        SimultaneousPool, derive_antibiotic_parameters,
-                       AGENT_PERSONAS, agent_tools, SCENARIOS)
+                       AGENT_PERSONAS, CYBERSECURITY_PERSONAS, FISHERIES_PERSONAS,
+                       agent_tools, SCENARIOS, compare_population_to_baselines,
+                       derive_real_cve_parameters, derive_real_fisheries_parameters)
 
 
 def _state(seed=0):
@@ -212,6 +214,48 @@ def test_agent_ecosystem_population_runs_simultaneous():
     assert result["system_value"] == pytest.approx(
         sum(a["value"] for a in result["agents"].values()))
     assert sum(a["pulls"] for a in result["agents"].values()) > 0
+
+
+def test_cybersecurity_population_runs_turn_taking():
+    """FINDINGS.md #55: the cybersecurity world (exploit-catalog-real)
+    had a scenario but no persona/population layer -- same treatment as
+    AMR (examples/04) and agent-ecosystem (examples/19), applied to
+    CYBERSECURITY_PERSONAS over the real CVE catalog."""
+    v, p, e, _labels = derive_real_cve_parameters(n=50, seed=0)
+    personas = [CYBERSECURITY_PERSONAS["patch-conservative"],
+               CYBERSECURITY_PERSONAS["patch-balanced"],
+               CYBERSECURITY_PERSONAS["patch-aggressive"]]
+    population = Population.from_personas(personas, client=MockLLMClient(seed=0))
+    result = compare_population_to_baselines(
+        lambda s: ConsumableBandit(v, p, e, delta=0.05, horizon=20, seed=s),
+        population, [Greedy(), ECI()], seeds=5)
+    assert set(result) == {"population", "greedy", "eci"}
+    for stats in result.values():
+        assert stats["value"] == stats["value"]  # not NaN
+
+
+def test_fisheries_population_runs_turn_taking():
+    """Same real-data-world persona/population coverage as the
+    cybersecurity test above, for the environment world
+    (fisheries-commons-real)."""
+    v, p, e, _labels = derive_real_fisheries_parameters()
+    personas = [FISHERIES_PERSONAS["fisher-conservative"],
+               FISHERIES_PERSONAS["fisher-balanced"],
+               FISHERIES_PERSONAS["fisher-aggressive"]]
+    population = Population.from_personas(personas, client=MockLLMClient(seed=0))
+    result = compare_population_to_baselines(
+        lambda s: ConsumableBandit(v, p, e, delta=0.15, horizon=12, seed=s),
+        population, [Greedy(), ECI()], seeds=5)
+    assert set(result) == {"population", "greedy", "eci"}
+    for stats in result.values():
+        assert stats["value"] == stats["value"]  # not NaN
+
+
+def test_cybersecurity_and_fisheries_personas_have_the_standard_conservative_aggressive_balanced_spread():
+    for personas in (CYBERSECURITY_PERSONAS, FISHERIES_PERSONAS):
+        risk = {p.risk_tolerance for p in personas.values()}
+        assert len(personas) == 3
+        assert min(risk) < 0.3 < 0.7 < max(risk)
 
 
 def test_shared_quota_scenarios_are_tagged_agent_ecosystem_world():

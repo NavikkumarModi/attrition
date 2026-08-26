@@ -2495,6 +2495,25 @@ each district's own network effect (final minus direct-only) is
 independently non-trivial, not an artefact of a shared graph leaking
 across districts.
 
+Wired into `election_api.py`: the 400 raise removed, the district branch
+now passes `use_network`/`peer_conversion_prob`/`mean_degree` through,
+and the response's `district_granularity` object gains a
+`network_within_district` flag. `ConstituencyLab.tsx` updated to allow
+both checkboxes simultaneously (previously mutually `disabled`), with an
+inline hint pointing at this entry, a "Direct only %" column added to
+the per-district results table only when applicable, and the same
+scoping caveat surfaced in the UI. Verified live in the browser at
+http://localhost:5173: running AHMEDABAD EAST with both controls on
+produced Gandhinagar (485 voters, 0.36% direct-only -> 0.67% final) and
+Ahmadabad (2,515 voters, 0.37% -> 0.73%), each final >= direct-only as
+required, with the combined population-weighted mean (0.72%) and the
+scoping caveat text rendering correctly.
+
+9 new tests total (`tests/test_network.py`, `tests/test_granularity.py`,
+`tests/test_election_api.py`). Full suite: 314/314 passing (was 297;
+the gap reflects tests added earlier this session for #52 and other
+work not previously reconciled against a full run).
+
 ## 54. Level 2 (LLM-driven) decisions distilled into a policy that scales past small N
 
 Item 3 of a five-item punch list raised after #52/#53: "Level 2 (real
@@ -2566,21 +2585,69 @@ time. Exported from the top-level `attrition` package (`DecisionTrace`,
 `evaluate_agreement`) alongside every other policy in this repo. Full
 suite: 324/324 passing (was 314).
 
-Wired into `election_api.py`: the 400 raise removed, the district branch
-now passes `use_network`/`peer_conversion_prob`/`mean_degree` through,
-and the response's `district_granularity` object gains a
-`network_within_district` flag. `ConstituencyLab.tsx` updated to allow
-both checkboxes simultaneously (previously mutually `disabled`), with an
-inline hint pointing at this entry, a "Direct only %" column added to
-the per-district results table only when applicable, and the same
-scoping caveat surfaced in the UI. Verified live in the browser at
-http://localhost:5173: running AHMEDABAD EAST with both controls on
-produced Gandhinagar (485 voters, 0.36% direct-only -> 0.67% final) and
-Ahmadabad (2,515 voters, 0.37% -> 0.73%), each final >= direct-only as
-required, with the combined population-weighted mean (0.72%) and the
-scoping caveat text rendering correctly.
+## 55. Cybersecurity and fisheries get the persona/population layer election and AMR already had
 
-9 new tests total (`tests/test_network.py`, `tests/test_granularity.py`,
-`tests/test_election_api.py`). Full suite: 314/314 passing (was 297;
-the gap reflects tests added earlier this session for #52 and other
-work not previously reconciled against a full run).
+Item 4 of the punch list: "Cybersecurity/fisheries worlds are
+scenario-only, no population/frontend layer like election/AMR got."
+True as stated -- `exploit-catalog-real` (world `"cybersecurity"`) and
+`fisheries-commons-real` (world `"environment"` -- the fisheries world's
+actual key, not `"fisheries"`, checked before assuming) have carried
+real (v, p, e) data since FINDINGS.md #45/#46, but `election_api.py`'s
+`WORLD_PERSONAS` mapping never had entries for them -- both #45 and #46
+explicitly documented this as a known, named gap at the time
+("environment, cybersecurity, synthetic" had no registered persona
+set), not a bug discovered now.
+
+**Closed the actual gap, not a broader one.** New `CYBERSECURITY_PERSONAS`
+and `FISHERIES_PERSONAS` dicts in `attrition/persona.py`, matching every
+existing persona set's shape exactly: three dispositions (conservative/
+aggressive/balanced), `risk_tolerance` spread 0.15/0.5/0.9, description
+text framed around each world's real shared-externality mechanism --
+`patch-conservative`/`patch-aggressive`/`patch-balanced` (a security
+team lead's remediation-rollout risk appetite, weighing shared
+production infrastructure against clearing the queue fast) and
+`fisher-conservative`/`fisher-aggressive`/`fisher-balanced` (a vessel
+captain's harvest-target risk appetite, weighing a shared regional
+stock against filling the hold this trip). Deliberately defensive/
+neutral framing for cybersecurity -- security-team patch prioritization,
+not an attacker's exploit-selection decision -- consistent with this
+project's stated dual-use handling, even though the underlying CVE data
+(EPSS exploitation-probability scores) would equally support either
+framing.
+
+**The entire backend change is two new `WORLD_PERSONAS` dict entries.**
+Checked, not assumed, before writing anything: `frontend/ScenarioLab.tsx`
+is genuinely generic -- it fetches `/api/scenarios/{name}/personas` at
+runtime and renders whatever comes back, with no hardcoded world or
+persona list of its own (`App.tsx`'s "Other domains" grouping just
+lists which worlds appear under that tab, unrelated to whether they
+have personas). So the only backend change needed was `WORLD_PERSONAS
+["cybersecurity"] = CYBERSECURITY_PERSONAS` and `WORLD_PERSONAS
+["environment"] = FISHERIES_PERSONAS` -- zero frontend code changed.
+
+Verified live at http://localhost:5173, not just asserted from reading
+the frontend's source: selecting `exploit-catalog-real` (cybersecurity)
+with a provider chosen renders `patch-conservative`/`patch-aggressive`/
+`patch-balanced`; selecting `fisheries-commons-real` (environment)
+renders `fisher-conservative`/`fisher-aggressive`/`fisher-balanced` --
+both previously showed no persona list at all, confirmed via the
+now-updated test that used to assert exactly that emptiness (`tests/
+test_election_api.py`'s `test_scenario_personas_empty_for_world_with_
+no_persona_set`, repointed at a genuinely persona-less scenario --
+`high-dispersion`, `world="synthetic"` -- since its previous target,
+`fisheries-commons-real`, is no longer persona-less and asserting that
+would now be testing the wrong thing).
+
+`examples/22_cybersecurity_fisheries_population.py`: the same
+turn-taking population-vs-baselines treatment `examples/04` (AMR) and
+`examples/19` (agent-ecosystem) already give their worlds, applied to
+both new persona sets over their real data. Confirms each world's
+already-documented `corr(v, kappa)` regime shows up in a persona-driven
+run too, not just the classical-policy comparison: fisheries (real
+CONFLICT regime, +0.74) shows a much larger population-vs-ECI gap than
+cybersecurity (mild, near the alignment boundary, -0.11) in the same
+run, consistent with #45/#46's real, previously measured correlations,
+not a new claim invented for this entry.
+
+4 new tests (`tests/test_population.py`, `tests/test_election_api.py`).
+Full suite: 328/328 passing (was 324).
