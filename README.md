@@ -743,6 +743,19 @@ ordering guard against stale responses) whenever the seat or any control
 changes, instead of requiring an explicit "Run" click — the guided-flow
 gap identified against poliwave's interaction model.
 
+### A real interactive basemap
+
+`FINDINGS.md` #60. `IndiaMap` rewritten on `react-leaflet` with a free
+OpenStreetMap tile layer — real pan/zoom, real geographic context
+(neighbouring countries, coastline, labels), floating search/legend/
+hover overlay chrome, replacing the earlier static, fixed-viewport
+d3-geo SVG. Typing 2+ characters into the floating search box filters
+the same 543 real seats and navigates on click, same as clicking a map
+polygon. A pre-existing `npm run build` bug (recharts tooltip formatter
+typing) was fixed in passing, confirmed pre-existing by re-running the
+build against the prior commit — `npm run build` now succeeds end to
+end.
+
 ### Scale with concurrent calls
 
 `simulate_population_simultaneous` and `compare_population_to_baselines` take

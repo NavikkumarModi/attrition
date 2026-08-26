@@ -74,7 +74,12 @@ export default function Overview({ onSelect }: { onSelect: (state: string, name:
             <Tooltip
               cursor={{ strokeDasharray: "3 3" }}
               contentStyle={{ background: CHART_TOOLTIP_BG, border: `1px solid ${CHART_TOOLTIP_BORDER}`, fontSize: 12 }}
-              formatter={(value: number, key: string) => [key === "real_margin_pct" ? `${value.toFixed(2)}pp` : `${value?.toFixed?.(2)}%`, key]}
+              formatter={((value: unknown, key: string) => [
+                typeof value === "number"
+                  ? (key === "real_margin_pct" ? `${value.toFixed(2)}pp` : `${value.toFixed(2)}%`)
+                  : "—",
+                key,
+              ]) as any}
               labelFormatter={() => ""}
             />
             <Scatter

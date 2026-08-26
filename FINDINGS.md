@@ -2976,3 +2976,50 @@ caught before shipping, not after. The explicit button remains (relabelled
 result.
 
 Full suite: 355/355 passing (was 346).
+
+## 60. A real interactive basemap, replacing the static SVG choropleth
+
+Continued pushback that the frontend still didn't read as a product:
+the single biggest remaining visual gap against poliwave was the map
+itself -- a static, fixed-viewBox d3-geo SVG (no pan, no zoom, no real
+geographic context: no neighbouring countries, no coastline, no
+labels) versus poliwave's real, pannable/zoomable basemap.
+
+`frontend/src/IndiaMap.tsx` rewritten on `react-leaflet` (new
+dependency, `leaflet`/`react-leaflet`/`@types/leaflet`): a real
+`MapContainer` with an OpenStreetMap standard tile layer (free, no API
+key -- CARTO's free anonymous basemap tier, tried first, turned out to
+now require a key, caught live by an "API KEY REQUIRED" watermark on
+the rendered tiles before it shipped, not after) rendering the same 543-
+seat real GeoJSON as a `GeoJSON` layer with the same tipping-point
+choropleth styling, pan/zoom/scroll interaction free from the mapping
+library, floating overlay chrome (search box, zoom control, legend,
+hover info card) instead of a below-map static legend paragraph -- the
+concrete poliwave-shaped surface this session's earlier redesigns (#58,
+#59) stopped short of.
+
+Real search added, not a stub: `IndiaMap` builds its match index
+directly from the already-fetched GeoJSON `properties` (name/state),
+no separate fetch -- typing 2+ characters filters to up to 8 matches,
+clicking one calls the same `onSelect(state, name)` handler a map-
+polygon click does, verified live to correctly navigate to Constituency
+Lab for the selected seat either way.
+
+**A real, pre-existing build bug fixed in passing, not introduced by
+this change:** `npm run build` (`tsc -b`, the composite-project build
+mode -- stricter than the `tsc --noEmit` check used throughout this
+session's earlier frontend work, which never caught it) failed on
+`Overview.tsx`'s scatter-chart tooltip formatter, whose parameter type
+didn't account for recharts' `ValueType` also being an array. Confirmed
+pre-existing by stashing this session's changes and re-running `tsc -b`
+against the prior commit -- same failure, not something this session's
+edits caused. Fixed by handling the non-numeric case explicitly.
+Verified: `npm run build` now succeeds end to end (818KB bundle,
+235KB gzip -- not code-split, a real, disclosed size the project
+accepts for now rather than a hidden cost).
+
+Verified live: real pan/zoom, floating search returning and correctly
+navigating to real matches, hover info card, click-to-select from a
+map polygon -- all confirmed working in the browser, not just compiled.
+No backend change; full Python suite (355/355) unaffected, checked as
+a sanity check only.

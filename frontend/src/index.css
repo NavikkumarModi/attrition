@@ -270,3 +270,105 @@ button.run-btn:disabled {
   border-radius: 50%;
   margin-right: 6px;
 }
+
+.map-hero {
+  position: relative;
+  width: 100%;
+  height: min(78vh, 720px);
+  min-height: 420px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  margin-bottom: 18px;
+  background: var(--panel-2);
+}
+
+.map-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 13px;
+  z-index: 400;
+  background: var(--panel-2);
+}
+
+.map-overlay {
+  position: absolute;
+  z-index: 401;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+}
+
+.map-overlay-top {
+  top: 14px;
+  left: 14px;
+  right: 70px;
+  max-width: 340px;
+}
+
+.map-search { padding: 2px; }
+.map-search input {
+  width: 100%;
+  border: none;
+  padding: 9px 12px;
+  border-radius: 9px;
+  font-size: 13px;
+  background: transparent;
+}
+.map-search input:focus { outline: none; }
+
+.map-search-results {
+  border-top: 1px solid var(--border);
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.map-search-results button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.map-search-results button:hover { background: var(--panel-2); }
+
+.map-overlay-legend {
+  bottom: 14px;
+  left: 14px;
+  padding: 8px 12px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.map-overlay-hover {
+  bottom: 14px;
+  right: 14px;
+  padding: 10px 14px;
+  font-size: 12px;
+  max-width: 240px;
+  pointer-events: none;
+}
+
+.map-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+
+.leaflet-container {
+  font-family: inherit;
+  background: var(--panel-2);
+}
