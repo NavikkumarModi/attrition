@@ -651,6 +651,30 @@ persona checklist with zero frontend changes.
 turn-taking population-vs-baselines treatment examples/04 and
 examples/19 already give AMR and agent-ecosystem.
 
+### Cross-world benchmark: a unified table, and a real transfer test
+
+`FINDINGS.md` #56, `experiments/exp66_cross_world_transfer.py`. (a) One
+Greedy-vs-ECI value-gap table across every registered world, assembled
+from `attrition.scenarios.SCENARIOS` rather than re-typed from scattered
+prior reports. (b) A genuine transfer test for `Conservative`'s "no
+domain-specific knowledge needed" framing: calibrating the raw `e_bound`
+on one world and reusing it verbatim elsewhere would be a meaningless,
+unit-mismatched comparison across domains whose v/e scales differ
+entirely — so instead the RATIO `e_bound / v.max()` is calibrated once,
+on a single home world, then reused unchanged to derive every other
+world's `e_bound` from its own `v.max()`, never looking at that world's
+own `e` distribution. Checked result, reported both ways: the ratio
+itself transfers well (within a few points of local recalibration in
+every world), but `Conservative`'s own local recipe isn't uniformly good
+across domains regardless of transfer — it recovers only ~1.5% of the
+Greedy-to-ECI gap in the fisheries world (real `p` nearly uniform, real
+`e` highly dispersed, so a uniform worst-case bound overcharges every
+arm about equally) while exceeding 100% (outperforming the ECI oracle)
+in cybersecurity. A real, useful distinction this benchmark draws for
+the first time in this repo: the transfer step holds up; whether
+Conservative is the right policy for a given domain remains a separate,
+per-domain question.
+
 ### Scale with concurrent calls
 
 `simulate_population_simultaneous` and `compare_population_to_baselines` take
