@@ -1,4 +1,9 @@
-export const API_BASE = "http://localhost:8000";
+// Local dev: Vite (port 5173) and uvicorn (port 8000) run separately, so
+// the frontend needs the backend's explicit origin. Production build: the
+// backend serves the built frontend itself (see election_api.py's static
+// mount), so requests should stay same-origin -- an empty base, not a
+// hardcoded localhost that would break in any deployed environment.
+export const API_BASE = import.meta.env.PROD ? "" : "http://localhost:8000";
 
 export interface SeatSummary {
   id: string;

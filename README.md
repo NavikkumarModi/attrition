@@ -756,6 +756,22 @@ typing) was fixed in passing, confirmed pre-existing by re-running the
 build against the prior commit — `npm run build` now succeeds end to
 end.
 
+### Single-container deployment
+
+`FINDINGS.md` #61. A root `Dockerfile` builds the frontend and serves it
+alongside the FastAPI backend from one `uvicorn` process on one port —
+`election_api.py` gains a purely additive static mount (active only if
+`frontend/dist` exists, so local dev via `npm run dev` +
+`uvicorn --reload` is unaffected). Verified locally end to end: a real
+`docker build` + `docker run`, checked live against a running
+container — `/api/constituencies` (543 real seats), the built frontend
+assets, and a real `/api/simulate` call all confirmed working, not just
+a successful build. A Space-specific `README_huggingface.md` (Docker
+SDK frontmatter) is ready, kept separate from this README. Actually
+pushing to a Hugging Face Space needs the deployer's own account and
+write token — genuinely blocked on that, not attempted with borrowed or
+invented credentials.
+
 ### Scale with concurrent calls
 
 `simulate_population_simultaneous` and `compare_population_to_baselines` take

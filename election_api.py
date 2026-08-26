@@ -856,3 +856,31 @@ def amr_reference_table():
     repo = in_repo_half()
     return {"in_repo": repo, "external_siloed": EXTERNAL_SILOED,
            "external_shared": EXTERNAL_SHARED}
+
+
+# --------------------------------------------------------- built frontend
+# Serves frontend/dist (npm run build's output) if it exists, so this same
+# process can serve both the API and the built React app on one port --
+# the shape a single-container deployment needs (see Dockerfile). Purely
+# additive and conditional: local dev (`uvicorn election_api:app --reload`
+# alongside `npm run dev`) never has frontend/dist present, so this has no
+# effect on that workflow. Registered LAST, after every /api/* route, so
+# it never shadows one.
+_FRONTEND_DIST = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              "frontend", "dist")
+if os.path.isdir(_FRONTEND_DIST):
+    from fastapi.responses import FileResponse
+    from fastapi.staticfiles import StaticFiles
+
+    app.mount("/assets", StaticFiles(directory=os.path.join(_FRONTEND_DIST, "assets")),
+             name="frontend-assets")
+
+    @app.get("/{full_path:path}")
+    def serve_frontend(full_path: str):
+        """SPA catch-all: any non-/api path serves index.html, so client-
+        side routing (this app has none today, but a future router would)
+        and a hard refresh on any page both work -- not just the root."""
+        candidate = os.path.join(_FRONTEND_DIST, full_path)
+        if full_path and os.path.isfile(candidate):
+            return FileResponse(candidate)
+        return FileResponse(os.path.join(_FRONTEND_DIST, "index.html"))

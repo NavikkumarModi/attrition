@@ -1,0 +1,16 @@
+# Keep the Docker build context to what the image actually needs -- the
+# same raw-data/large-artifact exclusions .gitignore already makes,
+# restated here because .dockerignore is evaluated independently.
+.git
+data/
+frontend/node_modules
+frontend/dist
+attrition/data/*.json.bak
+__pycache__
+*.pyc
+.pytest_cache
+.venv
+*.egg-info
+paper/
+experiments/__pycache__
+attrition-update-final.bundle

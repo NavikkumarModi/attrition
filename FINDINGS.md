@@ -3023,3 +3023,73 @@ navigating to real matches, hover info card, click-to-select from a
 map polygon -- all confirmed working in the browser, not just compiled.
 No backend change; full Python suite (355/355) unaffected, checked as
 a sanity check only.
+
+## 61. Single-container deployment groundwork, verified end to end, not just written
+
+Asked to publish the frontend, replacing the existing Streamlit Cloud
+deployment (the live link in this README is actually
+attrition-world-simulator.streamlit.app, Streamlit Community Cloud --
+not Hugging Face, a real, checked correction to the request's own
+premise, not silently gone along with). No Hugging Face credentials are
+configured in this environment (`hf auth whoami` -- not logged in), so
+the actual push to a Space is blocked on the user's own account/token,
+which this session cannot and should not handle (entering a credential
+on someone's behalf is out of scope regardless of who's asking). What
+IS in scope, and done: everything a deployment needs that doesn't
+require someone else's credentials, built and VERIFIED locally, not
+left as an untested Dockerfile.
+
+**Single-container architecture.** `Dockerfile` (repo root, two-stage:
+`node:20-slim` builds the frontend, `python:3.11-slim` serves it):
+builds `frontend/dist` with `npm run build`, installs the package
+(`pip install -e ".[api,llm,groq]"` -- lightweight enough to include the
+real-LLM-population feature out of the box, not just the core API), and
+serves BOTH the built frontend and every `/api/*` route from one
+`uvicorn` process on one port -- the shape a platform that exposes
+exactly one port per app (Hugging Face Spaces' Docker SDK) needs.
+`election_api.py` gains a purely additive, conditional static mount:
+if `frontend/dist` exists, `/assets/*` is served as static files and
+every other non-`/api` path serves `index.html` (a SPA catch-all,
+registered LAST so it can never shadow a real API route); if it doesn't
+exist (every local-dev workflow today), this code path never runs --
+`uvicorn election_api:app --reload` alongside `npm run dev` is
+completely unaffected. `frontend/src/api.ts`'s `API_BASE` now resolves
+to same-origin (empty string) in a production build (`import.meta.env.
+PROD`) instead of the hardcoded `localhost:8000` that would have
+silently broken in any deployed environment -- caught by actually
+building and running the container, not by inspecting the code.
+
+**A real, pre-existing gap in Docker build-context hygiene closed
+alongside this, not left for later:** new `.dockerignore` excludes
+`data/` (119MB of raw, gitignored manual downloads -- SHRUG, Census --
+never needed at runtime, only by `scripts/process_*.py`) and
+`frontend/node_modules` (131MB, rebuilt fresh inside the image via
+`npm ci` regardless), keeping the build context to what the image
+actually uses.
+
+**Verified end to end locally, not just "should work":** `docker build`
+succeeds (422MB final image); a running container answers
+`/api/constituencies` with the real 543 seats, serves `index.html` and
+the built JS/CSS bundle at their real hashed paths, and completes a real
+`/api/simulate` call end to end (AHMEDABAD EAST, BJP, 38.17pp margin --
+matching the API's own already-tested output) -- all three checked live
+against a container actually running, not assumed from a successful
+build. `npm run build`'s pre-existing bug (fixed in #60) was a
+prerequisite this deployment attempt surfaced the real cost of not
+having fixed sooner: `docker build` would have failed outright on it.
+
+**New `README_huggingface.md`** -- a Space-specific README (Docker SDK
+frontmatter, `app_port: 7860`) kept SEPARATE from the project's own
+GitHub `README.md` rather than injecting Hugging Face YAML frontmatter
+into the research-facing document everyone else reads; renamed to
+`README.md` only within the Space's own separate git history at push
+time.
+
+**What's left, genuinely blocked, not silently skipped:** the actual
+`git push` to a Hugging Face Space requires the user's own Hugging Face
+account and a write token (`hf auth login`, run by the user in their own
+terminal so the token never passes through this session) and a decision
+on the Space's name (new Space, or does one already exist under a
+different name than this repo's own `README.md` currently links to).
+Full suite: 355/355 passing, unaffected (pure deployment/infra addition,
+no simulation-logic change).
