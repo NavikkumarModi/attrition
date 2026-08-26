@@ -720,6 +720,29 @@ result content. Verified live across every tab with no visual
 regressions; the backend's 346/346 tests are unaffected, as expected for
 a pure frontend change.
 
+### Real indicators as simulation criteria, and a guided-flow frontend
+
+`FINDINGS.md` #59. Every real indicator from #57 was display-only until
+now — asked to wire real covariates into the actual voter-switching
+mechanism (`switch_resistance`), but only after checking the real
+literature, not assuming a direction. Three checked: **literacy**
+(kept) — Zaller's (1992) Receive-Accept-Sample model predicts that under
+high-intensity campaign contact, LESS politically aware voters are MORE
+persuadable, not less; literacy (Census 2011 via SHRUG) is the closest
+real per-seat proxy for political awareness, so lower literacy now makes
+a seat more persuadable — the opposite of a naive guess. **Income/
+poverty** and **road connectivity** (both checked, NOT wired in) — real
+causal literature (Broockman et al. 2024, NBER; Goyal 2023, *Journal of
+Politics*) finds neither has a supported effect on political attitudes
+or voter responsiveness, so SHRUG's real data for both stays display-
+only rather than driving an unsupported assumption.
+`simulate_level1_contact(..., use_literacy_effect=True)`, opt-in,
+default off, byte-identical existing behaviour otherwise. Also: the
+Constituency Lab now runs automatically (debounced, with a request-
+ordering guard against stale responses) whenever the seat or any control
+changes, instead of requiring an explicit "Run" click — the guided-flow
+gap identified against poliwave's interaction model.
+
 ### Scale with concurrent calls
 
 `simulate_population_simultaneous` and `compare_population_to_baselines` take

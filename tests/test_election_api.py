@@ -250,6 +250,33 @@ def test_simulate_district_granularity_without_network_omits_direct_only():
         assert "direct_only_final_switched_fraction" not in d
 
 
+def test_simulate_literacy_effect_reports_real_fraction_used(): # FINDINGS.md#59
+    resp = client.post("/api/simulate",
+                       json={"state": "Uttar Pradesh", "name": "VARANASI",
+                            "use_literacy_effect": True, "n_voters": 3000})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "literacy_effect" in data
+    lf = data["literacy_effect"]["literacy_fraction"]
+    assert lf is not None and 0.0 < lf < 1.0
+
+
+def test_simulate_literacy_effect_off_by_default_omits_field():
+    resp = client.post("/api/simulate", json={**_SEAT, "n_voters": 3000})
+    assert resp.status_code == 200
+    assert "literacy_effect" not in resp.json()
+
+
+def test_simulate_literacy_effect_falls_back_cleanly_with_no_shrug_match():
+    """AHMEDABAD EAST's two constituent ACs have no matched SHRUG
+    population data (a real, disclosed gap -- FINDINGS.md #57) -- must
+    report literacy_fraction: null, never crash or guess a value."""
+    resp = client.post("/api/simulate",
+                       json={**_SEAT, "use_literacy_effect": True, "n_voters": 3000})
+    assert resp.status_code == 200
+    assert resp.json()["literacy_effect"]["literacy_fraction"] is None
+
+
 def test_simulate_district_granularity_falls_back_cleanly_with_no_rollup():
     resp = client.post(
         "/api/simulate",

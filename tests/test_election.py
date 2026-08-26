@@ -322,6 +322,91 @@ def test_incumbency_bonus_increases_resistance_and_slows_switching():
     assert final_inc <= final_chal
 
 
+# ------------------------------------ literacy susceptibility effect (FINDINGS.md#59)
+def test_lower_literacy_pulls_resistance_down_not_up():
+    """Real, checked, counter-intuitive direction (Zaller 1992's RAS
+    model, see LITERACY_SUSCEPTIBILITY_ADJUSTMENT's module comment):
+    LOWER literacy makes a seat's population MORE persuadable, not less
+    -- the opposite of an unexamined guess."""
+    from attrition.election.agents import mean_resistance_for, LITERACY_SUSCEPTIBILITY_ADJUSTMENT
+
+    base = mean_resistance_for(0.6, incumbent=False)
+    high_literacy = mean_resistance_for(0.6, incumbent=False, literacy_fraction=0.9)
+    low_literacy = mean_resistance_for(0.6, incumbent=False, literacy_fraction=0.3)
+    assert low_literacy < high_literacy < base + 1e-9  # both pulled down from base
+    assert low_literacy < base
+    illiteracy = 1.0 - 0.3
+    assert low_literacy == base - LITERACY_SUSCEPTIBILITY_ADJUSTMENT * illiteracy * base
+
+
+def test_mean_resistance_for_ignores_literacy_when_not_given():
+    from attrition.election.agents import mean_resistance_for
+    assert mean_resistance_for(0.6, incumbent=False) == mean_resistance_for(
+        0.6, incumbent=False, literacy_fraction=None)
+
+
+def test_literacy_fraction_for_seat_is_real_and_bounded():
+    from attrition.election.agents import literacy_fraction_for_seat
+    lf = literacy_fraction_for_seat("Uttar Pradesh", "VARANASI")
+    assert lf is not None
+    assert 0.0 < lf < 1.0
+
+
+def test_literacy_fraction_for_seat_none_falls_back_cleanly():
+    """A seat whose constituent ACs have no SHRUG population match
+    (a real, disclosed gap -- FINDINGS.md #57) must return None, never a
+    guessed value, and use_literacy_effect must not crash simulating it."""
+    from attrition.election.agents import literacy_fraction_for_seat
+    from attrition.election import ALL_PHASE1_CONSTITUENCIES
+    from attrition.election.shrug import shrug_rollup_for_seat
+
+    unmatched = None
+    for c in ALL_PHASE1_CONSTITUENCIES:
+        rollup = shrug_rollup_for_seat(c.state, c.name)
+        if rollup is None or rollup.get("population_total") is None:
+            unmatched = c
+            break
+    assert unmatched is not None, "expected at least one real seat with no SHRUG population match"
+    assert literacy_fraction_for_seat(unmatched.state, unmatched.name) is None
+
+    from attrition.election import simulate_level1_contact
+    seq = [0.2, 0.3, 0.4]
+    _, final = simulate_level1_contact(unmatched, seq, n_voters=500, seed=0,
+                                       use_literacy_effect=True)
+    assert final >= 0.0
+
+
+def test_use_literacy_effect_off_by_default_matches_existing_behaviour():
+    """Byte-identical to calling without the new kwarg at all -- a real
+    backward-compatibility guard, not just documented as one."""
+    from attrition.election import simulate_level1_contact
+    seq = [0.15, 0.2, 0.25, 0.3, 0.35]
+    _, default_final = simulate_level1_contact("VARANASI", seq, n_voters=2000, seed=0)
+    _, explicit_off_final = simulate_level1_contact(
+        "VARANASI", seq, n_voters=2000, seed=0, use_literacy_effect=False)
+    assert default_final == explicit_off_final
+
+
+def test_use_literacy_effect_on_changes_a_real_low_literacy_seat():
+    """Real end-to-end check: turning the effect on for a seat with real,
+    matched, sub-national-average literacy must increase (never decrease)
+    the final switched fraction relative to the effect being off, holding
+    everything else (seed, sequence, n_voters) fixed."""
+    from attrition.election import simulate_level1_contact
+    from attrition.election.agents import literacy_fraction_for_seat
+
+    seq = [0.15, 0.2, 0.25, 0.3, 0.35]
+    candidates = [c for c in ALL_PHASE1_CONSTITUENCIES
+                 if literacy_fraction_for_seat(c.state, c.name) is not None]
+    seat = min(candidates, key=lambda c: literacy_fraction_for_seat(c.state, c.name))
+
+    _, off = simulate_level1_contact(seat, seq, n_voters=4000, seed=0,
+                                     use_literacy_effect=False)
+    _, on = simulate_level1_contact(seat, seq, n_voters=4000, seed=0,
+                                    use_literacy_effect=True)
+    assert on >= off
+
+
 def test_level2_personas_diverge_by_disposition():
     """The whole point of a second, LLM-driven tier: personas should not
     all respond identically to the same contact sequence, or Level 2 adds

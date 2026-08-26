@@ -44,6 +44,7 @@ from attrition.election import (ALL_PHASE1_CONSTITUENCIES, build_constituency,
                                 census_rollup_for_seat, census_rollup_coverage,
                                 simulate_level1_contact_by_district,
                                 shrug_rollup_for_seat, shrug_rollup_coverage)
+from attrition.election.agents import literacy_fraction_for_seat
 from experiments.exp65_amr_five_policy_reference_table import (
     in_repo_half, EXTERNAL_SILOED, EXTERNAL_SHARED)
 
@@ -233,6 +234,10 @@ class SimulateRequest(BaseModel):
     margin_override_pct: Optional[float] = None  # counterfactual real margin
     use_district_granularity: bool = False    # split n_voters across real
                                                # constituent districts (FINDINGS.md#51)
+    use_literacy_effect: bool = False         # real Census literacy (via SHRUG)
+                                               # modulates switch-resistance,
+                                               # per Zaller's RAS model
+                                               # (FINDINGS.md#59)
 
 
 def _with_overrides(c, incumbent_override, margin_override_pct):
@@ -326,7 +331,11 @@ def simulate(req: SimulateRequest):
     `use_district_granularity` CAN now be combined (FINDINGS.md#53):
     propagation runs independently within each constituent district (no
     cross-district edges -- a real, stated scoping choice, see
-    `simulate_level1_contact_by_district`'s docstring), not seat-wide."""
+    `simulate_level1_contact_by_district`'s docstring), not seat-wide.
+    `use_literacy_effect` (FINDINGS.md#59) modulates switch-resistance by
+    the seat's real Census literacy rate -- currently only on the plain
+    (non-network, non-district-granular) path; combining it with those is
+    future work, not silently approximated."""
     c = _resolve(req.state, req.name)
     c = _with_overrides(c, req.incumbent_override, req.margin_override_pct)
     n_voters_cap = _MAX_N_VOTERS_NETWORK if req.use_network else _MAX_N_VOTERS
@@ -368,7 +377,8 @@ def simulate(req: SimulateRequest):
             return fractions, final, {"kind": "network", "direct_only": direct_only,
                                       "graph_method": graph_method, "graph_param": graph_param}
         fractions, final = simulate_level1_contact(
-            c, req.intensity_sequence, n_voters=n_voters, seed=seed)
+            c, req.intensity_sequence, n_voters=n_voters, seed=seed,
+            use_literacy_effect=req.use_literacy_effect)
         return fractions, final, None
 
     fractions, final, extra = run_once(req.seed)
@@ -394,6 +404,9 @@ def simulate(req: SimulateRequest):
         result["district_granularity"] = {"per_district": extra["per_district"],
                                           "combined_final_switched_fraction": final,
                                           "network_within_district": extra["network_within_district"]}
+    if req.use_literacy_effect:
+        result["literacy_effect"] = {
+            "literacy_fraction": literacy_fraction_for_seat(c.state, c.name)}
     if req.include_level2:
         result["level2_decisions"] = simulate_level2_contact(c, req.intensity_sequence)
 

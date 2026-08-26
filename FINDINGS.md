@@ -2890,3 +2890,89 @@ regressions found. No backend code touched -- this is a pure frontend/
 presentation change; the full Python test suite (346/346) is unaffected
 and reported here only as a sanity check that nothing else drifted
 during this pass.
+
+## 59. Real indicators as simulation criteria, checked against the literature first -- and a guided-flow frontend
+
+Two more concerns raised directly: every real indicator this session
+added (#57's demographic/economic/wealth/infrastructure data) was
+display-only, never an input to the actual voter-switching mechanism;
+and the frontend, even after #58's redesign, still read as a form to
+fill out and submit rather than something to interactively play with.
+
+**Simulation criteria, literature-checked before writing any code, not
+assumed.** Asked explicitly to find real research backing any
+relationship before wiring real covariates into `switch_resistance`.
+Three real candidates checked; only one survives:
+
+- **Literacy (kept, direction is counter-intuitive):** Zaller's
+  Receive-Accept-Sample model (Zaller 1992, *The Nature and Origins of
+  Mass Opinion*) -- the standard political-science account of persuasion
+  susceptibility -- predicts that under HIGH-INTENSITY information flow
+  (a general-election campaign, the exact condition Level 1 already
+  models), the LEAST politically aware voters are the MOST persuadable,
+  not the least: they receive the message but have little countervailing
+  information to resist it with. No per-seat political-knowledge measure
+  exists in any real source this repo has; literacy (real, Census 2011
+  via SHRUG, #57) is the closest real proxy available, corroborated by
+  the general education/political-knowledge literature. The wired-in
+  direction is the OPPOSITE of a naive, unexamined guess ("less-literate
+  voters are harder to reach") -- exactly the kind of checked, not
+  assumed, real relationship this project's discipline requires.
+- **Income/poverty (checked, NOT wired in):** Broockman, Rhodes, Bartik,
+  Dotson, Miller, Krause & Vivalt (2024, NBER Working Paper 33214) -- a
+  real RCT (unconditional cash transfers to 1,000 low-income Americans
+  over three years) found income has essentially NO causal effect on
+  political attitudes or preferences. SHRUG's real SECC consumption/
+  poverty data (#57) is available -- deliberately not used as a
+  persuasion-susceptibility modifier, since the best available causal
+  evidence doesn't support that effect existing.
+- **Infrastructure connectivity (checked, NOT wired in):** Goyal (2023,
+  *Journal of Politics*, "Do Citizens Enforce Accountability for Public
+  Goods Provision? Evidence from India's Rural Roads Program") found real
+  PMGSY road connectivity has NO detectable effect on voter
+  responsiveness to public goods provision -- the closest real study to
+  "does infrastructure access change how voters respond to something a
+  campaign does." SHRUG's real PMGSY connectivity data (#57) is
+  available -- also deliberately not wired in, same reasoning.
+
+**Implementation** (`attrition/election/agents.py`): new
+`literacy_fraction_for_seat(state, name)` (real, via SHRUG's constituent-
+AC rollup, `None` for the ~16% of seats with no matched SHRUG population
+data -- never a guessed value). `mean_resistance_for` gains an optional
+`literacy_fraction` parameter, applied AFTER the existing incumbency
+adjustment: `resistance -= LITERACY_SUSCEPTIBILITY_ADJUSTMENT *
+illiteracy_fraction * resistance` -- proportional, bounded, can never
+push resistance negative, same order of magnitude (0.15) and same
+"stated modelling choice, not fit to a per-seat effect size" status as
+`INCUMBENCY_RESISTANCE_BONUS`. `simulate_level1_contact` gains
+`use_literacy_effect=False` (opt-in, default off -- every existing caller
+and test sees byte-identical behaviour, verified by a dedicated
+regression test). Currently wired into the plain (non-network, non-
+district-granular) path only; combining with those is disclosed future
+work, not silently approximated.
+
+Wired into `/api/simulate` (`use_literacy_effect`, reports the real
+`literacy_fraction` actually used or `null` in a new `literacy_effect`
+response field) and `ConstituencyLab.tsx` (a new checkbox, collapsed
+disclosure explaining the direction and the two rejected covariates).
+Verified live: VARANASI with the effect on reports "63.2% real literacy
+rate applied" and a higher final switched fraction than with it off,
+holding seed/sequence/n_voters fixed; a seat with no SHRUG population
+match falls back cleanly (`literacy_fraction: null`, no crash). 9 new
+tests (`tests/test_election.py`, `tests/test_election_api.py`).
+
+**Guided flow, not a form** (`ConstituencyLab.tsx`, no backend change):
+the simulation now runs automatically, debounced 500ms, whenever the
+selected seat or any control changes -- landing on the tab shows a
+result immediately (the default seat's), and adjusting any slider or
+checkbox updates it without an explicit submit action, the concrete gap
+identified against poliwave's interaction model. A request-ordering
+guard (`requestIdRef`, incrementing per issued request) discards a
+response that resolves after a newer request has already been issued --
+a real race a naive auto-run would hit the first time a slow (network-
+propagation, large-n_voters) run overlaps with the next control change,
+caught before shipping, not after. The explicit button remains (relabelled
+"Refresh now") as a manual override, no longer the only way to get a
+result.
+
+Full suite: 355/355 passing (was 346).

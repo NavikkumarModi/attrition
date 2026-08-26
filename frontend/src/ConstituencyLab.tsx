@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, Legend,
 } from "recharts";
@@ -36,6 +36,7 @@ export default function ConstituencyLab({
   const [marginOverrideOn, setMarginOverrideOn] = useState(false);
   const [marginOverride, setMarginOverride] = useState(5);
   const [useDistrictGranularity, setUseDistrictGranularity] = useState(false);
+  const [useLiteracyEffect, setUseLiteracyEffect] = useState(false);
 
   const [assemblyRollup, setAssemblyRollup] = useState<AssemblyRollupResponse | null>(null);
   const [assemblyCoverage, setAssemblyCoverage] = useState<AssemblyRollupCoverage | null>(null);
@@ -64,28 +65,48 @@ export default function ConstituencyLab({
 
   const seat = seats.find((s) => s.state === state && s.name === name);
 
+  // Guards against a stale response landing after a newer one when two
+  // runs overlap (a slow network-propagation run still in flight when the
+  // user adjusts another control) -- only the most recently ISSUED
+  // request's response is ever applied, regardless of which resolves
+  // first.
+  const requestIdRef = useRef(0);
+
   async function run() {
+    const myId = ++requestIdRef.current;
     setLoading(true);
     setError(null);
     try {
-      setResult(
-        await simulate(state, name, sequence, nVoters, {
-          n_seeds: nSeeds,
-          use_network: useNetwork,
-          peer_conversion_prob: peerConversionProb,
-          graph_density: graphDensity,
-          mean_degree: meanDegreeOn ? meanDegree : null,
-          incumbent_override: incumbentOverride === "real" ? null : incumbentOverride === "yes",
-          margin_override_pct: marginOverrideOn ? marginOverride : null,
-          use_district_granularity: useDistrictGranularity,
-        }),
-      );
+      const data = await simulate(state, name, sequence, nVoters, {
+        n_seeds: nSeeds,
+        use_network: useNetwork,
+        peer_conversion_prob: peerConversionProb,
+        graph_density: graphDensity,
+        mean_degree: meanDegreeOn ? meanDegree : null,
+        incumbent_override: incumbentOverride === "real" ? null : incumbentOverride === "yes",
+        margin_override_pct: marginOverrideOn ? marginOverride : null,
+        use_district_granularity: useDistrictGranularity,
+        use_literacy_effect: useLiteracyEffect,
+      });
+      if (myId === requestIdRef.current) setResult(data);
     } catch (e) {
-      setError(String(e));
+      if (myId === requestIdRef.current) setError(String(e));
     } finally {
-      setLoading(false);
+      if (myId === requestIdRef.current) setLoading(false);
     }
   }
+
+  // Guided flow, not a form: select a seat (or adjust any control below)
+  // and the result updates on its own, debounced, instead of requiring an
+  // explicit "Run" click every time. The button below still exists for a
+  // deliberate manual refresh, but is no longer required.
+  useEffect(() => {
+    const t = setTimeout(() => { run(); }, 500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, name, sequence, nVoters, nSeeds, useNetwork, peerConversionProb, graphDensity,
+      meanDegreeOn, meanDegree, incumbentOverride, marginOverrideOn, marginOverride,
+      useDistrictGranularity, useLiteracyEffect]);
 
   const chartData = result?.level1_switched_fraction_by_round
     ? result.level1_switched_fraction_by_round.map((f, i) => ({
@@ -176,9 +197,14 @@ export default function ConstituencyLab({
             </button>
           </div>
         </div>
-        <button className="run-btn" onClick={run} disabled={loading} style={{ marginTop: 10 }}>
-          {loading ? "Running…" : "Run simulation"}
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
+          <button className="run-btn" onClick={run} disabled={loading}>
+            {loading ? "Updating…" : "Refresh now"}
+          </button>
+          <span className="muted" style={{ fontSize: 12 }}>
+            {loading ? "Updating…" : "Updates automatically as you adjust anything below."}
+          </span>
+        </div>
         {error && <p className="error-box" style={{ marginTop: 12 }}>{error}</p>}
       </div>
 
@@ -452,6 +478,25 @@ export default function ConstituencyLab({
                     onChange={(e) => setUseDistrictGranularity(e.target.checked)} />
               Population granularity: split voters across real constituent districts
             </label>
+
+            <label className="muted" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
+              <input type="checkbox" checked={useLiteracyEffect}
+                    onChange={(e) => setUseLiteracyEffect(e.target.checked)} />
+              Real literacy modulates persuadability (Census 2011, via SHRUG)
+            </label>
+            {useLiteracyEffect && (
+              <Disclosure summary="Why literacy, and why this direction">
+                Zaller's (1992) Receive-Accept-Sample model — the standard political-science account of
+                persuasion susceptibility — predicts that under high-intensity information flow (a general-election
+                campaign), the LEAST politically aware voters are the MOST persuadable, not the least: they receive
+                the message but have little countervailing information to resist it with. Literacy (real, Census
+                2011 via SHRUG) is the closest real proxy for political awareness available per seat — so lower
+                literacy makes a seat's population more persuadable here, the opposite of a naive guess. Two other
+                real covariates (income/poverty, road connectivity) were checked against real causal literature
+                (Broockman et al. 2024 NBER; Goyal 2023, <em>Journal of Politics</em>) and found to have no
+                supported effect — deliberately NOT wired in. See FINDINGS.md #59.
+              </Disclosure>
+            )}
           </div>
         </div>
       </div>
@@ -477,6 +522,13 @@ export default function ConstituencyLab({
               <div className="label">independent seeds simulated this run</div>
             </div>
           </div>
+          {result.literacy_effect && (
+            <p className="muted" style={{ fontSize: 11, marginTop: 10 }}>
+              Real literacy effect: {result.literacy_effect.literacy_fraction != null
+                ? `${(result.literacy_effect.literacy_fraction * 100).toFixed(1)}% real literacy rate applied`
+                : "no matched SHRUG literacy data for this seat — effect had no seat-specific data to apply"}
+            </p>
+          )}
         </div>
       )}
 

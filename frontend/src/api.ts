@@ -87,6 +87,9 @@ export interface DistrictGranularity {
   combined_final_switched_fraction: number;
   network_within_district: boolean;
 }
+export interface LiteracyEffect {
+  literacy_fraction: number | null;
+}
 export interface SimulateResult {
   seat: SimulateSeatSummary;
   level1_switched_fraction_by_round: number[] | null;
@@ -103,6 +106,7 @@ export interface SimulateResult {
   network?: NetworkEffect;
   flip_probability?: FlipProbability;
   district_granularity?: DistrictGranularity;
+  literacy_effect?: LiteracyEffect;
 }
 export interface SimulateOptions {
   seed?: number;
@@ -114,6 +118,7 @@ export interface SimulateOptions {
   margin_override_pct?: number | null;
   use_district_granularity?: boolean;
   mean_degree?: number | null;
+  use_literacy_effect?: boolean;
 }
 
 async function getJSON<T>(path: string): Promise<T> {

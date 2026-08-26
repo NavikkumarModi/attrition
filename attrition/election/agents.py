@@ -64,9 +64,11 @@ from ..policies import State
 from ..persona import VOTER_PERSONAS
 from .persuasion import persuadable_fraction_from_margin
 from .population import build_constituency
+from .shrug import shrug_rollup_for_seat
 
 __all__ = ["BehaviouralVoter", "simulate_level1_contact",
           "simulate_level2_contact", "INCUMBENCY_RESISTANCE_BONUS",
+          "LITERACY_SUSCEPTIBILITY_ADJUSTMENT", "literacy_fraction_for_seat",
           "mean_resistance_for", "REALISTIC_PERSUASION_CEILING_PCT"]
 
 # A real incumbent's electorate is modelled as harder to move: mean
@@ -109,17 +111,90 @@ INCUMBENCY_RESISTANCE_BONUS = 0.15
 # FINDINGS.md #41 for the before/after numbers).
 REALISTIC_PERSUASION_CEILING_PCT = 2.0
 
+# Real literacy (Census 2011, via SHRUG -- attrition.election.shrug) as an
+# optional, opt-in modifier of switch-resistance, added after checking the
+# real literature rather than assuming a direction (this session's own
+# "consider real indicators as simulation criteria" ask). Three real
+# candidate covariates were checked -- literacy, income/poverty, and
+# infrastructure connectivity -- and only ONE survives contact with the
+# actual evidence:
+#
+# - Literacy (kept, DIRECTION IS COUNTER-INTUITIVE): Zaller's Receive-
+#   Accept-Sample model (Zaller 1992, "The Nature and Origins of Mass
+#   Opinion") -- the standard political-science account of persuasion
+#   susceptibility -- predicts that under HIGH-INTENSITY information flow
+#   (a general-election campaign, the exact condition Level 1 models),
+#   the LEAST politically aware voters are the MOST persuadable, not the
+#   least: they receive the message but have little countervailing
+#   information to resist it with. Political awareness is not literacy,
+#   but no direct per-seat political-knowledge measure exists in any real
+#   source this repo has; literacy (real, from Census 2011 via SHRUG,
+#   FINDINGS.md #57) is the closest real proxy available, and the general
+#   education/political-knowledge literature corroborates the same
+#   direction. A real, checkable, NOT-naive relationship -- lower
+#   literacy makes a seat's population MORE persuadable here, the
+#   opposite of an unexamined guess.
+# - Income/poverty (checked, NOT wired in): Broockman, Rhodes, Bartik,
+#   Dotson, Miller, Krause & Vivalt (2024, NBER Working Paper 33214, "The
+#   Causal Effects of Income on Political Attitudes and Behavior") -- a
+#   real RCT (unconditional cash transfers to 1,000 low-income
+#   Americans) found income has essentially NO causal effect on political
+#   attitudes or preferences. SHRUG's SECC consumption/poverty rate is
+#   real, checked data (#57) -- but the best available causal evidence
+#   says wiring it into persuasion susceptibility would be inventing an
+#   effect the literature doesn't support, so it is deliberately NOT used
+#   here.
+# - Infrastructure connectivity (checked, NOT wired in): Goyal (2023,
+#   Journal of Politics, "Do Citizens Enforce Accountability for Public
+#   Goods Provision? Evidence from India's Rural Roads Program") found
+#   PMGSY road connectivity has NO detectable effect on voter
+#   responsiveness -- the closest real study to "does infrastructure
+#   access change how voters respond to something a campaign/government
+#   does." SHRUG's PMGSY connectivity rate (#57) is real, checked data --
+#   also deliberately NOT wired into persuasion susceptibility for the
+#   same reason.
+#
+# 0.15 -- the same order of magnitude as INCUMBENCY_RESISTANCE_BONUS,
+# a stated, round modelling choice, not fit to the Zaller literature
+# (which is theoretical/directional, not a per-seat effect size) -- caps
+# how much a seat's real illiteracy fraction can pull mean resistance
+# down, applied proportionally so resistance can never go negative.
+LITERACY_SUSCEPTIBILITY_ADJUSTMENT = 0.15
 
-def mean_resistance_for(persuadable_fraction, incumbent):
+
+def literacy_fraction_for_seat(state, name):
+    """Real literacy fraction (Census 2011, via SHRUG's constituent-AC
+    rollup) for one real seat, or `None` if no SHRUG match / no matched
+    AC reports population data (see FINDINGS.md #57's disclosed
+    per-field gaps) -- never defaulted to a guessed value."""
+    rollup = shrug_rollup_for_seat(state, name)
+    if not rollup:
+        return None
+    literate, total = rollup["population_literate"], rollup["population_total"]
+    if literate is None or not total:
+        return None
+    return literate / total
+
+
+def mean_resistance_for(persuadable_fraction, incumbent, literacy_fraction=None):
     """Mean switch-resistance for a constituency's Level-1 population:
     `1 - persuadable_fraction`, pulled `INCUMBENCY_RESISTANCE_BONUS` of
     the remaining way to 1.0 if the real 2019 winner was a real
-    incumbent. Factored out from `simulate_level1_contact` so the
-    incumbency effect itself is directly unit-testable, not only visible
-    through a full population simulation."""
+    incumbent, then (if `literacy_fraction` is given) pulled a real,
+    literacy-scaled fraction of the way DOWN toward 0.0 -- lower real
+    literacy makes a seat more persuadable, per Zaller's RAS model (see
+    `LITERACY_SUSCEPTIBILITY_ADJUSTMENT`'s module-level comment for the
+    literature and why income/connectivity were checked and rejected).
+    Factored out from `simulate_level1_contact` so each effect is
+    directly unit-testable, not only visible through a full population
+    simulation."""
     resistance = 1.0 - float(persuadable_fraction)
     if incumbent:
         resistance = resistance + INCUMBENCY_RESISTANCE_BONUS * (1.0 - resistance)
+    if literacy_fraction is not None:
+        illiteracy_fraction = 1.0 - float(literacy_fraction)
+        resistance = resistance - (LITERACY_SUSCEPTIBILITY_ADJUSTMENT
+                                   * illiteracy_fraction * resistance)
     return resistance
 
 
@@ -137,7 +212,7 @@ class BehaviouralVoter:
 
 
 def simulate_level1_contact(constituency, intensity_sequence, rho=0.7,
-                            n_voters=2000, seed=0):
+                            n_voters=2000, seed=0, use_literacy_effect=False):
     """Run `n_voters` Level-1 voters through a sequence of campaign-contact
     rounds. `intensity_sequence` is contact intensity in [0, 1] per round
     (e.g. one of `derive_campaign_parameters`'s `intensity` levels, chosen
@@ -153,6 +228,17 @@ def simulate_level1_contact(constituency, intensity_sequence, rho=0.7,
     is harder still to move than the margin alone implies -- all without
     hand-tuning per constituency.
 
+    `use_literacy_effect=True` (opt-in, default off -- existing callers and
+    tests see byte-identical behaviour) additionally looks up the seat's
+    real literacy fraction (`literacy_fraction_for_seat`, Census 2011 via
+    SHRUG) and feeds it to `mean_resistance_for` -- see
+    `LITERACY_SUSCEPTIBILITY_ADJUSTMENT`'s module-level comment for the
+    real literature this is based on, and for the two other real
+    covariates (income/poverty, infrastructure connectivity) checked and
+    deliberately NOT wired in. Falls back to the unmodified mean
+    resistance, silently, for the ~16% of real seats with no matched
+    SHRUG literacy data -- never a guessed value.
+
     Returns the per-round switched fraction (list, one entry per round)
     and the final switched fraction -- both rescaled by
     `REALISTIC_PERSUASION_CEILING_PCT` (module-level docstring, FINDINGS.md
@@ -166,7 +252,10 @@ def simulate_level1_contact(constituency, intensity_sequence, rho=0.7,
     if isinstance(constituency, str):
         constituency = build_constituency(constituency)
     persuadable = persuadable_fraction_from_margin(constituency)
-    mean_resistance = mean_resistance_for(persuadable, constituency.candidate_incumbent[0])
+    literacy_fraction = (literacy_fraction_for_seat(constituency.state, constituency.name)
+                         if use_literacy_effect else None)
+    mean_resistance = mean_resistance_for(persuadable, constituency.candidate_incumbent[0],
+                                          literacy_fraction)
     rng = np.random.default_rng(seed)
     # Beta(a, b) with mean = mean_resistance, concentration held fixed at 8
     # (moderate spread around the mean, not degenerate) -- a modelling
