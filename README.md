@@ -772,6 +772,26 @@ pushing to a Hugging Face Space needs the deployer's own account and
 write token — genuinely blocked on that, not attempted with borrowed or
 invented credentials.
 
+### The Strategist becomes indicator-driven, not just a display of real data
+
+`FINDINGS.md` #62. Every real indicator this session added reached the
+single-seat Constituency Lab, but the Strategist — the tool that
+allocates a NATIONAL campaign budget across all 543 seats — still ranked
+and costed every seat by the raw margin-derived `tipping_point` alone.
+`literacy_adjusted_cost_multiplier` (`attrition/election/strategist.py`)
+reuses #59's own literature-checked mechanism (Zaller 1992) to rescale
+each seat's cost by its real literacy-adjusted persuadability; both
+`greedy_allocation`/`even_allocation` gain `use_literacy_effect=False`
+(opt-in). Checked, not assumed, that this is a real behavioural change:
+at a fixed budget, the literacy-adjusted allocation flips a genuinely
+different set of real seats (43 vs. 42), not the same seats relabelled.
+Real rural SECC poverty rate (via SHRUG #57) is separately offered as a
+targeting FILTER, not a cost driver — #59 already checked the causal
+literature and found no supported persuadability effect for poverty, so
+wiring it in as a cost driver here would repeat that exact mistake.
+Wired into `Strategist.tsx` with live, debounced updates; verified the
+indicator-driven toggle visibly changes which seats get targeted.
+
 ### Scale with concurrent calls
 
 `simulate_population_simultaneous` and `compare_population_to_baselines` take

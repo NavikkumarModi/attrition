@@ -166,12 +166,15 @@ export interface StrategistFilters {
   constituency_type?: string;
   sub_region?: string;
   incumbency?: "any" | "incumbent" | "challenger";
+  min_poverty_rate_pct?: number | null;
+  max_poverty_rate_pct?: number | null;
 }
 export interface StrategistResult {
   budget_pct: number;
   scope_max_tipping_pct: number;
   n_seats_in_scope: number;
   filters: StrategistFilters;
+  use_literacy_effect: boolean;
   greedy: AllocationSide;
   even: AllocationSide;
 }
@@ -179,6 +182,7 @@ export const fetchStrategist = (
   budgetPct: number,
   scopeMaxTippingPct = 20,
   filters: StrategistFilters = {},
+  useLiteracyEffect = false,
 ) => {
   const params = new URLSearchParams({
     budget_pct: String(budgetPct),
@@ -187,6 +191,9 @@ export const fetchStrategist = (
   if (filters.constituency_type) params.set("constituency_type", filters.constituency_type);
   if (filters.sub_region) params.set("sub_region", filters.sub_region);
   if (filters.incumbency && filters.incumbency !== "any") params.set("incumbency", filters.incumbency);
+  if (filters.min_poverty_rate_pct != null) params.set("min_poverty_rate_pct", String(filters.min_poverty_rate_pct));
+  if (filters.max_poverty_rate_pct != null) params.set("max_poverty_rate_pct", String(filters.max_poverty_rate_pct));
+  if (useLiteracyEffect) params.set("use_literacy_effect", "true");
   return getJSON<StrategistResult>(`/api/strategist?${params.toString()}`);
 };
 

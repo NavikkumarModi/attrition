@@ -18,6 +18,10 @@ export default function Strategist({
   const [constituencyType, setConstituencyType] = useState("");
   const [subRegion, setSubRegion] = useState("");
   const [incumbency, setIncumbency] = useState<Filters["incumbency"]>("any");
+  const [povertyFilterOn, setPovertyFilterOn] = useState(false);
+  const [minPovertyRate, setMinPovertyRate] = useState(0);
+  const [maxPovertyRate, setMaxPovertyRate] = useState(60);
+  const [useLiteracyEffect, setUseLiteracyEffect] = useState(false);
 
   useEffect(() => {
     fetchStrategistFilters().then(setFacets).catch(() => {});
@@ -28,8 +32,11 @@ export default function Strategist({
       constituency_type: constituencyType || undefined,
       sub_region: subRegion || undefined,
       incumbency,
-    }).then(setResult).catch((e) => setError(String(e)));
-  }, [budget, constituencyType, subRegion, incumbency]);
+      min_poverty_rate_pct: povertyFilterOn ? minPovertyRate : null,
+      max_poverty_rate_pct: povertyFilterOn ? maxPovertyRate : null,
+    }, useLiteracyEffect).then(setResult).catch((e) => setError(String(e)));
+  }, [budget, constituencyType, subRegion, incumbency, povertyFilterOn,
+      minPovertyRate, maxPovertyRate, useLiteracyEffect]);
 
   return (
     <>
@@ -49,15 +56,33 @@ export default function Strategist({
         </label>
         <input type="range" min={2} max={100} step={1} value={budget}
               onChange={(e) => setBudget(Number(e.target.value))} />
+
+        <label className="muted" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, marginTop: 14 }}>
+          <input type="checkbox" checked={useLiteracyEffect}
+                onChange={(e) => setUseLiteracyEffect(e.target.checked)} />
+          Indicator-driven: rank and cost seats by real literacy-adjusted persuadability
+        </label>
+        {useLiteracyEffect && (
+          <Disclosure summary="Why literacy drives this, and not other indicators">
+            The same literature-checked mechanism as Constituency Lab's literacy control (FINDINGS.md #59):
+            Zaller's (1992) Receive-Accept-Sample model predicts lower-literacy seats are more persuadable under
+            high-intensity campaign contact — so this rescales each seat's real tipping-point cost by its real
+            literacy-adjusted resistance, changing which seats greedy/even actually pick, not just how they're
+            displayed. Income/poverty and road connectivity were checked against real causal literature and found
+            to have no supported effect on persuadability — they're offered below as a real TARGETING filter, not
+            as a cost driver. See FINDINGS.md #62.
+          </Disclosure>
+        )}
         {error && <p className="error-box" style={{ marginTop: 12 }}>{error}</p>}
       </div>
 
       <div className="card">
         <h2>Target by real seat covariates</h2>
         <Disclosure summary="What can be targeted, and why">
-          Real, published per-seat facts only — reservation category, sub-region, and whether the real 2019
-          winner was an incumbent. No per-voter demographic or economic data exists in the source (see
-          FINDINGS.md #47), so targeting stops at what's real.
+          Real, published per-seat facts — reservation category, sub-region, whether the real 2019 winner was an
+          incumbent, and (new, FINDINGS.md #62) real rural poverty rate (2012 SECC, via SHRUG #57) — the first
+          genuinely economic targeting criterion here. Still no per-voter demographic or economic data (FINDINGS.md
+          #47) — every filter is a real, seat-level, published fact, never invented.
         </Disclosure>
         <div className="search-row">
           <select value={constituencyType} onChange={(e) => setConstituencyType(e.target.value)}>
@@ -74,8 +99,26 @@ export default function Strategist({
             <option value="challenger">Real winner was a challenger</option>
           </select>
         </div>
+
+        <label className="muted" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, marginTop: 12 }}>
+          <input type="checkbox" checked={povertyFilterOn}
+                onChange={(e) => setPovertyFilterOn(e.target.checked)} />
+          Filter by real rural poverty rate (2012 SECC)
+        </label>
+        {povertyFilterOn && (
+          <div className="round-slider-row" style={{ marginTop: 8 }}>
+            <span className="n">{minPovertyRate}%</span>
+            <input type="range" min={0} max={60} step={1} value={minPovertyRate}
+                  onChange={(e) => setMinPovertyRate(Math.min(Number(e.target.value), maxPovertyRate))} />
+            <span className="v">to</span>
+            <input type="range" min={0} max={60} step={1} value={maxPovertyRate}
+                  onChange={(e) => setMaxPovertyRate(Math.max(Number(e.target.value), minPovertyRate))} />
+            <span className="v">{maxPovertyRate}%</span>
+          </div>
+        )}
+
         {result && (
-          <p className="muted" style={{ fontSize: 12 }}>
+          <p className="muted" style={{ fontSize: 12, marginTop: 8 }}>
             {result.n_seats_in_scope} of 543 real seats match this filter.
           </p>
         )}
@@ -109,7 +152,9 @@ export default function Strategist({
                 </div>
                 <div className="stat">
                   <div className="value">{result.greedy.society.cost_mean_pct?.toFixed(2) ?? "—"}%</div>
-                  <div className="label">mean tipping-point cost of targeted seats</div>
+                  <div className="label">
+                    mean {result.use_literacy_effect ? "literacy-adjusted" : "tipping-point"} cost of targeted seats
+                  </div>
                 </div>
               </div>
             </div>
@@ -130,7 +175,9 @@ export default function Strategist({
                 </div>
                 <div className="stat">
                   <div className="value">{result.even.society.cost_mean_pct?.toFixed(2) ?? "—"}%</div>
-                  <div className="label">mean tipping-point cost of targeted seats</div>
+                  <div className="label">
+                    mean {result.use_literacy_effect ? "literacy-adjusted" : "tipping-point"} cost of targeted seats
+                  </div>
                 </div>
               </div>
             </div>
@@ -149,6 +196,7 @@ export default function Strategist({
             <p className="muted" style={{ fontSize: 12 }}>
               Spent {result.greedy.budget_spent.toFixed(1)} of {budget}, {result.greedy.budget_remaining.toFixed(1)} left over
               (too little to fund the next-cheapest seat).
+              {result.use_literacy_effect && " Ranked by real literacy-adjusted cost — the Cost column below still shows each seat's real, unadjusted tipping point."}
             </p>
             <table className="seat-table">
               <thead><tr><th>Seat</th><th>State</th><th>Cost</th></tr></thead>

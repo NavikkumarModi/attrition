@@ -402,6 +402,47 @@ def test_strategist_society_metrics_empty_scope_does_not_crash():
     assert society["cost_dispersion_pct"] == 0.0
 
 
+# --------------------------------------- indicator-driven strategist (FINDINGS.md#62)
+def test_strategist_literacy_effect_picks_a_different_real_set_at_same_budget():
+    baseline = client.get("/api/strategist", params={"budget_pct": 20}).json()
+    literacy = client.get("/api/strategist",
+                          params={"budget_pct": 20, "use_literacy_effect": True}).json()
+    assert literacy["use_literacy_effect"] is True
+    baseline_names = {s["name"] for s in baseline["greedy"]["flipped"]}
+    literacy_names = {s["name"] for s in literacy["greedy"]["flipped"]}
+    assert baseline_names != literacy_names
+
+
+def test_strategist_literacy_effect_off_by_default():
+    data = client.get("/api/strategist", params={"budget_pct": 20}).json()
+    assert data["use_literacy_effect"] is False
+
+
+def test_strategist_poverty_rate_filter_restricts_scope():
+    unfiltered = client.get("/api/strategist", params={"budget_pct": 20}).json()
+    high_poverty = client.get(
+        "/api/strategist", params={"budget_pct": 20, "min_poverty_rate_pct": 30}).json()
+    assert high_poverty["n_seats_in_scope"] < unfiltered["n_seats_in_scope"]
+    assert high_poverty["filters"]["min_poverty_rate_pct"] == 30
+
+
+def test_strategist_poverty_rate_filter_range_is_consistent():
+    low = client.get("/api/strategist",
+                     params={"budget_pct": 20, "max_poverty_rate_pct": 10}).json()
+    high = client.get("/api/strategist",
+                      params={"budget_pct": 20, "min_poverty_rate_pct": 40}).json()
+    unfiltered = client.get("/api/strategist", params={"budget_pct": 20}).json()
+    assert low["n_seats_in_scope"] + high["n_seats_in_scope"] <= unfiltered["n_seats_in_scope"]
+
+
+def test_strategist_poverty_and_literacy_combine_without_crashing():
+    resp = client.get("/api/strategist",
+                      params={"budget_pct": 20, "min_poverty_rate_pct": 20,
+                             "use_literacy_effect": True})
+    assert resp.status_code == 200
+    assert resp.json()["use_literacy_effect"] is True
+
+
 # ----------------------------------------------- assembly rollup
 def test_assembly_rollup_endpoint_returns_real_shape():
     resp = client.get("/api/constituencies/Gujarat/AHMEDABAD EAST/assembly-rollup")

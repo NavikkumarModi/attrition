@@ -572,6 +572,56 @@ def test_even_allocation_reports_empty_result_with_no_seats_in_scope():
     assert result.budget_remaining == 10.0
 
 
+# --------------------------------- literacy-adjusted allocation (FINDINGS.md#62)
+def test_literacy_adjusted_cost_multiplier_is_one_with_no_shrug_match():
+    from attrition.election import literacy_adjusted_cost_multiplier
+    from attrition.election.agents import literacy_fraction_for_seat
+    unmatched = next(c for c in ALL_PHASE1_CONSTITUENCIES
+                     if literacy_fraction_for_seat(c.state, c.name) is None)
+    assert literacy_adjusted_cost_multiplier(unmatched) == 1.0
+
+
+def test_literacy_adjusted_cost_multiplier_is_bounded_and_real():
+    """Real, checked bound: the multiplier can never push cost to zero or
+    negative, and moves in the same direction low literacy moves
+    resistance (down) -- checked against a real seat with matched SHRUG
+    literacy data, not asserted in the abstract."""
+    from attrition.election import literacy_adjusted_cost_multiplier
+    from attrition.election.agents import literacy_fraction_for_seat
+    matched = [c for c in ALL_PHASE1_CONSTITUENCIES
+              if literacy_fraction_for_seat(c.state, c.name) is not None]
+    assert matched, "expected at least one real seat with matched SHRUG literacy"
+    for c in matched[:20]:
+        m = literacy_adjusted_cost_multiplier(c)
+        assert 0.5 < m <= 1.0 + 1e-9  # bounded by LITERACY_SUSCEPTIBILITY_ADJUSTMENT
+
+
+def test_greedy_allocation_with_literacy_effect_picks_a_real_different_set():
+    """The whole point of making the optimizer indicator-driven: at a
+    fixed budget, the literacy-adjusted ranking must select a genuinely
+    different (not just re-ordered-then-identical) set of real seats than
+    the unadjusted one, for at least one real budget level."""
+    from attrition.election import greedy_allocation
+    base = greedy_allocation(20.0)
+    literacy = greedy_allocation(20.0, use_literacy_effect=True)
+    base_names = {c.name for c in base.targeted}
+    literacy_names = {c.name for c in literacy.targeted}
+    assert base_names != literacy_names
+
+
+def test_greedy_allocation_with_literacy_effect_still_only_funds_what_it_targets():
+    from attrition.election import greedy_allocation
+    result = greedy_allocation(15.0, use_literacy_effect=True)
+    assert result.targeted == result.flipped
+    assert result.budget_spent <= 15.0 + 1e-9
+
+
+def test_even_allocation_with_literacy_effect_runs_without_crashing():
+    from attrition.election import even_allocation
+    result = even_allocation(20.0, scope_max_tipping_pct=20.0, use_literacy_effect=True)
+    assert set(result.flipped) <= set(result.targeted)
+
+
 # ------------------------------------------- forecasting (forecast.py)
 def test_match_seats_finds_most_real_seats_across_both_years():
     from attrition.election.forecast import match_seats

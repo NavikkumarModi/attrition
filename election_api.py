@@ -38,6 +38,7 @@ from attrition.election import (ALL_PHASE1_CONSTITUENCIES, build_constituency,
                                 simulate_level1_contact_with_network,
                                 get_constituency, geojson_feature_collection,
                                 greedy_allocation, even_allocation,
+                                literacy_adjusted_cost_multiplier,
                                 leave_one_state_out_backtest, train_gradient_bandit,
                                 assembly_rollup_for_seat, assembly_rollup_coverage,
                                 ASSEMBLY_YEAR_BY_STATE,
@@ -471,7 +472,7 @@ def calibration():
 _TOTAL_NATIONAL_ELECTORS = sum(c.electors for c in ALL_PHASE1_CONSTITUENCIES)
 
 
-def _society_metrics(targeted, flipped):
+def _society_metrics(targeted, flipped, use_literacy_effect=False):
     """Real, closed-form metrics over the seats a strategy TARGETED --
     "what does spending this budget cost/reach, societally" -- deliberately
     built only from fields already real and already validated (electors,
@@ -481,13 +482,24 @@ def _society_metrics(targeted, flipped):
     exist anywhere in this codebase -- see FINDINGS.md#48 for why that
     was deliberately not attempted, the same discipline that keeps the
     persuasion mechanism and the forecast baseline as two separate
-    questions rather than one merged (overclaiming) one."""
+    questions rather than one merged (overclaiming) one.
+
+    `use_literacy_effect`: report the SAME literacy-adjusted cost the
+    allocation itself used (FINDINGS.md#62), not the raw tipping_point --
+    otherwise the reported cost would silently disagree with what was
+    actually spent."""
     if not targeted:
         return {"efficiency": None, "electors_in_scope": 0,
                "electors_in_scope_pct_national": 0.0, "n_states_touched": 0,
                "states_touched": [], "cost_mean_pct": None, "cost_dispersion_pct": 0.0}
     tps = _tipping_points()
-    costs = [tps[_seat_id(c)] * 100.0 for c in targeted if tps[_seat_id(c)] is not None]
+    costs = []
+    for c in targeted:
+        tp = tps[_seat_id(c)]
+        if tp is None:
+            continue
+        mult = literacy_adjusted_cost_multiplier(c) if use_literacy_effect else 1.0
+        costs.append(tp * mult * 100.0)
     electors_in_scope = sum(c.electors for c in targeted)
     states_touched = sorted({c.state for c in targeted})
     return {
@@ -501,12 +513,12 @@ def _society_metrics(targeted, flipped):
     }
 
 
-def _allocation_response(result):
+def _allocation_response(result, use_literacy_effect=False):
     return {
         "n_targeted": len(result.targeted), "n_flipped": len(result.flipped),
         "budget_spent": result.budget_spent, "budget_remaining": result.budget_remaining,
         "flipped": [_summary(c) for c in result.flipped[:25]],
-        "society": _society_metrics(result.targeted, result.flipped),
+        "society": _society_metrics(result.targeted, result.flipped, use_literacy_effect),
     }
 
 
@@ -528,13 +540,34 @@ def strategist_filters():
     return _filter_facets()
 
 
-def _filtered_constituencies(constituency_type, sub_region, incumbency):
+def _rural_poverty_rate(c):
+    """Real rural SECC poverty rate for a seat (population-weighted
+    across its constituent ACs, FINDINGS.md#57), or `None` if unmatched
+    -- never guessed."""
+    rollup = shrug_rollup_for_seat(c.state, c.name)
+    return rollup["secc_pov_rate_rural"] if rollup else None
+
+
+def _filtered_constituencies(constituency_type, sub_region, incumbency,
+                             min_poverty_rate_pct=None, max_poverty_rate_pct=None):
     """Restrict the real 543-seat pool to those matching every given real
     covariate, before handing the subset to `greedy_allocation`/
     `even_allocation` (both already accept a `constituencies=` subset --
-    no change to that module was needed). `incumbency`: "any" (default),
-    "incumbent" (real 2019 winner was a real incumbent), or "challenger"
-    (was not) -- real, per-seat `candidate_incumbent[0]`, not invented."""
+    no change to that module was needed for the political/administrative
+    filters). `incumbency`: "any" (default), "incumbent" (real 2019
+    winner was a real incumbent), or "challenger" (was not) -- real,
+    per-seat `candidate_incumbent[0]`, not invented.
+
+    `min_poverty_rate_pct`/`max_poverty_rate_pct` (FINDINGS.md#62): real
+    rural SECC poverty rate, the first genuinely ECONOMIC targeting
+    criterion here -- previously this file's docstring stated only
+    political/administrative covariates were offered "since no real
+    per-voter demographic/economic data exists in the source" (FINDINGS.
+    md#47); SHRUG (#57) closed that gap for seat-level (not per-voter)
+    economic data, so this filter is now real and offered. A seat with no
+    matched real poverty data is EXCLUDED when this filter is active
+    (never assumed to pass), so results never silently include a seat the
+    filter couldn't actually check."""
     cs = ALL_PHASE1_CONSTITUENCIES
     if constituency_type:
         cs = [c for c in cs if c.constituency_type == constituency_type]
@@ -544,6 +577,19 @@ def _filtered_constituencies(constituency_type, sub_region, incumbency):
         cs = [c for c in cs if c.candidate_incumbent[0]]
     elif incumbency == "challenger":
         cs = [c for c in cs if not c.candidate_incumbent[0]]
+    if min_poverty_rate_pct is not None or max_poverty_rate_pct is not None:
+        filtered = []
+        for c in cs:
+            rate = _rural_poverty_rate(c)
+            if rate is None:
+                continue
+            rate_pct = rate * 100.0
+            if min_poverty_rate_pct is not None and rate_pct < min_poverty_rate_pct:
+                continue
+            if max_poverty_rate_pct is not None and rate_pct > max_poverty_rate_pct:
+                continue
+            filtered.append(c)
+        cs = filtered
     return cs
 
 
@@ -551,7 +597,10 @@ def _filtered_constituencies(constituency_type, sub_region, incumbency):
 def strategist(budget_pct: float = 20.0, scope_max_tipping_pct: float = 20.0,
               constituency_type: Optional[str] = None,
               sub_region: Optional[str] = None,
-              incumbency: str = "any"):
+              incumbency: str = "any",
+              min_poverty_rate_pct: Optional[float] = None,
+              max_poverty_rate_pct: Optional[float] = None,
+              use_literacy_effect: bool = False):
     """The national campaign-strategist agent (`attrition.election.
     strategist`): given one total budget, expressed in percent-of-
     electorate units (the same unit `tipping_point` already uses
@@ -562,24 +611,37 @@ def strategist(budget_pct: float = 20.0, scope_max_tipping_pct: float = 20.0,
     Theorems 1-6 -- see strategist.py's module docstring.
 
     Optionally restricted to real seats matching `constituency_type`
-    (GEN/SC/ST), `sub_region`, and/or `incumbency` ("any"/"incumbent"/
-    "challenger") before allocating -- targeting by real, published
-    covariates, not invented demographic/economic data (see this file's
-    module docstring and FINDINGS.md#47 for why the latter isn't offered).
-    """
+    (GEN/SC/ST), `sub_region`, `incumbency` ("any"/"incumbent"/
+    "challenger"), and/or real rural SECC poverty rate
+    (`min_poverty_rate_pct`/`max_poverty_rate_pct`, FINDINGS.md#62 --
+    the first genuinely economic targeting criterion here, closed by
+    SHRUG's real data, #57) before allocating.
+
+    `use_literacy_effect` (FINDINGS.md#62) makes the allocation itself
+    indicator-driven, not just the scope: ranks and charges seats by
+    their real literacy-adjusted cost (`literacy_adjusted_cost_
+    multiplier`) instead of the raw `tipping_point` -- the SAME
+    literature-checked mechanism #59 wired into the single-seat
+    simulator, now driving which seats a national strategy picks."""
     if incumbency not in ("any", "incumbent", "challenger"):
         raise HTTPException(status_code=400,
                             detail="incumbency must be 'any', 'incumbent', "
                                    "or 'challenger'")
-    cs = _filtered_constituencies(constituency_type, sub_region, incumbency)
-    greedy = greedy_allocation(budget_pct, constituencies=cs)
+    cs = _filtered_constituencies(constituency_type, sub_region, incumbency,
+                                  min_poverty_rate_pct, max_poverty_rate_pct)
+    greedy = greedy_allocation(budget_pct, constituencies=cs,
+                               use_literacy_effect=use_literacy_effect)
     even = even_allocation(budget_pct, scope_max_tipping_pct=scope_max_tipping_pct,
-                           constituencies=cs)
+                           constituencies=cs, use_literacy_effect=use_literacy_effect)
     return {"budget_pct": budget_pct, "scope_max_tipping_pct": scope_max_tipping_pct,
            "n_seats_in_scope": len(cs),
            "filters": {"constituency_type": constituency_type,
-                      "sub_region": sub_region, "incumbency": incumbency},
-           "greedy": _allocation_response(greedy), "even": _allocation_response(even)}
+                      "sub_region": sub_region, "incumbency": incumbency,
+                      "min_poverty_rate_pct": min_poverty_rate_pct,
+                      "max_poverty_rate_pct": max_poverty_rate_pct},
+           "use_literacy_effect": use_literacy_effect,
+           "greedy": _allocation_response(greedy, use_literacy_effect),
+           "even": _allocation_response(even, use_literacy_effect)}
 
 
 @lru_cache(maxsize=1)

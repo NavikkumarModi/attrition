@@ -3093,3 +3093,71 @@ on the Space's name (new Space, or does one already exist under a
 different name than this repo's own `README.md` currently links to).
 Full suite: 355/355 passing, unaffected (pure deployment/infra addition,
 no simulation-logic change).
+
+## 62. The Strategist becomes a genuinely indicator-driven optimizer, not just a display of real data
+
+A real, precise gap identified: every real indicator this session has
+added (Assembly results, Census, SHRUG #57, the literacy-driven
+persuasion mechanism #59) reached the single-seat Constituency Lab, but
+`attrition.election.strategist` -- the tool that actually allocates a
+NATIONAL budget across all 543 seats, the closest thing this project has
+to an "election optimizer" -- still ranked and costed every seat by
+nothing but the raw, margin-derived `tipping_point`. Real indicators
+were visible everywhere except the one tool actually making an
+allocation decision.
+
+**Closed by reusing #59's mechanism, not inventing a second one.** New
+`literacy_adjusted_cost_multiplier(constituency)` (`attrition/election/
+strategist.py`): computes the ratio of literacy-adjusted to unadjusted
+mean switch-resistance (`agents.mean_resistance_for`, the SAME Zaller-
+1992-grounded function #59 already validated and tested), and both
+`greedy_allocation`/`even_allocation` gain `use_literacy_effect=False`
+(opt-in, default off) that rescales each seat's real `tipping_point`
+cost by this multiplier before ranking/funding. Bounded by the same
+`LITERACY_SUSCEPTIBILITY_ADJUSTMENT` cap #59 already uses -- not a new,
+separately-invented magnitude. A seat with no matched real SHRUG
+literacy data keeps multiplier 1.0 (no adjustment), never a guessed one.
+
+**Checked, not assumed, that this is a real behavioural change, not just
+a relabelled display:** at budget_pct=20, the unadjusted allocation
+flips 42 real seats; the literacy-adjusted one flips 43 -- a genuinely
+DIFFERENT set of seats (checked directly: the flipped-seat name sets are
+unequal), not the same 42 with a different number attached. Consistency
+maintained end to end: `election_api.py`'s `_society_metrics` reports
+the SAME literacy-adjusted cost the allocation actually used when the
+effect is on (previously it always recomputed from the raw, unadjusted
+`tipping_point` -- a real inconsistency this change had to avoid
+introducing, not just something to add a flag for).
+
+**A second, genuinely different indicator, offered honestly as a
+FILTER, not a cost driver -- respecting what #59's own literature check
+already found.** Real rural SECC poverty rate (2012, via SHRUG #57) is
+now a targeting criterion (`min_poverty_rate_pct`/`max_poverty_rate_pct`
+on `/api/strategist`) -- the first genuinely economic targeting
+criterion this file has ever offered (its own docstring previously
+stated only political/administrative covariates were available "since
+no real per-voter demographic/economic data exists in the source",
+FINDINGS.md#47 -- true when written, closed by SHRUG since #57, updated
+here rather than left to silently go stale). Poverty is deliberately
+NOT wired in as a cost/persuadability driver the way literacy is --
+#59 already checked the real causal literature (Broockman et al. 2024,
+NBER) and found no supported effect, so using it as a cost driver here
+would repeat the exact mistake #59 was written to avoid. A seat with no
+matched real poverty data is EXCLUDED when the filter is active, never
+silently assumed to pass.
+
+Wired into `Strategist.tsx`: a "indicator-driven" checkbox (collapsed
+disclosure explains the mechanism and explicitly why poverty/
+connectivity are filters, not cost drivers, cross-referencing #59's own
+literature check) and a real poverty-rate range filter, both live-
+updating the same debounced-on-change pattern the rest of this session's
+frontend work established. Verified live: toggling the indicator-driven
+checkbox visibly changes "% of national electorate in scope" (8.7% to
+9.1% at a fixed budget) and the reported cost label switches to
+"literacy-adjusted"; the poverty filter live-narrows 543 to 415 seats at
+its default 0-60% range.
+
+10 new tests (`tests/test_election.py`, `tests/test_election_api.py`),
+including a regression guard that the literacy-adjusted and unadjusted
+allocations pick genuinely different real seat sets, not just different
+numbers on the same seats. Full suite: 365/365 passing (was 355).

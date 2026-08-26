@@ -31,7 +31,8 @@ from .agents import (BehaviouralVoter, simulate_level1_contact,
 from .network import simulate_level1_contact_with_network
 from .outcome import Outcome, recompute_outcome, tipping_point
 from .geo import load_boundaries, geojson_feature_collection
-from .strategist import greedy_allocation, even_allocation, AllocationResult
+from .strategist import (greedy_allocation, even_allocation, AllocationResult,
+                         literacy_adjusted_cost_multiplier)
 from .forecast import (match_seats, national_swing, predict_seat_winner,
                        leave_one_state_out_backtest, MIN_SEATS_FOR_SWING)
 from .policy_training import GradientBanditPolicy, train_gradient_bandit
@@ -56,6 +57,7 @@ __all__ = ["SOURCE", "load_constituencies", "get_constituency",
           "Outcome", "recompute_outcome", "tipping_point",
           "load_boundaries", "geojson_feature_collection",
           "greedy_allocation", "even_allocation", "AllocationResult",
+          "literacy_adjusted_cost_multiplier",
           "match_seats", "national_swing", "predict_seat_winner",
           "leave_one_state_out_backtest", "MIN_SEATS_FOR_SWING",
           "GradientBanditPolicy", "train_gradient_bandit",
