@@ -80,10 +80,12 @@ export interface DistrictGranularityDistrict {
   district: string | null;
   n_voters: number;
   final_switched_fraction: number;
+  direct_only_final_switched_fraction?: number;
 }
 export interface DistrictGranularity {
   per_district: DistrictGranularityDistrict[];
   combined_final_switched_fraction: number;
+  network_within_district: boolean;
 }
 export interface SimulateResult {
   seat: SimulateSeatSummary;

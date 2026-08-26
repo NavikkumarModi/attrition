@@ -586,6 +586,27 @@ dominates its cost); the plain and district-granularity paths' cap is
 1,000,000. Verified live: a real 1,000,000-voter run completes in well
 under a second in the browser.
 
+`FINDINGS.md` #53 closes the two items #52 explicitly deferred.
+`AgentGraph`'s own adjacency construction — the ~4.5s of `random_by_
+degree`'s ~5.5s at n=1,000,000 that #52 left unoptimised because
+`AgentGraph` is a widely-shared class — is now a lazy, memoized CSR
+(compressed-sparse-row) representation built with vectorised numpy
+instead of the generic per-edge dict constructor; construction at
+n=1,000,000 drops to ~1.06-1.15s (~5x), with per-node lookups free
+after the first call. Reported honestly rather than extrapolated: the
+speedup does not fully carry through to end-to-end simulation (~6.1s
+total at n=1,000,000, a real but more modest ~25-30% improvement) —
+the propagation loop's own `.neighbors()` calls pay the lazy
+materialization cost that construction no longer does, so the cost
+moves rather than disappearing. Separately, network propagation and
+population granularity can now be combined (`use_network` plumbed into
+`simulate_level1_contact_by_district`) — previously a 400 error.
+Propagation stays LOCAL to each district (no cross-district graph), a
+real, stated scoping choice, not a claim that real social ties respect
+district boundaries; verified live with both controls on for AHMEDABAD
+EAST, each district reporting a direct-only and a final figure with
+final ≥ direct-only, and an exact population-weighted combined mean.
+
 ### Scale with concurrent calls
 
 `simulate_population_simultaneous` and `compare_population_to_baselines` take

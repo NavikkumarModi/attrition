@@ -210,10 +210,30 @@ def test_simulate_district_granularity_partitions_voters_exactly():
         pytest.approx(resp.json()["level1_final_switched_fraction"])
 
 
-def test_simulate_district_granularity_and_network_conflict_400s():
+def test_simulate_district_granularity_and_network_now_combine(): # FINDINGS.md#53
+    """Regression check: district granularity + network propagation used
+    to 400 (network.py's O(n^2) graph was a real scaling wall). Both must
+    now combine cleanly, with propagation run independently per district."""
     resp = client.post("/api/simulate",
-                       json={**_SEAT, "use_district_granularity": True, "use_network": True})
-    assert resp.status_code == 400
+                       json={**_SEAT, "use_district_granularity": True,
+                            "use_network": True, "n_voters": 3000})
+    assert resp.status_code == 200
+    dg = resp.json()["district_granularity"]
+    assert dg["network_within_district"] is True
+    for d in dg["per_district"]:
+        assert "direct_only_final_switched_fraction" in d
+        # propagation can only add conversions, never reduce the total
+        assert d["final_switched_fraction"] >= d["direct_only_final_switched_fraction"]
+
+
+def test_simulate_district_granularity_without_network_omits_direct_only():
+    resp = client.post("/api/simulate",
+                       json={**_SEAT, "use_district_granularity": True, "n_voters": 3000})
+    assert resp.status_code == 200
+    dg = resp.json()["district_granularity"]
+    assert dg["network_within_district"] is False
+    for d in dg["per_district"]:
+        assert "direct_only_final_switched_fraction" not in d
 
 
 def test_simulate_district_granularity_falls_back_cleanly_with_no_rollup():

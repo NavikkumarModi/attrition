@@ -295,13 +295,11 @@ def simulate(req: SimulateRequest):
     seat's real constituent districts instead of one undifferentiated pool
     (`attrition.election.simulate_level1_contact_by_district`, FINDINGS.md
     #51) -- see `_with_overrides`'s and that function's docstrings for
-    exactly what each control does and doesn't claim."""
-    if req.use_network and req.use_district_granularity:
-        raise HTTPException(status_code=400,
-                            detail="use_network and use_district_granularity "
-                                   "cannot both be set -- district granularity "
-                                   "does not yet run the network-propagation "
-                                   "path per sub-population")
+    exactly what each control does and doesn't claim. `use_network` and
+    `use_district_granularity` CAN now be combined (FINDINGS.md#53):
+    propagation runs independently within each constituent district (no
+    cross-district edges -- a real, stated scoping choice, see
+    `simulate_level1_contact_by_district`'s docstring), not seat-wide."""
     c = _resolve(req.state, req.name)
     c = _with_overrides(c, req.incumbent_override, req.margin_override_pct)
     n_voters_cap = _MAX_N_VOTERS_NETWORK if req.use_network else _MAX_N_VOTERS
@@ -316,9 +314,15 @@ def simulate(req: SimulateRequest):
         (a float vs. a list of per-district results) to safely share one
         untagged slot."""
         if req.use_district_granularity:
+            mean_degree = min(req.mean_degree or _DEFAULT_LARGE_POPULATION_MEAN_DEGREE,
+                              _MAX_MEAN_DEGREE)
             per_district, final = simulate_level1_contact_by_district(
-                c, req.intensity_sequence, n_voters=n_voters, seed=seed)
-            return None, final, {"kind": "district", "per_district": per_district}
+                c, req.intensity_sequence, n_voters=n_voters, seed=seed,
+                use_network=req.use_network,
+                peer_conversion_prob=req.peer_conversion_prob,
+                mean_degree=mean_degree)
+            return None, final, {"kind": "district", "per_district": per_district,
+                                 "network_within_district": req.use_network}
         if req.use_network:
             voter_ids = [f"v{i}" for i in range(n_voters)]
             if req.mean_degree is not None or n_voters >= _LARGE_POPULATION_THRESHOLD:
@@ -361,7 +365,8 @@ def simulate(req: SimulateRequest):
                              "graph_param": extra["graph_param"]}
     elif extra and extra["kind"] == "district":
         result["district_granularity"] = {"per_district": extra["per_district"],
-                                          "combined_final_switched_fraction": final}
+                                          "combined_final_switched_fraction": final,
+                                          "network_within_district": extra["network_within_district"]}
     if req.include_level2:
         result["level2_decisions"] = simulate_level2_contact(c, req.intensity_sequence)
 

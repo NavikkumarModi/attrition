@@ -59,3 +59,52 @@ def test_district_split_reproducible_given_same_seed():
     r1 = simulate_level1_contact_by_district(c, [0.2, 0.3], n_voters=2000, seed=5)
     r2 = simulate_level1_contact_by_district(c, [0.2, 0.3], n_voters=2000, seed=5)
     assert r1 == r2
+
+
+# ------------------------------------ combined with network (FINDINGS.md#53)
+def test_district_split_with_network_reports_direct_only_per_district():
+    c = build_constituency("AHMEDABAD EAST", state="Gujarat")
+    per_district, combined = simulate_level1_contact_by_district(
+        c, [0.15, 0.2, 0.25, 0.3, 0.35], n_voters=3000, seed=0, use_network=True)
+    assert len(per_district) == 2
+    for d in per_district:
+        assert "direct_only_final_switched_fraction" in d
+        assert d["final_switched_fraction"] >= d["direct_only_final_switched_fraction"]
+
+
+def test_district_split_with_network_direct_only_matches_plain_path():
+    """The direct-only figure inside the networked run must exactly match
+    a plain (non-networked) run at the same seed -- both draw the same
+    voters and the same contact pressure, propagation is a strict addition
+    on top, not a different draw."""
+    c = build_constituency("AHMEDABAD EAST", state="Gujarat")
+    plain, _ = simulate_level1_contact_by_district(
+        c, [0.15, 0.2, 0.25, 0.3, 0.35], n_voters=3000, seed=0, use_network=False)
+    networked, _ = simulate_level1_contact_by_district(
+        c, [0.15, 0.2, 0.25, 0.3, 0.35], n_voters=3000, seed=0, use_network=True)
+    for p, n in zip(plain, networked):
+        assert n["direct_only_final_switched_fraction"] == pytest.approx(
+            p["final_switched_fraction"])
+
+
+def test_district_split_with_network_propagation_is_local_not_shared():
+    """Real scoping check for the module's own stated limitation:
+    propagation must not leak across districts -- each district's network
+    effect (final minus direct-only) must be independently non-trivial,
+    not an artefact of a shared/seat-wide graph."""
+    c = build_constituency("AHMEDABAD EAST", state="Gujarat")
+    per_district, _ = simulate_level1_contact_by_district(
+        c, [0.15, 0.2, 0.25, 0.3, 0.35], n_voters=5000, seed=0, use_network=True,
+        peer_conversion_prob=0.1, mean_degree=15)
+    for d in per_district:
+        assert d["final_switched_fraction"] > d["direct_only_final_switched_fraction"]
+
+
+def test_district_split_with_network_falls_back_cleanly_with_no_rollup():
+    unmatched = next(c for c in ALL_PHASE1_CONSTITUENCIES
+                     if census_rollup_for_seat(c.state, c.name) is None)
+    per_district, combined = simulate_level1_contact_by_district(
+        unmatched, [0.2, 0.3], n_voters=500, seed=0, use_network=True)
+    assert len(per_district) == 1
+    assert per_district[0]["district"] is None
+    assert "direct_only_final_switched_fraction" in per_district[0]

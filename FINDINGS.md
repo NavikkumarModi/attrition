@@ -2423,3 +2423,93 @@ visible, not silent. 9 new tests (`tests/test_network.py`, `tests/
 test_election_api.py`), including a regression check that
 `random_by_degree`'s mean degree stays population-independent (the
 exact property `random`'s fixed-probability design lacks at scale).
+
+## 53. AgentGraph's real remaining bottleneck fixed, and the network + district-granularity combination that used to 400
+
+Continuing straight from FINDINGS.md#52's own disclosed leftover: "a
+further, disclosed, NOT-yet-optimised cost -- `AgentGraph`'s core
+storage is a widely-used class across this repo, not something to
+restructure inside this pass." Revisited on purpose this session,
+because it was the largest remaining piece of the "million agent"
+picture, not a hypothetical.
+
+**Part 1: `AgentGraph`'s adjacency construction.** At n=1,000,000,
+`random_by_degree` spent ~4.5s of its ~5.5s total inside the generic
+`AgentGraph.__init__`'s dict-of-sets construction and undirected-edge
+insertion -- the exact cost flagged and deferred in FINDINGS.md#52.
+Fixed by adding a lazy, memoized CSR (compressed-sparse-row) adjacency
+representation (`_CSRAdjacency`, new, `attrition/network.py`) and
+rewriting `random_by_degree` to build it directly with vectorized numpy
+instead of going through the generic per-edge dict constructor. Two
+numpy details mattered in practice, found by benchmarking, not assumed:
+`np.argsort`'s default (stable/mergesort) sort was itself ~2.7-2.8s of
+an early ~3s prototype -- switched to `kind="quicksort"` (~3.5x faster)
+since neighbor order within a node is never semantically meaningful,
+only correct grouping is; and materializing every node's neighbor list
+eagerly was strictly worse than caching each list the first time
+`.neighbors()` actually asks for it, since most large-population runs
+never touch most nodes' neighbor lists at all. Net result: construction
+at n=1,000,000 dropped from ~5.5s to ~1.06-1.15s, a real ~5x, with
+per-node lookup after the first call effectively free (memoized).
+`AgentGraph.random` (the small-population, exact-probability path) and
+its existing behaviour are completely untouched -- `neighbors()` just
+checks which representation is present. 4 new tests (`tests/
+test_network.py`), including a 500,000-node construction-speed
+regression guard and a memoized-identity check.
+
+**Caveat, checked rather than assumed: the construction speedup does
+not fully translate to end-to-end simulation speedup.** Running
+`simulate_level1_contact_with_network` at n=1,000,000 end-to-end (not
+just graph construction) measured ~6.1s total -- a real but more modest
+~25-30% improvement, not a proportional ~5x. The reason, found by
+looking rather than guessing: the propagation loop itself calls
+`.neighbors()` once per round for a large fraction of nodes, so the
+"lazy" materialization cost that construction no longer pays gets paid
+later, during simulation, instead of disappearing -- it moved, it did
+not vanish. Reported honestly here rather than extrapolating the
+isolated construction benchmark into an end-to-end claim it doesn't
+support.
+
+**Part 2: the network-propagation + population-granularity 400 removed,
+by actually building the combination rather than continuing to forbid
+it.** `/api/simulate` previously rejected `use_network=True` together
+with `use_district_granularity=True` outright. Fixed by teaching
+`simulate_level1_contact_by_district` (`attrition/election/
+granularity.py`) an optional `use_network` (plus `peer_conversion_prob`,
+`mean_degree`) that, per sub-population, dispatches to
+`simulate_level1_contact_with_network` instead of the plain contact
+simulator -- each district gets its own independently-constructed graph
+and its own propagation run, so `direct_only_final_switched_fraction` is
+now reported alongside `final_switched_fraction` per district, exactly
+as the flat (non-granular) network path already reports it.
+
+**A real, explicitly stated scoping choice, not a hidden simplification:
+propagation stays LOCAL to each district.** There is no seat-wide graph
+connecting voters across district boundaries -- a voter in Gandhinagar
+cannot be reached by peer contact that originated in Ahmadabad within
+the same seat. This is a genuine limitation of the combination, not a
+claim that real social ties respect administrative district lines, and
+is stated as such in both the module docstring and the frontend UI
+(rather than only in this file). Verified by a dedicated test asserting
+each district's own network effect (final minus direct-only) is
+independently non-trivial, not an artefact of a shared graph leaking
+across districts.
+
+Wired into `election_api.py`: the 400 raise removed, the district branch
+now passes `use_network`/`peer_conversion_prob`/`mean_degree` through,
+and the response's `district_granularity` object gains a
+`network_within_district` flag. `ConstituencyLab.tsx` updated to allow
+both checkboxes simultaneously (previously mutually `disabled`), with an
+inline hint pointing at this entry, a "Direct only %" column added to
+the per-district results table only when applicable, and the same
+scoping caveat surfaced in the UI. Verified live in the browser at
+http://localhost:5173: running AHMEDABAD EAST with both controls on
+produced Gandhinagar (485 voters, 0.36% direct-only -> 0.67% final) and
+Ahmadabad (2,515 voters, 0.37% -> 0.73%), each final >= direct-only as
+required, with the combined population-weighted mean (0.72%) and the
+scoping caveat text rendering correctly.
+
+9 new tests total (`tests/test_network.py`, `tests/test_granularity.py`,
+`tests/test_election_api.py`). Full suite: 314/314 passing (was 297;
+the gap reflects tests added earlier this session for #52 and other
+work not previously reconciled against a full run).

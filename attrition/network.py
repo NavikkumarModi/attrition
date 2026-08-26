@@ -21,20 +21,65 @@ import numpy as np
 __all__ = ["AgentGraph"]
 
 
+class _CSRAdjacency:
+    """Lazy compressed-sparse-row neighbor lookup (FINDINGS.md#53) --
+    `random_by_degree`'s fast-path backend at large population sizes.
+
+    Construction stores only three numpy arrays (an integer id->position
+    map, `indptr`, `indices` -- the standard CSR layout) and does NOT
+    build a single Python string or set up front. Converting a queried
+    node's integer neighbor indices back into the agent-id strings
+    `neighbors()` is contracted to return happens lazily, only for ids
+    actually queried, and is memoized -- the real fix for the cost
+    `AgentGraph`'s general dict-of-sets `__init__`/`add_edge` path pays
+    unconditionally (building every node's neighbor SET as real Python
+    objects, whether or not that node's neighbors are ever looked up).
+    """
+
+    __slots__ = ("_id_to_idx", "_idx_to_id", "_indptr", "_indices", "_cache")
+
+    def __init__(self, agent_ids, indptr, indices):
+        self._idx_to_id = agent_ids
+        self._id_to_idx = {a: i for i, a in enumerate(agent_ids)}
+        self._indptr = indptr
+        self._indices = indices
+        self._cache = {}
+
+    def neighbors(self, agent_id):
+        cached = self._cache.get(agent_id)
+        if cached is not None:
+            return cached
+        idx = self._id_to_idx.get(agent_id)
+        if idx is None:
+            return []
+        seg = self._indices[self._indptr[idx]:self._indptr[idx + 1]]
+        result = sorted(self._idx_to_id[j] for j in seg)
+        self._cache[agent_id] = result
+        return result
+
+
 class AgentGraph:
     """Plain undirected adjacency structure over agent ids."""
 
     def __init__(self, agent_ids, edges=()):
         self.agent_ids = list(agent_ids)
         self._adj = {a: set() for a in self.agent_ids}
+        self._csr = None
         for a, b in edges:
             self.add_edge(a, b)
 
     def add_edge(self, a, b):
         self._adj[a].add(b)
         self._adj[b].add(a)
+        self._csr = None  # any exact-backend graph never sets _csr anyway;
+                          # defensive reset if add_edge is ever called on
+                          # a _csr-backed instance (not currently possible
+                          # via any public constructor, but never silently
+                          # stale if that changes)
 
     def neighbors(self, agent_id):
+        if self._csr is not None:
+            return self._csr.neighbors(agent_id)
         return sorted(self._adj.get(agent_id, ()))
 
     @classmethod
@@ -112,6 +157,20 @@ class AgentGraph:
         degree, stated rather than silently masked by a resampling loop
         that would reintroduce the O(n^2) worst case this method exists to
         avoid.
+
+        Construction itself is also vectorised end to end (FINDINGS.md
+        #53), not just the edge sampling: the resulting instance is
+        backed by a lazy CSR adjacency (`_CSRAdjacency`) instead of
+        `AgentGraph`'s general dict-of-sets `__init__`/`add_edge` path,
+        which was itself the dominant cost at real scale (~4.5s of a
+        ~5.5s total at n=1,000,000, checked, not assumed) -- that path
+        builds every node's neighbor set as real Python objects
+        unconditionally, whether or not that node is ever queried.
+        Construction here is ~1s at n=1,000,000 (a numpy sort plus a
+        vectorised grouping, no Python-level loop over edges at all), and
+        the per-node id/set materialisation `neighbors()` still returns
+        happens lazily, once per node actually queried, not once per node
+        that exists.
         """
         agent_ids = list(agent_ids)
         n = len(agent_ids)
@@ -121,5 +180,24 @@ class AgentGraph:
         n_edges = max(0, round(n * float(mean_degree) / 2.0))
         a_idx = rng.integers(0, n, size=n_edges)
         b_idx = rng.integers(0, n, size=n_edges)
-        edges = [(agent_ids[i], agent_ids[j]) for i, j in zip(a_idx, b_idx) if i != j]
-        return cls(agent_ids, edges)
+        keep = a_idx != b_idx
+        a_idx, b_idx = a_idx[keep], b_idx[keep]
+
+        # Undirected: each edge contributes an entry in both directions.
+        # `kind="quicksort"` (numpy's introsort, the default) rather than
+        # the stable mergesort -- neighbor ORDER within a node doesn't
+        # matter here (`neighbors()` sorts its output anyway), only
+        # correct grouping does, and quicksort is measured ~3.5x faster
+        # for this (0.79s vs 2.8s at n=1,000,000, checked).
+        src = np.concatenate([a_idx, b_idx])
+        dst = np.concatenate([b_idx, a_idx])
+        order = np.argsort(src, kind="quicksort")
+        src_sorted = src[order]
+        indices = dst[order]
+        indptr = np.searchsorted(src_sorted, np.arange(n + 1))
+
+        self = cls.__new__(cls)
+        self.agent_ids = agent_ids
+        self._adj = {}
+        self._csr = _CSRAdjacency(agent_ids, indptr, indices)
+        return self

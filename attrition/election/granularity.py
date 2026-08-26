@@ -20,12 +20,28 @@ contact` for the ~18% of real seats `census.py` has no constituent-
 district data for (see that module's docstring for the real, checked
 coverage number) -- reported as `district: None`, one "district" covering
 the whole requested population, never silently dropped.
+
+Optionally combines with voter-to-voter network propagation
+(`use_network=True`, FINDINGS.md#53) -- closing the gap `election_api.py`
+previously rejected with a 400 (`use_network` and `use_district_
+granularity` "cannot both be set"). A real, explicit scoping choice
+stated here rather than left implicit: propagation is LOCAL to each
+district -- each sub-population gets its OWN independent random graph
+(`attrition.network.AgentGraph.random_by_degree`), with no edges
+between districts. This is not asserted to be a complete model of real
+word-of-mouth (a voter's real social ties are not neatly bounded by
+district lines), but it is the honest, defensible default absent any
+real cross-district social-tie data to build a joined graph from --
+the same "real data or an explicit, stated modelling choice, never a
+silent guess" discipline this module already uses for population size.
 """
 import numpy as np
 
 from .agents import simulate_level1_contact
 from .census import census_rollup_for_seat
+from .network import simulate_level1_contact_with_network
 from .population import build_constituency
+from ..network import AgentGraph
 
 __all__ = ["simulate_level1_contact_by_district"]
 
@@ -50,13 +66,18 @@ def _allocate_integers(total, weights):
 
 
 def simulate_level1_contact_by_district(constituency, intensity_sequence, rho=0.7,
-                                        n_voters=2000, seed=0):
+                                        n_voters=2000, seed=0, use_network=False,
+                                        peer_conversion_prob=0.05, mean_degree=10.0):
     """Level 1 contact simulation, split across this real seat's real
-    constituent districts by their real 2011 population share.
+    constituent districts by their real 2011 population share, optionally
+    with voter-to-voter network propagation run independently within each
+    district (`use_network=True` -- see module docstring for why
+    propagation is scoped per-district, not seat-wide).
 
     Returns `(per_district, combined_final_fraction)`:
       per_district   list of {state, district, n_voters,
-                     final_switched_fraction} -- `district` is `None` and
+                     final_switched_fraction, [direct_only_final_switched_
+                     fraction if use_network]} -- `district` is `None` and
                      the list has one entry (covering all `n_voters`) if
                      `census.py` has no constituent-district data for
                      this seat.
@@ -71,13 +92,27 @@ def simulate_level1_contact_by_district(constituency, intensity_sequence, rho=0.
     if isinstance(constituency, str):
         constituency = build_constituency(constituency)
 
+    def _run(count, sub_seed):
+        if not use_network:
+            _, final = simulate_level1_contact(
+                constituency, intensity_sequence, rho=rho, n_voters=count, seed=sub_seed)
+            return final, None
+        voter_ids = [f"v{k}" for k in range(count)]
+        graph = AgentGraph.random_by_degree(voter_ids, mean_degree=mean_degree,
+                                            seed=sub_seed)
+        _, final, direct_only = simulate_level1_contact_with_network(
+            constituency, intensity_sequence, rho=rho, n_voters=count, graph=graph,
+            peer_conversion_prob=peer_conversion_prob, seed=sub_seed)
+        return final, direct_only
+
     rollup = census_rollup_for_seat(constituency.state, constituency.name)
     if not rollup:
-        _, final = simulate_level1_contact(
-            constituency, intensity_sequence, rho=rho, n_voters=n_voters, seed=seed)
-        return ([{"state": constituency.state, "district": None,
-                 "n_voters": n_voters, "final_switched_fraction": final}],
-               final)
+        final, direct_only = _run(n_voters, seed)
+        entry = {"state": constituency.state, "district": None,
+                "n_voters": n_voters, "final_switched_fraction": final}
+        if direct_only is not None:
+            entry["direct_only_final_switched_fraction"] = direct_only
+        return [entry], final
 
     districts = rollup["constituent_districts"]
     weights = [d["population_total"] for d in districts]
@@ -88,10 +123,12 @@ def simulate_level1_contact_by_district(constituency, intensity_sequence, rho=0.
     for i, (d, count) in enumerate(zip(districts, counts)):
         if count == 0:
             continue
-        _, final = simulate_level1_contact(
-            constituency, intensity_sequence, rho=rho, n_voters=count, seed=seed + i)
-        per_district.append({"state": d["state"], "district": d["district"],
-                            "n_voters": count, "final_switched_fraction": final})
+        final, direct_only = _run(count, seed + i)
+        entry = {"state": d["state"], "district": d["district"],
+                "n_voters": count, "final_switched_fraction": final}
+        if direct_only is not None:
+            entry["direct_only_final_switched_fraction"] = direct_only
+        per_district.append(entry)
         weighted_sum += final * count
 
     combined_final = weighted_sum / n_voters

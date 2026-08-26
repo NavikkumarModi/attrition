@@ -283,9 +283,11 @@ export default function ConstituencyLab({
         <div className="grid cols-2">
           <div>
             <label className="muted" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
-              <input type="checkbox" checked={useNetwork} onChange={(e) => setUseNetwork(e.target.checked)}
-                    disabled={useDistrictGranularity} />
+              <input type="checkbox" checked={useNetwork} onChange={(e) => setUseNetwork(e.target.checked)} />
               Voter-to-voter network propagation
+              {useDistrictGranularity && (
+                <span className="muted" style={{ fontSize: 11 }}>(runs independently within each district — FINDINGS.md #53)</span>
+              )}
             </label>
             {useNetwork && (
               <>
@@ -358,15 +360,9 @@ export default function ConstituencyLab({
 
             <label className="muted" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, marginTop: 14 }}>
               <input type="checkbox" checked={useDistrictGranularity}
-                    onChange={(e) => setUseDistrictGranularity(e.target.checked)}
-                    disabled={useNetwork} />
+                    onChange={(e) => setUseDistrictGranularity(e.target.checked)} />
               Population granularity: split voters across real constituent districts
             </label>
-            {useNetwork && (
-              <p className="muted" style={{ fontSize: 11 }}>
-                Not available together with network propagation yet — pick one.
-              </p>
-            )}
           </div>
         </div>
       </div>
@@ -403,17 +399,32 @@ export default function ConstituencyLab({
             margin data to derive a differentiated resistance distribution from. See FINDINGS.md #51.
           </p>
           <table className="seat-table">
-            <thead><tr><th>District</th><th>Voters</th><th>Final switched %</th></tr></thead>
+            <thead>
+              <tr>
+                <th>District</th><th>Voters</th>
+                {result.district_granularity.network_within_district && <th>Direct only %</th>}
+                <th>Final switched %</th>
+              </tr>
+            </thead>
             <tbody>
               {result.district_granularity.per_district.map((d, i) => (
                 <tr key={i}>
                   <td>{d.district ?? "(no rollup — whole seat as one pool)"}</td>
                   <td>{d.n_voters.toLocaleString()}</td>
+                  {result.district_granularity!.network_within_district && (
+                    <td>{((d.direct_only_final_switched_fraction ?? 0) * 100).toFixed(2)}%</td>
+                  )}
                   <td>{(d.final_switched_fraction * 100).toFixed(2)}%</td>
                 </tr>
               ))}
             </tbody>
           </table>
+          {result.district_granularity.network_within_district && (
+            <p className="muted" style={{ fontSize: 11, marginTop: 8 }}>
+              Network propagation runs independently within each district (no cross-district edges — a real, stated
+              scoping choice, not a claim that real social ties respect district lines). See FINDINGS.md #53.
+            </p>
+          )}
           <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
             Combined (exact population-weighted mean):{" "}
             {(result.district_granularity.combined_final_switched_fraction * 100).toFixed(2)}%

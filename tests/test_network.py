@@ -82,6 +82,49 @@ def test_random_by_degree_handles_trivial_population_sizes():
     assert g.neighbors("only") == []
 
 
+# --------------------------------------- CSR adjacency backend (FINDINGS.md#53)
+def test_random_by_degree_neighbors_are_mutually_consistent():
+    """Real correctness check for the CSR backend, not just a mean-degree
+    sanity check: the graph is undirected, so if b appears in a's neighbor
+    list, a must appear in b's -- checked exhaustively on a small
+    population where materialising every node's neighbor list is cheap."""
+    ids = [f"v{i}" for i in range(300)]
+    g = AgentGraph.random_by_degree(ids, mean_degree=6, seed=1)
+    for a in ids:
+        for b in g.neighbors(a):
+            assert a in g.neighbors(b)
+
+
+def test_random_by_degree_neighbor_lookup_is_memoized():
+    """The CSR backend must not recompute a node's neighbor list -- the
+    same Python list object should come back on a second query."""
+    ids = [f"v{i}" for i in range(1000)]
+    g = AgentGraph.random_by_degree(ids, mean_degree=8, seed=0)
+    first = g.neighbors("v42")
+    second = g.neighbors("v42")
+    assert first is second
+
+
+def test_random_by_degree_unknown_agent_id_returns_empty():
+    g = AgentGraph.random_by_degree([f"v{i}" for i in range(100)],
+                                    mean_degree=5, seed=0)
+    assert g.neighbors("not-a-real-id") == []
+
+
+def test_random_by_degree_construction_is_fast_at_large_scale():
+    """Regression check for FINDINGS.md#53's actual fix: construction must
+    stay well under the ~5.5s AgentGraph.random's O(n^2) path -- or the
+    old dict-of-sets construction this replaces -- would take at real
+    scale. Not a tight timing assertion (CI machines vary), just a
+    generous ceiling that would fail if the CSR fast path regressed back
+    to a per-edge Python loop."""
+    import time
+    ids = [f"v{i}" for i in range(500000)]
+    t0 = time.time()
+    AgentGraph.random_by_degree(ids, mean_degree=10, seed=0)
+    assert time.time() - t0 < 5.0
+
+
 def _small_population():
     personas = [Persona(name=f"p{i}", role="tester", description="",
                         risk_tolerance=r)
