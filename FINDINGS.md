@@ -3334,3 +3334,42 @@ whole map greyed "out of scope," not an error or a silent no-op.
 narrows or holds scope size relative to unfiltered, and the incumbency
 filter round-trips through the response's `filters` object. Full
 suite: 374/374 passing (was 372).
+
+## 66. Splitting README.md: a product-facing simulator doc, and a research-track doc
+
+Asked directly: `README.md` had grown to 1,492 lines by accumulating both
+a product pitch for the two running simulators (election, AMR/pharma) and
+the full theoretical apparatus (eleven theorems, correlated-destruction
+extension, price-of-anarchy result, falsified attempts, paper, related
+work) in one document — plus, inside the product half, a ~550-line
+single-paragraph narrative of the election track's entire development
+history that already existed in fuller form in `FINDINGS.md`. Split
+into two files rather than trimmed in place, since both halves are real,
+useful content for different readers, not duplicate or stale material to
+delete.
+
+New `RESEARCH.md`: everything the old README explicitly separated with
+"Everything above is the tool. Everything below is why its numbers can
+be trusted" (Why this happens, The model, Results, Terminal commitment,
+Correlated destruction/SECI, Environments and scenarios, Paper,
+Reproducing, What was falsified, Related work) — moved verbatim, no
+content rewritten or summarized away, cross-linked back to `README.md`
+and `THEORY.md`/`FINDINGS.md`.
+
+`README.md` rewritten around a new **Simulators** section covering both
+running simulators (election, AMR/pharma) plus the cybersecurity/
+fisheries persona layer, the Streamlit app, and dashboards/persistence/
+scaling — condensed from the election track's giant historical paragraph
+to a description of what the product actually does today, since the
+session-by-session bug-by-bug history already lives in `FINDINGS.md`
+(explicitly cross-linked, sections 27–65) and repeating it in README was
+real duplication, not just length. Net: README 1,492 → 656 lines (a real
+56% reduction, not just displaced word count — the historical narrative
+was compressed against its FINDINGS.md original, not merely relocated),
+RESEARCH.md a new 378-line file carrying the moved theory content
+verbatim. Checked for breakage before calling it done: every in-page
+anchor link in the new README resolves to a heading that still exists
+(`#llm-agent-populations` was the one dangling reference, caught and
+fixed — it pointed at a heading that no longer exists after the
+restructuring), and no other file in the repo (`THEORY.md`,
+`README_huggingface.md`, `docs/`) links to a README section that moved.
