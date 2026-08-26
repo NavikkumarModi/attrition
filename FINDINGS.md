@@ -3229,3 +3229,65 @@ before, byte-for-byte the same mechanism underneath both modes. A full
 production build (`npm run build`) also verified clean after the JSX
 fix. No backend change; full suite (365/365) unaffected, checked as a
 sanity check only.
+
+## 64. A map-wide campaign simulator: the map itself becomes the interaction surface
+
+Asked directly: let the map recolour by simulated campaign effort --
+nationwide, for one state/region, or for one category -- instead of
+only ever showing the real, static 2019 tipping-point buckets. A
+genuinely new capability, not a restyle: the existing single-seat
+mechanism (`simulate_level1_contact`/`recompute_outcome`, already
+proven by every Constituency Lab run this session) applied at map
+scale, for the first time letting a user see the geographic SHAPE of
+what a campaign effort level would do, not just one seat's number.
+
+**Checked feasibility before building anything, not assumed.**
+`simulate_level1_contact` at `n_voters=2000` across all 543 real seats,
+timed directly: 0.39s. Fast enough to run synchronously, once per
+request, no caching or background job needed -- a real measurement, not
+a guess about whether this would be usable interactively.
+
+**Backend** (`election_api.py`, new `POST /api/campaign-map`): runs the
+SAME mechanism the single-seat endpoint already uses, once per real seat
+in scope, at one uniform campaign-effort `intensity_sequence` -- no new
+simulation logic. Scope reuses Strategist's own filter infrastructure
+(`_filtered_constituencies`, extended with a new `state` parameter,
+FINDINGS.md#62's `constituency_type`/`sub_region` filters reused
+directly, not reimplemented) so "whole nation" / "one state" / "one
+reservation category" share one real, tested filtering path with the
+Strategist. `n_voters` is capped at 5,000 for this endpoint specifically
+(lower than the single-seat endpoint's cap) -- a real, stated tradeoff:
+running the mechanism up to 543 times per request needs to stay fast,
+and per-seat statistical noise at that population is already small
+relative to the map's coarse hold/flip colouring.
+
+**Frontend, the harder half: recolouring a live Leaflet layer without
+losing the user's pan/zoom.** `react-leaflet`'s `<GeoJSON>` component
+only evaluates its `style` prop once, at mount -- a real, checked
+limitation (not assumed): it does not re-run the style function when
+new data arrives on a later render. Recolouring via the underlying
+Leaflet layer's own `setStyle` (through a ref, in a `useEffect` keyed on
+the simulation result) keeps the map exactly where the user left it
+instead of remounting the whole layer -- caught and fixed before
+verifying live, not shipped as a "just remount it" workaround that would
+have reset pan/zoom every time an effort or scope control changed.
+`IndiaMap` gains an optional `simulation` prop; when set, seats outside
+the current scope render in a distinct muted grey ("out of scope"), not
+silently defaulted to the real-data colour or hidden -- the map always
+shows what it actually knows, not more.
+
+New "Campaign simulator" panel (`Overview.tsx`): the same Light/
+Moderate/Heavy effort presets #63 introduced (shared now via
+`theme.ts`'s `INTENSITY_PRESETS`, not duplicated a second time), a scope
+selector (whole nation / one state / one reservation category), and the
+same debounced-auto-update pattern every other control in this session
+uses. Verified live: nationwide at Moderate effort, 66 of 543 real seats
+flip, the map showing a genuine red/blue geographic pattern; scoped to
+Gujarat, exactly its 26 real seats render coloured (all holds at that
+effort) and every other seat renders muted grey, confirmed by an actual
+screenshot, not assumed from the response JSON.
+
+7 new tests (`tests/test_election_api.py`), including a regression guard
+that an unknown scope value returns an honest empty result, never a 500
+or a silently-wrong nationwide answer. Full suite: 372/372 passing
+(was 365).

@@ -2,10 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, Cell,
 } from "recharts";
-import { fetchConstituencies, fetchNationalScan, type SeatSummary, type NationalScan } from "./api";
+import {
+  fetchConstituencies, fetchNationalScan, fetchCampaignMap,
+  type SeatSummary, type NationalScan, type CampaignMapResult,
+} from "./api";
 import IndiaMap from "./IndiaMap";
 import Disclosure from "./Disclosure";
-import { CHART_GRID, CHART_TICK, CHART_TOOLTIP_BG, CHART_TOOLTIP_BORDER, tippingPointColor } from "./theme";
+import {
+  CHART_GRID, CHART_TICK, CHART_TOOLTIP_BG, CHART_TOOLTIP_BORDER, tippingPointColor, INTENSITY_PRESETS,
+} from "./theme";
 
 export default function Overview({ onSelect }: { onSelect: (state: string, name: string) => void }) {
   const [seats, setSeats] = useState<SeatSummary[] | null>(null);
@@ -14,6 +19,15 @@ export default function Overview({ onSelect }: { onSelect: (state: string, name:
   const [query, setQuery] = useState("");
   const [stateFilter, setStateFilter] = useState("");
   const [sortKey, setSortKey] = useState<keyof SeatSummary>("tipping_point_pct");
+
+  const [simMode, setSimMode] = useState(false);
+  const [simEffort, setSimEffort] = useState<keyof typeof INTENSITY_PRESETS>("Moderate");
+  const [simScope, setSimScope] = useState<"nation" | "state" | "type">("nation");
+  const [simState, setSimState] = useState("");
+  const [simType, setSimType] = useState("GEN");
+  const [simResult, setSimResult] = useState<CampaignMapResult | null>(null);
+  const [simLoading, setSimLoading] = useState(false);
+  const [simError, setSimError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchConstituencies().then(setSeats).catch((e) => setError(String(e)));
@@ -24,6 +38,30 @@ export default function Overview({ onSelect }: { onSelect: (state: string, name:
     () => (seats ? Array.from(new Set(seats.map((s) => s.state))).sort() : []),
     [seats],
   );
+
+  const constituencyTypes = useMemo(
+    () => (seats ? Array.from(new Set(seats.map((s) => s.constituency_type))).sort() : ["GEN", "SC", "ST"]),
+    [seats],
+  );
+
+  // Guided flow, same debounced-on-change pattern the single-seat
+  // simulator and Strategist already use: pick an effort/scope and the
+  // map recolours on its own.
+  useEffect(() => {
+    if (!simMode) { setSimResult(null); return; }
+    const t = setTimeout(() => {
+      setSimLoading(true);
+      setSimError(null);
+      fetchCampaignMap(INTENSITY_PRESETS[simEffort], {
+        state: simScope === "state" && simState ? simState : null,
+        constituency_type: simScope === "type" ? simType : null,
+      })
+        .then(setSimResult)
+        .catch((e) => setSimError(String(e)))
+        .finally(() => setSimLoading(false));
+    }, 400);
+    return () => clearTimeout(t);
+  }, [simMode, simEffort, simScope, simState, simType]);
 
   const filtered = useMemo(() => {
     if (!seats) return [];
@@ -43,7 +81,65 @@ export default function Overview({ onSelect }: { onSelect: (state: string, name:
 
   return (
     <>
-      <IndiaMap onSelect={onSelect} />
+      <div className="card">
+        <h2>Campaign simulator</h2>
+        <label className="muted" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+          <input type="checkbox" checked={simMode} onChange={(e) => setSimMode(e.target.checked)} />
+          Simulate a campaign and recolour the map by outcome, instead of real 2019 tipping points
+        </label>
+        {simMode && (
+          <>
+            <div className="grid cols-2" style={{ marginTop: 12 }}>
+              <div>
+                <label className="muted" style={{ fontSize: 12, display: "block", marginBottom: 6 }}>Effort</label>
+                <div className="search-row">
+                  {(Object.keys(INTENSITY_PRESETS) as (keyof typeof INTENSITY_PRESETS)[]).map((label) => (
+                    <button
+                      key={label}
+                      className="run-btn"
+                      style={{ padding: "8px 16px", opacity: simEffort === label ? 1 : 0.55 }}
+                      onClick={() => setSimEffort(label)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="muted" style={{ fontSize: 12, display: "block", marginBottom: 6 }}>Scope</label>
+                <select value={simScope} onChange={(e) => setSimScope(e.target.value as typeof simScope)}>
+                  <option value="nation">Whole nation</option>
+                  <option value="state">One state / UT</option>
+                  <option value="type">Reservation category</option>
+                </select>
+                {simScope === "state" && (
+                  <select style={{ marginTop: 6, width: "100%" }} value={simState}
+                         onChange={(e) => setSimState(e.target.value)}>
+                    <option value="">Choose a state…</option>
+                    {states.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                )}
+                {simScope === "type" && (
+                  <select style={{ marginTop: 6, width: "100%" }} value={simType}
+                         onChange={(e) => setSimType(e.target.value)}>
+                    {constituencyTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                )}
+              </div>
+            </div>
+            <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
+              {simLoading
+                ? "Updating…"
+                : simResult
+                ? `${simResult.n_flipped} of ${simResult.n_seats} seats in scope flip at ${simEffort.toLowerCase()} effort.`
+                : "Choose an effort and scope above."}
+            </p>
+            {simError && <p className="error-box" style={{ marginTop: 8 }}>{simError}</p>}
+          </>
+        )}
+      </div>
+
+      <IndiaMap onSelect={onSelect} simulation={simMode ? simResult : null} />
 
       {scan && (
         <div className="card">

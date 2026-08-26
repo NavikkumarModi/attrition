@@ -23,3 +23,14 @@ export function tippingPointColor(pct: number | null): string {
   if (pct < 8) return TIPPING_POINT_COLORS.competitive;
   return TIPPING_POINT_COLORS.safe;
 }
+
+// Simple-mode campaign-effort presets -- one plain choice instead of a
+// technical multi-round intensity sequence (FINDINGS.md#63/#64). Shared
+// between ConstituencyLab's single-seat simulator and Overview's
+// map-wide campaign simulator so "Heavy" means the same real
+// intensity_sequence in both places.
+export const INTENSITY_PRESETS: Record<string, number[]> = {
+  Light: [0.1, 0.1, 0.15, 0.15, 0.15],
+  Moderate: [0.15, 0.2, 0.25, 0.3, 0.35],
+  Heavy: [0.3, 0.4, 0.5, 0.6, 0.7],
+};

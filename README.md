@@ -810,6 +810,24 @@ underneath both. Verified live: Simple mode's default view is genuinely
 two cards, and switching effort presets changes the real simulated
 result (0.38% → 1.41% switched), not a static label.
 
+### A map-wide campaign simulator
+
+`FINDINGS.md` #64. The national map now recolours by SIMULATED campaign
+outcome — nationwide, one state, or one reservation category — instead
+of only ever showing the static real-2019 tipping-point buckets. Same
+mechanism (`simulate_level1_contact`/`recompute_outcome`) the single-seat
+Constituency Lab already uses, run once per real seat in scope
+(`POST /api/campaign-map`) — checked feasible first (543 seats in 0.39s,
+no caching needed) rather than assumed. The harder half was the
+frontend: `react-leaflet`'s `<GeoJSON>` only applies its `style` prop
+once at mount, so recolouring uses the underlying Leaflet layer's own
+`setStyle` through a ref instead of remounting — keeps the user's
+pan/zoom instead of resetting it on every effort/scope change. Seats
+outside the current scope render muted grey, never silently defaulted
+to the real-data colour. Verified live: nationwide at Moderate effort,
+66/543 seats flip in a genuine geographic pattern; scoped to Gujarat,
+exactly its 26 seats render and everything else greys out.
+
 ### Scale with concurrent calls
 
 `simulate_population_simultaneous` and `compare_population_to_baselines` take

@@ -10,20 +10,9 @@ import {
   type ShrugRollupResponse, type ShrugRollupCoverage,
 } from "./api";
 import Disclosure from "./Disclosure";
-import { CHART_GRID, CHART_TICK, CHART_TOOLTIP_BG, CHART_TOOLTIP_BORDER } from "./theme";
+import { CHART_GRID, CHART_TICK, CHART_TOOLTIP_BG, CHART_TOOLTIP_BORDER, INTENSITY_PRESETS } from "./theme";
 
-const DEFAULT_SEQUENCE = [0.15, 0.2, 0.25, 0.3, 0.35];
-
-// Simple-mode intensity presets -- competitor research (270toWin,
-// poliwave) converged on the same lesson: a non-technical user gets ONE
-// plain choice, not five per-round sliders. These map to the exact same
-// real intensity_sequence mechanism Advanced mode exposes directly --
-// no new simulation logic, just fewer numbers to look at by default.
-const INTENSITY_PRESETS: Record<string, number[]> = {
-  Light: [0.1, 0.1, 0.15, 0.15, 0.15],
-  Moderate: DEFAULT_SEQUENCE,
-  Heavy: [0.3, 0.4, 0.5, 0.6, 0.7],
-};
+const DEFAULT_SEQUENCE = INTENSITY_PRESETS.Moderate;
 
 export default function ConstituencyLab({
   initialState, initialName,

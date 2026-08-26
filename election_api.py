@@ -549,7 +549,8 @@ def _rural_poverty_rate(c):
 
 
 def _filtered_constituencies(constituency_type, sub_region, incumbency,
-                             min_poverty_rate_pct=None, max_poverty_rate_pct=None):
+                             min_poverty_rate_pct=None, max_poverty_rate_pct=None,
+                             state=None):
     """Restrict the real 543-seat pool to those matching every given real
     covariate, before handing the subset to `greedy_allocation`/
     `even_allocation` (both already accept a `constituencies=` subset --
@@ -567,8 +568,13 @@ def _filtered_constituencies(constituency_type, sub_region, incumbency,
     economic data, so this filter is now real and offered. A seat with no
     matched real poverty data is EXCLUDED when this filter is active
     (never assumed to pass), so results never silently include a seat the
-    filter couldn't actually check."""
+    filter couldn't actually check.
+
+    `state` (FINDINGS.md#64): restrict to one real state/UT -- reused by
+    the map-wide campaign simulator's "specific region" scope."""
     cs = ALL_PHASE1_CONSTITUENCIES
+    if state:
+        cs = [c for c in cs if c.state == state]
     if constituency_type:
         cs = [c for c in cs if c.constituency_type == constituency_type]
     if sub_region:
@@ -642,6 +648,61 @@ def strategist(budget_pct: float = 20.0, scope_max_tipping_pct: float = 20.0,
            "use_literacy_effect": use_literacy_effect,
            "greedy": _allocation_response(greedy, use_literacy_effect),
            "even": _allocation_response(even, use_literacy_effect)}
+
+
+class CampaignMapRequest(BaseModel):
+    intensity_sequence: list[float] = [0.15, 0.2, 0.25, 0.3, 0.35]
+    n_voters: int = 2000
+    state: Optional[str] = None
+    constituency_type: Optional[str] = None
+    sub_region: Optional[str] = None
+    use_literacy_effect: bool = False
+
+
+@app.post("/api/campaign-map")
+def campaign_map(req: CampaignMapRequest):
+    """The SAME `simulate_level1_contact`/`recompute_outcome` pair the
+    single-seat Constituency Lab already uses (FINDINGS.md#64) -- run
+    once per real seat in scope, at one uniform campaign-effort level,
+    so the national map can be recoloured by SIMULATED outcome instead
+    of the static real-2019 tipping-point buckets. No new simulation
+    mechanism; this is the existing single-seat mechanism applied at
+    map scale, exactly as `/api/simulate` applies it to one seat.
+
+    Scope: `state` restricts to one real state/UT; `constituency_type`
+    (GEN/SC/ST) and `sub_region` are the same real, published covariates
+    `/api/strategist` already filters by (`_filtered_constituencies`,
+    reused here, not reimplemented). Omitting all three runs every real
+    seat nationwide.
+
+    `n_voters` is capped at 5,000 (not the single-seat endpoint's much
+    higher cap): this runs the mechanism up to 543 times in one request,
+    and per-seat statistical noise at 2,000-5,000 voters is already
+    small relative to the map's coarse hold/flip colouring -- a real,
+    stated tradeoff for map-wide responsiveness, not silently
+    unlimited."""
+    n_voters = max(50, min(req.n_voters, 5000))
+    cs = _filtered_constituencies(req.constituency_type, req.sub_region, "any",
+                                  state=req.state)
+    seats = []
+    n_flipped = 0
+    for c in cs:
+        _, final = simulate_level1_contact(
+            c, req.intensity_sequence, n_voters=n_voters, seed=0,
+            use_literacy_effect=req.use_literacy_effect)
+        outcome = recompute_outcome(c, final)
+        if outcome.flipped:
+            n_flipped += 1
+        seats.append({
+            "id": _seat_id(c), "state": c.state, "name": c.name,
+            "flipped": outcome.flipped,
+            "final_switched_fraction": final,
+            "winner": outcome.winner, "margin_pct": outcome.margin_pct,
+        })
+    return {"n_seats": len(seats), "n_flipped": n_flipped,
+           "filters": {"state": req.state, "constituency_type": req.constituency_type,
+                      "sub_region": req.sub_region},
+           "use_literacy_effect": req.use_literacy_effect, "seats": seats}
 
 
 @lru_cache(maxsize=1)

@@ -203,6 +203,35 @@ export interface StrategistFacets {
 }
 export const fetchStrategistFilters = () => getJSON<StrategistFacets>("/api/strategist/filters");
 
+export interface CampaignMapSeat {
+  id: string;
+  state: string;
+  name: string;
+  flipped: boolean;
+  final_switched_fraction: number;
+  winner: string;
+  margin_pct: number;
+}
+export interface CampaignMapResult {
+  n_seats: number;
+  n_flipped: number;
+  filters: { state?: string | null; constituency_type?: string | null; sub_region?: string | null };
+  use_literacy_effect: boolean;
+  seats: CampaignMapSeat[];
+}
+export interface CampaignMapOptions {
+  n_voters?: number;
+  state?: string | null;
+  constituency_type?: string | null;
+  sub_region?: string | null;
+  use_literacy_effect?: boolean;
+}
+export const fetchCampaignMap = (intensitySequence: number[], options: CampaignMapOptions = {}) =>
+  postJSON<CampaignMapResult>("/api/campaign-map", {
+    intensity_sequence: intensitySequence,
+    ...options,
+  });
+
 export interface ForecastResult {
   n_seats: number;
   swing_model_accuracy: number;

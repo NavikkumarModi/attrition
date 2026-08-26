@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, GeoJSON, ZoomControl, useMap } from "react-leaflet";
-import type { Layer, GeoJSON as LeafletGeoJSON, LatLngBoundsExpression } from "leaflet";
+import type { Layer, GeoJSON as LeafletGeoJSON, LatLngBoundsExpression, PathOptions } from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { FeatureCollection } from "geojson";
-import { fetchConstituenciesGeoJSON, type SeatFeature, type SeatSummary } from "./api";
+import { fetchConstituenciesGeoJSON, type SeatFeature, type SeatSummary, type CampaignMapResult } from "./api";
 import Disclosure from "./Disclosure";
 
 const BUCKET_COLORS = { none: "#c7cbd1", contestable: "#dc2626", competitive: "#d97706",
                         close: "#eab308", safe: "#2563eb" };
+const SIM_COLORS = { flip: "#dc2626", hold: "#2563eb", outOfScope: "#d8dbe0" };
 
 function colorFor(seat: SeatSummary) {
   if (seat.tipping_point_pct === null) return BUCKET_COLORS.none;
@@ -39,7 +40,17 @@ function FitToData({ fc }: { fc: FeatureCollection | null }) {
   return null;
 }
 
-export default function IndiaMap({ onSelect }: { onSelect: (state: string, name: string) => void }) {
+export default function IndiaMap({
+  onSelect, simulation,
+}: {
+  onSelect: (state: string, name: string) => void;
+  // When set (FINDINGS.md#64), the map recolours by SIMULATED outcome
+  // (flip/hold at the given campaign effort/scope) instead of the
+  // static real-2019 tipping-point buckets -- the same
+  // simulate_level1_contact mechanism the single-seat lab uses, just
+  // run once per seat in scope.
+  simulation?: CampaignMapResult | null;
+}) {
   const [fc, setFc] = useState<FeatureCollection | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hover, setHover] = useState<SeatSummary | null>(null);
@@ -66,7 +77,47 @@ export default function IndiaMap({ onSelect }: { onSelect: (state: string, name:
       .slice(0, 8);
   }, [features, query]);
 
+  const simIndex = useMemo(
+    () => (simulation ? new Map(simulation.seats.map((s) => [s.id, s])) : null),
+    [simulation],
+  );
+
+  const styleFor = (seat: SeatSummary, isHover: boolean): PathOptions => {
+    if (simIndex) {
+      const sim = simIndex.get(seat.id);
+      const fill = !sim ? SIM_COLORS.outOfScope : sim.flipped ? SIM_COLORS.flip : SIM_COLORS.hold;
+      return {
+        fillColor: fill,
+        fillOpacity: isHover ? 1 : (sim ? 0.85 : 0.35),
+        color: isHover ? "#1a1d24" : "#ffffff",
+        weight: isHover ? 1.6 : 0.6,
+      };
+    }
+    return {
+      fillColor: colorFor(seat),
+      fillOpacity: isHover ? 1 : 0.85,
+      color: isHover ? "#1a1d24" : "#ffffff",
+      weight: isHover ? 1.6 : 0.6,
+    };
+  };
+
+  // react-leaflet's <GeoJSON> only applies its `style` prop once, at
+  // mount -- it does not re-run the style function when `simulation` or
+  // `hover` change on a later render. Recolouring imperatively via the
+  // underlying Leaflet layer's own setStyle (through the ref) keeps the
+  // user's current pan/zoom instead of remounting the whole layer every
+  // time an effort/scope control changes.
+  useEffect(() => {
+    geoJsonRef.current?.setStyle((feature: any) => {
+      const seat = feature.properties as SeatSummary;
+      return styleFor(seat, hover?.id === seat.id);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [simIndex, hover]);
+
   if (error) return <div className="error-box">{error} — is election_api.py running on :8000?</div>;
+
+  const simSeat = simIndex && hover ? simIndex.get(hover.id) : null;
 
   return (
     <div className="map-hero">
@@ -90,16 +141,7 @@ export default function IndiaMap({ onSelect }: { onSelect: (state: string, name:
           <GeoJSON
             ref={geoJsonRef}
             data={fc as any}
-            style={(feature: any) => {
-              const seat = feature.properties as SeatSummary;
-              const isHover = hover?.id === seat.id;
-              return {
-                fillColor: colorFor(seat),
-                fillOpacity: isHover ? 1 : 0.85,
-                color: isHover ? "#1a1d24" : "#ffffff",
-                weight: isHover ? 1.6 : 0.6,
-              };
-            }}
+            style={(feature: any) => styleFor(feature.properties as SeatSummary, false)}
             onEachFeature={(feature: any, layer: Layer) => {
               const seat = feature.properties as SeatSummary;
               layer.on({
@@ -136,27 +178,66 @@ export default function IndiaMap({ onSelect }: { onSelect: (state: string, name:
       </div>
 
       <div className="map-overlay map-overlay-legend">
-        <span className="legend-dot" style={{ background: BUCKET_COLORS.contestable }} /> &lt; 2%{"  "}
-        <span className="legend-dot" style={{ background: BUCKET_COLORS.competitive, marginLeft: 8 }} /> &lt; 8%{"  "}
-        <span className="legend-dot" style={{ background: BUCKET_COLORS.close, marginLeft: 8 }} /> &lt; 15%{"  "}
-        <span className="legend-dot" style={{ background: BUCKET_COLORS.safe, marginLeft: 8 }} /> &ge; 15%
+        {simIndex ? (
+          <>
+            <span className="legend-dot" style={{ background: SIM_COLORS.flip }} /> flips{"  "}
+            <span className="legend-dot" style={{ background: SIM_COLORS.hold, marginLeft: 8 }} /> holds{"  "}
+            <span className="legend-dot" style={{ background: SIM_COLORS.outOfScope, marginLeft: 8 }} /> out of scope
+          </>
+        ) : (
+          <>
+            <span className="legend-dot" style={{ background: BUCKET_COLORS.contestable }} /> &lt; 2%{"  "}
+            <span className="legend-dot" style={{ background: BUCKET_COLORS.competitive, marginLeft: 8 }} /> &lt; 8%{"  "}
+            <span className="legend-dot" style={{ background: BUCKET_COLORS.close, marginLeft: 8 }} /> &lt; 15%{"  "}
+            <span className="legend-dot" style={{ background: BUCKET_COLORS.safe, marginLeft: 8 }} /> &ge; 15%
+          </>
+        )}
       </div>
 
       {hover && (
         <div className="map-overlay map-overlay-hover">
           <strong>{hover.name}</strong> — {hover.state}
-          <div className="muted">{hover.winner_party} won by {hover.real_margin_pct.toFixed(2)}pp</div>
-          <div className="muted">tipping point: {hover.tipping_point_pct?.toFixed(1) ?? "—"}%</div>
+          {simIndex ? (
+            simSeat ? (
+              <>
+                <div className="muted">
+                  simulated: <strong>{simSeat.flipped ? "FLIPS" : "HOLDS"}</strong> — {simSeat.winner} wins,
+                  margin {simSeat.margin_pct.toFixed(1)}pp
+                </div>
+                <div className="muted">switched fraction: {(simSeat.final_switched_fraction * 100).toFixed(2)}%</div>
+              </>
+            ) : (
+              <div className="muted">not in this simulation's scope</div>
+            )
+          ) : (
+            <>
+              <div className="muted">{hover.winner_party} won by {hover.real_margin_pct.toFixed(2)}pp</div>
+              <div className="muted">tipping point: {hover.tipping_point_pct?.toFixed(1) ?? "—"}%</div>
+            </>
+          )}
         </div>
       )}
 
       <div className="map-caption">
-        <span>All 543 real constituencies, by tipping point — fraction of the electorate that would
-          need to switch to flip the seat. Click a seat to open it.</span>
+        {simIndex ? (
+          <span>
+            Simulated campaign result — {simulation!.n_flipped} of {simulation!.n_seats} seats in scope flip.
+            Click a seat to open it in Constituency Lab.
+          </span>
+        ) : (
+          <span>All 543 real constituencies, by tipping point — fraction of the electorate that would
+            need to switch to flip the seat. Click a seat to open it.</span>
+        )}
         <Disclosure summary="Map source & methodology">
           Boundaries: DataMeet (CC BY 4.0). Basemap: standard OpenStreetMap tiles.
-          Tipping point is the fraction of the total electorate that would need to switch to flip the
-          real 2019 result — a closed-form search over the real reallocation rule, not a simulation.
+          {simIndex ? (
+            <> Colours here are a real, simulated outcome (`simulate_level1_contact`/`recompute_outcome`, the
+              SAME mechanism the single-seat Constituency Lab uses) run once per seat in scope at one uniform
+              campaign-effort level — not a claim about what will actually happen. See FINDINGS.md #64.</>
+          ) : (
+            <> Tipping point is the fraction of the total electorate that would need to switch to flip the
+              real 2019 result — a closed-form search over the real reallocation rule, not a simulation.</>
+          )}
         </Disclosure>
       </div>
     </div>

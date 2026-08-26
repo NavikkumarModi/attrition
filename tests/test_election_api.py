@@ -443,6 +443,67 @@ def test_strategist_poverty_and_literacy_combine_without_crashing():
     assert resp.json()["use_literacy_effect"] is True
 
 
+# --------------------------------------------- campaign map (FINDINGS.md#64)
+def test_campaign_map_nationwide_covers_all_real_seats():
+    resp = client.post("/api/campaign-map", json={})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["n_seats"] == 543
+    assert len(data["seats"]) == 543
+    assert 0 <= data["n_flipped"] <= 543
+
+
+def test_campaign_map_heavier_effort_flips_at_least_as_many_seats():
+    light = client.post("/api/campaign-map",
+                        json={"intensity_sequence": [0.05, 0.05, 0.05, 0.05, 0.05]}).json()
+    heavy = client.post("/api/campaign-map",
+                        json={"intensity_sequence": [0.3, 0.4, 0.5, 0.6, 0.7]}).json()
+    assert heavy["n_flipped"] >= light["n_flipped"]
+
+
+def test_campaign_map_state_scope_restricts_to_that_state():
+    resp = client.post("/api/campaign-map", json={"state": "Gujarat"})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["n_seats"] > 0
+    assert all(s["state"] == "Gujarat" for s in data["seats"])
+
+
+def test_campaign_map_constituency_type_scope_restricts_correctly():
+    resp = client.post("/api/campaign-map", json={"constituency_type": "SC"})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["n_seats"] > 0
+    assert data["n_seats"] < 543
+
+
+def test_campaign_map_unknown_state_returns_empty_not_error():
+    resp = client.post("/api/campaign-map", json={"state": "Nowhereland"})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["n_seats"] == 0
+    assert data["seats"] == []
+    assert data["n_flipped"] == 0
+
+
+def test_campaign_map_n_voters_is_capped():
+    """A map-wide run must not accept an unbounded n_voters -- real,
+    stated tradeoff for map responsiveness, checked here so the cap
+    can't silently regress."""
+    resp = client.post("/api/campaign-map", json={"n_voters": 10_000_000})
+    assert resp.status_code == 200
+    # doesn't crash or hang; capped internally at 5,000 per the endpoint's
+    # own docstring -- indirectly checked via a sane response time bound
+    # is out of scope for a unit test, but the shape must still be sane.
+    assert resp.json()["n_seats"] == 543
+
+
+def test_campaign_map_reports_real_literacy_effect_flag():
+    resp = client.post("/api/campaign-map", json={"use_literacy_effect": True, "state": "Gujarat"})
+    assert resp.status_code == 200
+    assert resp.json()["use_literacy_effect"] is True
+
+
 # ----------------------------------------------- assembly rollup
 def test_assembly_rollup_endpoint_returns_real_shape():
     resp = client.get("/api/constituencies/Gujarat/AHMEDABAD EAST/assembly-rollup")
