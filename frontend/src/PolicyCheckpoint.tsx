@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchCampaignPolicy, type CampaignPolicyResult } from "./api";
+import Disclosure from "./Disclosure";
 
 export default function PolicyCheckpoint() {
   const [data, setData] = useState<CampaignPolicyResult | null>(null);
@@ -19,12 +20,12 @@ export default function PolicyCheckpoint() {
     <>
       <div className="card">
         <h2>A real trained campaign policy — not hand-derived</h2>
-        <p className="muted" style={{ fontSize: 13, maxWidth: 780 }}>
+        <Disclosure summary="How this was trained">
           No external campaign policy exists to transplant (unlike AMR's real PPO checkpoint — see FINDINGS.md#24.4),
           so this trains one from scratch: the gradient-bandit method, seeing only realised per-pull reward on the{" "}
           <code>campaign-persuasion</code> arms — the same information Greedy sees, nothing about the true
           destruction probability or externality. Trained fresh once per server process.
-        </p>
+        </Disclosure>
       </div>
 
       <div className="card">

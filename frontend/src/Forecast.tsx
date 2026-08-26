@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchForecast, type ForecastResult } from "./api";
+import Disclosure from "./Disclosure";
 
 export default function Forecast() {
   const [data, setData] = useState<ForecastResult | null>(null);
@@ -18,14 +19,14 @@ export default function Forecast() {
     <>
       <div className="card">
         <h2>A real, backtested forecasting baseline — not the persuasion simulator</h2>
-        <p className="muted" style={{ fontSize: 13, maxWidth: 760 }}>
+        <Disclosure summary="How this differs from the simulator">
           Different question from every other tab: no campaign, no contact intensity, no LLM.
           <strong> Uniform national swing</strong> — a classical political-science forecasting technique —
           estimates each party's average real vote-share change from 2014 to 2019, then predicts a seat's 2019
           winner as "2014 share + that party's national swing." Backtested honestly with leave-one-state-out
           cross-validation: each state's own real 2019 result is never used to estimate the swing that predicts
           it. Compared against the naive "incumbent retains" baseline on the same real, matched seats.
-        </p>
+        </Disclosure>
       </div>
 
       <div className="grid cols-4">

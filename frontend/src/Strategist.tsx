@@ -3,6 +3,7 @@ import {
   fetchStrategist, fetchStrategistFilters,
   type StrategistResult, type StrategistFacets, type StrategistFilters as Filters,
 } from "./api";
+import Disclosure from "./Disclosure";
 
 export default function Strategist({
   onSelect,
@@ -34,7 +35,7 @@ export default function Strategist({
     <>
       <div className="card">
         <h2>National campaign strategist</h2>
-        <p className="muted" style={{ fontSize: 13, maxWidth: 760 }}>
+        <Disclosure summary="How this allocation works">
           One finite national budget, expressed in the same "percent of electorate" unit as every real
           tipping point on this page. Two policies spend it differently: <strong>greedy</strong> fully funds the
           cheapest real seats to flip first and stops when the budget runs out; <strong>even</strong> spreads the
@@ -42,7 +43,7 @@ export default function Strategist({
           equal share actually clears its own real tipping point. Not a re-run of this project's core theorems —
           a new, one-shot allocation decision across 543 independent real seats, using the same
           finite-resource lens.
-        </p>
+        </Disclosure>
         <label className="muted" style={{ fontSize: 12 }}>
           National budget: {budget} (percentage-points of electorate-effort)
         </label>
@@ -53,11 +54,11 @@ export default function Strategist({
 
       <div className="card">
         <h2>Target by real seat covariates</h2>
-        <p className="muted" style={{ fontSize: 12, marginBottom: 12 }}>
+        <Disclosure summary="What can be targeted, and why">
           Real, published per-seat facts only — reservation category, sub-region, and whether the real 2019
           winner was an incumbent. No per-voter demographic or economic data exists in the source (see
           FINDINGS.md #47), so targeting stops at what's real.
-        </p>
+        </Disclosure>
         <div className="search-row">
           <select value={constituencyType} onChange={(e) => setConstituencyType(e.target.value)}>
             <option value="">All reservation categories</option>
@@ -83,13 +84,13 @@ export default function Strategist({
       {result && (
         <div className="card">
           <h2>What this costs society, not just seats flipped</h2>
-          <p className="muted" style={{ fontSize: 12, marginBottom: 12, maxWidth: 760 }}>
+          <Disclosure summary="Why these are closed-form, not simulated">
             Real, closed-form metrics over which seats each policy TARGETED — reach (electors, states touched) and
             efficiency (flipped ÷ targeted). Deliberately not re-derived from a mechanistic simulation run: doing
             that would require inventing a mapping from this budget unit to a contact-intensity sequence that
             doesn't exist anywhere in this project (see FINDINGS.md #48) — these numbers stay honest by staying
             inside the model that's actually validated.
-          </p>
+          </Disclosure>
           <div className="grid cols-2">
             <div>
               <h3 style={{ marginTop: 0 }}>Greedy</h3>

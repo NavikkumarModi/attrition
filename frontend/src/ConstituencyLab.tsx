@@ -9,6 +9,8 @@ import {
   type CensusRollupResponse, type CensusRollupCoverage,
   type ShrugRollupResponse, type ShrugRollupCoverage,
 } from "./api";
+import Disclosure from "./Disclosure";
+import { CHART_GRID, CHART_TICK, CHART_TOOLTIP_BG, CHART_TOOLTIP_BORDER } from "./theme";
 
 const DEFAULT_SEQUENCE = [0.15, 0.2, 0.25, 0.3, 0.35];
 
@@ -103,12 +105,12 @@ export default function ConstituencyLab({
     <>
       <div className="card">
         <h2>Run a campaign against one real seat</h2>
-        <p className="muted" style={{ fontSize: 12, marginBottom: 12, maxWidth: 700 }}>
+        <Disclosure summary="Why are the numbers so small?">
           Switched-fraction magnitudes are capped at 2% of the electorate — the upper edge of Kalla &amp;
           Broockman's (2018, <em>APSR</em>) real field-experiment confidence interval for campaign contact's
           persuasive effect on vote choice in a general election (their point estimate: statistically zero).
           Small numbers here are the honest result, not a bug — see FINDINGS.md #41.
-        </p>
+        </Disclosure>
         <div className="grid cols-2">
           <div>
             <label className="muted" style={{ fontSize: 12 }}>Constituency</label>
@@ -182,13 +184,13 @@ export default function ConstituencyLab({
 
       <div className="card">
         <h2>Real state Assembly rollup for this seat</h2>
-        <p className="muted" style={{ fontSize: 12, marginBottom: 12, maxWidth: 760 }}>
+        <Disclosure summary="Source & methodology">
           A second real data source (TCPD's state Assembly election results, joined to this seat via DataMeet's
           real Assembly-Constituency-to-Parliamentary-Constituency crosswalk — an exact administrative fact, not an
           approximation) — not a new mechanism, real aggregate results over this seat's constituent state Assembly
           segments. State elections run on each state's own cycle, not a single national date, so the year used is
           not always 2019 — shown explicitly below. See FINDINGS.md #49.
-        </p>
+        </Disclosure>
         {assemblyRollup?.rollup ? (
           <>
             <div className="grid cols-4">
@@ -232,12 +234,12 @@ export default function ConstituencyLab({
 
       <div className="card">
         <h2>Real Census 2011 district demographics for this seat</h2>
-        <p className="muted" style={{ fontSize: 12, marginBottom: 12, maxWidth: 760 }}>
+        <Disclosure summary="Source & methodology">
           Real district-level population, households, and density (Census of India 2011, table A-1), joined via the
           same real AC-to-PC crosswalk. A seat spanning more than one district shows each district's real,
           unmodified figures — never summed into one population number, which would double-count people in a
           district shared with another seat. See FINDINGS.md #50.
-        </p>
+        </Disclosure>
         {censusRollup?.rollup ? (
           <>
             <div className="grid cols-2">
@@ -280,7 +282,7 @@ export default function ConstituencyLab({
 
       <div className="card">
         <h2>Real SHRUG socioeconomic indicators for this seat</h2>
-        <p className="muted" style={{ fontSize: 12, marginBottom: 12, maxWidth: 760 }}>
+        <Disclosure summary="Source & methodology">
           Real demographic (Census 2011), economic (2012 SECC consumption/poverty — the first genuinely economic
           indicator in this repo), satellite-derived wealth (2021 Facebook Relative Wealth Index), and infrastructure
           (PMGSY rural road connectivity) data, joined via the SAME real AC-to-PC crosswalk, restricted to
@@ -290,7 +292,7 @@ export default function ConstituencyLab({
             Development Data Lab, SHRUG v2.2
           </a>{" "}
           (CC BY-NC-SA 4.0). See FINDINGS.md #57.
-        </p>
+        </Disclosure>
         {shrugRollup?.rollup ? (
           <>
             <div className="grid cols-2">
@@ -361,12 +363,12 @@ export default function ConstituencyLab({
 
       <div className="card">
         <h2>Granular controls — real, already-causal factors only</h2>
-        <p className="muted" style={{ fontSize: 12, marginBottom: 12, maxWidth: 760 }}>
+        <Disclosure summary="What's real here, and what isn't">
           No per-voter demographic or economic data exists in the real TCPD source, so none is invented here (see
           FINDINGS.md #47). Every control below is either a mechanism already wired into the model (voter-to-voter
           propagation, seed variation) or a real, already-causal seat covariate (incumbency, margin) offered as a
           counterfactual.
-        </p>
+        </Disclosure>
         <div className="grid cols-2">
           <div>
             <label className="muted" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
@@ -526,20 +528,20 @@ export default function ConstituencyLab({
             {result.level1_switched_fraction_by_round ? (
               <ResponsiveContainer width="100%" height={280}>
                 <LineChart data={chartData} margin={{ top: 8, right: 24, bottom: 8, left: 0 }}>
-                  <CartesianGrid stroke="#232938" />
-                  <XAxis dataKey="round" tick={{ fill: "#8b93a7", fontSize: 11 }} />
+                  <CartesianGrid stroke={CHART_GRID} />
+                  <XAxis dataKey="round" tick={{ fill: CHART_TICK, fontSize: 11 }} />
                   <YAxis
-                    unit="%" tick={{ fill: "#8b93a7", fontSize: 11 }}
+                    unit="%" tick={{ fill: CHART_TICK, fontSize: 11 }}
                     domain={[0, (dataMax: number) => Math.ceil(Math.max(dataMax, result.seat.tipping_point_pct ?? 0) * 1.15)]}
                   />
-                  <Tooltip contentStyle={{ background: "#171c28", border: "1px solid #232938", fontSize: 12 }} />
+                  <Tooltip contentStyle={{ background: CHART_TOOLTIP_BG, border: `1px solid ${CHART_TOOLTIP_BORDER}`, fontSize: 12 }} />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
                   <ReferenceLine
                     y={(result.seat.tipping_point_pct ?? 0)}
-                    stroke="#e0615e" strokeDasharray="4 4"
-                    label={{ value: "tipping point", position: "insideTopRight", fill: "#e0615e", fontSize: 11 }}
+                    stroke="#dc2626" strokeDasharray="4 4"
+                    label={{ value: "tipping point", position: "insideTopRight", fill: "#dc2626", fontSize: 11 }}
                   />
-                  <Line type="monotone" dataKey="switched" name="switched %" stroke="#5ec8e0" strokeWidth={2} dot />
+                  <Line type="monotone" dataKey="switched" name="switched %" stroke="#2563eb" strokeWidth={2} dot />
                 </LineChart>
               </ResponsiveContainer>
             ) : (

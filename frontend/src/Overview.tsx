@@ -4,13 +4,8 @@ import {
 } from "recharts";
 import { fetchConstituencies, fetchNationalScan, type SeatSummary, type NationalScan } from "./api";
 import IndiaMap from "./IndiaMap";
-
-function partyColor(seat: SeatSummary) {
-  if (seat.tipping_point_pct === null) return "#555";
-  if (seat.tipping_point_pct < 2) return "#e0615e";
-  if (seat.tipping_point_pct < 8) return "#f2a65a";
-  return "#5ec8e0";
-}
+import Disclosure from "./Disclosure";
+import { CHART_GRID, CHART_TICK, CHART_TOOLTIP_BG, CHART_TOOLTIP_BORDER, tippingPointColor } from "./theme";
 
 export default function Overview({ onSelect }: { onSelect: (state: string, name: string) => void }) {
   const [seats, setSeats] = useState<SeatSummary[] | null>(null);
@@ -48,37 +43,37 @@ export default function Overview({ onSelect }: { onSelect: (state: string, name:
 
   return (
     <>
+      <IndiaMap onSelect={onSelect} />
+
       {scan && (
         <div className="card">
-          <h2>Real tipping-point distribution — all {scan.n_seats} seats</h2>
           <div className="grid cols-4">
             <div className="stat"><div className="value">{scan.distribution_pct.min.toFixed(1)}%</div><div className="label">most contestable</div></div>
             <div className="stat"><div className="value">{scan.distribution_pct.median.toFixed(1)}%</div><div className="label">median seat</div></div>
             <div className="stat"><div className="value">{scan.distribution_pct.p90.toFixed(1)}%</div><div className="label">p90</div></div>
             <div className="stat"><div className="value">{scan.distribution_pct.max.toFixed(1)}%</div><div className="label">safest hold</div></div>
           </div>
-          <p className="muted" style={{ marginTop: 12, fontSize: 13 }}>
-            Fraction of the total electorate that would need to switch to flip each real 2019 seat, computed by{" "}
-            <code>tipping_point</code> — no simulation, a closed-form search over the real reallocation rule.
-          </p>
+          <Disclosure summary="What is a tipping point?">
+            The fraction of the total electorate that would need to switch to flip each real 2019 seat,
+            computed by <code>tipping_point</code> — no simulation, a closed-form search over the real
+            reallocation rule.
+          </Disclosure>
         </div>
       )}
-
-      <IndiaMap onSelect={onSelect} />
 
       <div className="card">
         <h2>Margin vs. tipping point, every real seat</h2>
         <ResponsiveContainer width="100%" height={360}>
           <ScatterChart margin={{ top: 8, right: 24, bottom: 8, left: 0 }}>
-            <CartesianGrid stroke="#232938" />
+            <CartesianGrid stroke={CHART_GRID} />
             <XAxis type="number" dataKey="real_margin_pct" name="real margin" unit="pp"
-                  tick={{ fill: "#8b93a7", fontSize: 11 }} />
+                  tick={{ fill: CHART_TICK, fontSize: 11 }} />
             <YAxis type="number" dataKey="tipping_point_pct" name="tipping point" unit="%"
-                  tick={{ fill: "#8b93a7", fontSize: 11 }} />
+                  tick={{ fill: CHART_TICK, fontSize: 11 }} />
             <ZAxis range={[36, 36]} />
             <Tooltip
               cursor={{ strokeDasharray: "3 3" }}
-              contentStyle={{ background: "#171c28", border: "1px solid #232938", fontSize: 12 }}
+              contentStyle={{ background: CHART_TOOLTIP_BG, border: `1px solid ${CHART_TOOLTIP_BORDER}`, fontSize: 12 }}
               formatter={(value: number, key: string) => [key === "real_margin_pct" ? `${value.toFixed(2)}pp` : `${value?.toFixed?.(2)}%`, key]}
               labelFormatter={() => ""}
             />
@@ -87,14 +82,14 @@ export default function Overview({ onSelect }: { onSelect: (state: string, name:
               onClick={(d: any) => onSelect(d.state, d.name)}
               cursor="pointer"
             >
-              {(seats ?? []).map((s, i) => <Cell key={i} fill={partyColor(s)} />)}
+              {(seats ?? []).map((s, i) => <Cell key={i} fill={tippingPointColor(s.tipping_point_pct)} />)}
             </Scatter>
           </ScatterChart>
         </ResponsiveContainer>
         <p className="muted" style={{ fontSize: 12 }}>
-          <span className="legend-dot" style={{ background: "#e0615e" }} /> tipping point &lt; 2%{"  "}
-          <span className="legend-dot" style={{ background: "#f2a65a", marginLeft: 12 }} /> &lt; 8%{"  "}
-          <span className="legend-dot" style={{ background: "#5ec8e0", marginLeft: 12 }} /> &ge; 8% &mdash; click a point to open that seat
+          <span className="legend-dot" style={{ background: tippingPointColor(1) }} /> tipping point &lt; 2%{"  "}
+          <span className="legend-dot" style={{ background: tippingPointColor(5), marginLeft: 12 }} /> &lt; 8%{"  "}
+          <span className="legend-dot" style={{ background: tippingPointColor(20), marginLeft: 12 }} /> &ge; 8% &mdash; click a point to open that seat
         </p>
       </div>
 

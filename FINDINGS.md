@@ -2827,3 +2827,66 @@ correctly blank for two rural-only ACs).
 
 9 new tests (`tests/test_shrug.py`), 3 new tests
 (`tests/test_election_api.py`). Full suite: 346/346 passing (was 334).
+
+## 58. Productization pass: the frontend redesigned to read like a product, not a paper
+
+Raised earlier this session as an open strategic question: this repo's
+simulation depth outstrips its packaging, unlike poliwave.com's simpler
+but map-first, low-prose India election simulator. Asked explicitly to
+move on it, and to redesign the EXISTING tabs in place rather than build
+a separate simplified surface -- a real risk accepted knowingly (this
+project's disclosed-limitation prose is a genuine asset; the redesign
+had to relocate that content, not delete it).
+
+**Three changes, all reversible from a design standpoint (nothing about
+the underlying data or claims changed), none of them touching backend
+code:**
+
+1. **Light theme, one file.** `frontend/src/index.css`'s `:root` tokens
+   swapped from a dark palette to a light one (`--bg`, `--panel`,
+   `--text`, `--accent`, etc.) -- every component already used these
+   shared CSS custom properties (`.card`, `.stat`, `.pill`, `nav.tabs`,
+   inputs), so the whole app re-themed from one file, not a per-component
+   pass. New `frontend/src/theme.ts` centralises the recharts/SVG color
+   constants that DO need literal hex strings (recharts props aren't CSS,
+   can't read custom properties) -- these were previously duplicated
+   as ad-hoc hex literals across four separate chart-owning files
+   (`Overview.tsx`, `Calibration.tsx`, `ConstituencyLab.tsx`,
+   `IndiaMap.tsx`); consolidated while touching all four anyway, not a
+   separate refactor.
+2. **Map-first landing.** `Overview.tsx`'s `IndiaMap` moved from second
+   position (below a stats card) to first -- the literal poliwave
+   comparison: a full-width interactive choropleth is now the first
+   thing rendered on the Election tab's default view, not buried under
+   text and a second chart.
+3. **Prose collapsed, never deleted.** New `frontend/src/Disclosure.tsx`
+   -- a `<details>`-based collapsible wrapper, closed by default. Applied
+   to the top-of-card "here's the real source and its disclosed
+   limitation" paragraphs across `ConstituencyLab.tsx` (6 cards),
+   `Overview.tsx`, `Calibration.tsx` (2), `Strategist.tsx` (3),
+   `Forecast.tsx`, `PolicyCheckpoint.tsx`, and `AmrReferenceTable.tsx` --
+   every word of every disclosure is still in the DOM, one click away,
+   never shortened or removed. Deliberately NOT applied to primary
+   content (a seat's real 2019 result, a scenario's own description,
+   the actual result numbers) -- only to methodology/source framing,
+   judged case by case rather than mechanically collapsing every
+   paragraph in the codebase.
+
+**A real bug caught during verification, not shipped:** a stale Vite
+HMR module cache in the browser tab used for iterative editing threw
+`ReferenceError: CHART_GRID is not defined` after dozens of rapid hot
+edits -- confirmed as a dev-tooling artifact, not a real code defect, by
+opening a fresh tab against the same running dev server and seeing zero
+console errors; `tsc --noEmit` was also clean throughout. Reported here
+so a future reader hitting the same stale-HMR symptom during heavy
+iterative editing doesn't mistake it for a shipped bug.
+
+Verified live across every tab (Election's 6 sub-tabs, Clinical/AMR's 2,
+Agent ecosystem, Other domains): map renders full-width and first,
+disclosures expand/collapse correctly and preserve full content,
+simulation results (charts, outcome pills, tables) remain fully
+legible and correctly colored in the new light theme, no visual
+regressions found. No backend code touched -- this is a pure frontend/
+presentation change; the full Python test suite (346/346) is unaffected
+and reported here only as a sanity check that nothing else drifted
+during this pass.

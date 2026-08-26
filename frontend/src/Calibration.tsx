@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { fetchCalibration, type Calibration as CalibrationData } from "./api";
+import Disclosure from "./Disclosure";
+import { CHART_GRID, CHART_TICK, CHART_TOOLTIP_BG, CHART_TOOLTIP_BORDER } from "./theme";
 
 export default function Calibration() {
   const [data, setData] = useState<CalibrationData | null>(null);
@@ -24,23 +26,23 @@ export default function Calibration() {
     <>
       <div className="card">
         <h2>Real historical swing vs. what the model requires to flip a seat</h2>
-        <p className="muted" style={{ fontSize: 13, maxWidth: 720 }}>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={chartData} margin={{ top: 8, right: 24, bottom: 8, left: 0 }}>
+            <CartesianGrid stroke={CHART_GRID} />
+            <XAxis dataKey="metric" tick={{ fill: CHART_TICK, fontSize: 12 }} />
+            <YAxis unit="%" tick={{ fill: CHART_TICK, fontSize: 11 }} />
+            <Tooltip contentStyle={{ background: CHART_TOOLTIP_BG, border: `1px solid ${CHART_TOOLTIP_BORDER}`, fontSize: 12 }} />
+            <Legend wrapperStyle={{ fontSize: 12 }} />
+            <Bar dataKey="real 2014→2019 swing" fill="#2563eb" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="tipping point required" fill="#d97706" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+        <Disclosure summary="Methodology">
           {data.prior_year}→{data.current_year}: same real 543 seats, same delimitation. For the{" "}
           {data.n_matched_same_party} seats where the same party won both times, this compares how much the
           winner's real vote share actually moved against this project's <code>tipping_point</code> requirement —
           a real, checkable order-of-magnitude anchor, not a fit (see FINDINGS.md #38).
-        </p>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={chartData} margin={{ top: 8, right: 24, bottom: 8, left: 0 }}>
-            <CartesianGrid stroke="#232938" />
-            <XAxis dataKey="metric" tick={{ fill: "#8b93a7", fontSize: 12 }} />
-            <YAxis unit="%" tick={{ fill: "#8b93a7", fontSize: 11 }} />
-            <Tooltip contentStyle={{ background: "#171c28", border: "1px solid #232938", fontSize: 12 }} />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            <Bar dataKey="real 2014→2019 swing" fill="#5ec8e0" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="tipping point required" fill="#f2a65a" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+        </Disclosure>
       </div>
 
       <div className="grid cols-4">
@@ -63,14 +65,13 @@ export default function Calibration() {
       </div>
 
       <div className="card">
-        <h2>Reading this</h2>
-        <p className="muted" style={{ fontSize: 13 }}>
+        <Disclosure summary="Reading this">
           This does not calibrate any single campaign's persuasion contribution — a seat's real swing reflects
           national mood, local candidates and countless other factors, not one campaign's contact effort alone.
           What it does show: example campaign sequences elsewhere in this app (and in <code>examples/17</code>/
           <code>18</code>) can run an order of magnitude hotter than real historical swings — worth reading
           simulated switched-fraction numbers against this real distribution, not in isolation.
-        </p>
+        </Disclosure>
       </div>
     </>
   );

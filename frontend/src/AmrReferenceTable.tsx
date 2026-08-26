@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchAmrReferenceTable, type AmrReferenceTable as AmrTable } from "./api";
+import Disclosure from "./Disclosure";
 
 export default function AmrReferenceTable() {
   const [data, setData] = useState<AmrTable | null>(null);
@@ -20,7 +21,7 @@ export default function AmrReferenceTable() {
     <>
       <div className="card">
         <h2>The unified five-policy table — not on one axis, on purpose</h2>
-        <p className="muted" style={{ fontSize: 13, maxWidth: 780 }}>
+        <Disclosure summary="Why these numbers aren't directly comparable">
           FINDINGS.md#26 recorded this as open rather than forced: this repo's engine (planner, greedy, eci,
           lambda-weighted) and <code>abx_amr_simulator</code>'s own environment (their trained PPO checkpoint) are
           not on the same axis — different environments, different value semantics, different agent-count and
@@ -28,7 +29,7 @@ export default function AmrReferenceTable() {
           incomparability in view instead of a footnote. Read down each half separately; read across only for
           the qualitative shape. See FINDINGS.md#44 and{" "}
           <code>experiments/exp65_amr_five_policy_reference_table.py</code>.
-        </p>
+        </Disclosure>
       </div>
 
       <div className="card">

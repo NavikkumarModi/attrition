@@ -703,6 +703,23 @@ in snapshot; `GET /api/constituencies/{state}/{name}/shrug-rollup` and a
 matching `ConstituencyLab.tsx` card follow the same pattern the
 Assembly/Census rollups established.
 
+### Productization pass: the frontend redesigned to read like a product
+
+`FINDINGS.md` #58. This project's simulation depth outstripped its
+packaging — compared explicitly against poliwave.com's simpler but
+map-first, low-prose India election simulator, and asked to redesign the
+existing tabs in place rather than build a separate simplified surface.
+Three changes, no backend code touched: a light theme swapped in from
+one file (`index.css`'s shared CSS custom properties cascade to every
+component); the national map moved from second position to first on the
+Election tab's landing view; and dense "source & methodology" prose
+collapsed behind a new `<Disclosure>` component (closed `<details>` by
+default) across every tab — every word preserved, one click away, never
+deleted, applied only to methodology framing and never to primary
+result content. Verified live across every tab with no visual
+regressions; the backend's 346/346 tests are unaffected, as expected for
+a pure frontend change.
+
 ### Scale with concurrent calls
 
 `simulate_population_simultaneous` and `compare_population_to_baselines` take

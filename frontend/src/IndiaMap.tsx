@@ -2,16 +2,23 @@ import { useEffect, useMemo, useState } from "react";
 import { geoMercator, geoPath } from "d3-geo";
 import type { FeatureCollection, Geometry } from "geojson";
 import { fetchConstituenciesGeoJSON, type SeatFeature, type SeatSummary } from "./api";
+import {
+  CHART_TOOLTIP_BG, CHART_TOOLTIP_BORDER, MAP_STROKE_DEFAULT, MAP_STROKE_HOVER,
+} from "./theme";
+import Disclosure from "./Disclosure";
 
 const WIDTH = 720;
 const HEIGHT = 780;
 
+const BUCKET_COLORS = { none: "#c7cbd1", contestable: "#dc2626", competitive: "#d97706",
+                        close: "#eab308", safe: "#2563eb" };
+
 function colorFor(seat: SeatSummary) {
-  if (seat.tipping_point_pct === null) return "#333";
-  if (seat.tipping_point_pct < 2) return "#e0615e";
-  if (seat.tipping_point_pct < 8) return "#f2a65a";
-  if (seat.tipping_point_pct < 15) return "#e5d36a";
-  return "#5ec8e0";
+  if (seat.tipping_point_pct === null) return BUCKET_COLORS.none;
+  if (seat.tipping_point_pct < 2) return BUCKET_COLORS.contestable;
+  if (seat.tipping_point_pct < 8) return BUCKET_COLORS.competitive;
+  if (seat.tipping_point_pct < 15) return BUCKET_COLORS.close;
+  return BUCKET_COLORS.safe;
 }
 
 export default function IndiaMap({ onSelect }: { onSelect: (state: string, name: string) => void }) {
@@ -43,7 +50,7 @@ export default function IndiaMap({ onSelect }: { onSelect: (state: string, name:
         onMouseMove={(e) => setMouse({ x: e.clientX, y: e.clientY })}
         style={{ position: "relative" }}
       >
-        <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} style={{ width: "100%", height: "auto", maxHeight: 640 }}>
+        <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} style={{ width: "100%", height: "auto", maxHeight: 720 }}>
           {features.map((f) => {
             const d = path(f.geometry as unknown as Geometry);
             if (!d) return null;
@@ -54,8 +61,8 @@ export default function IndiaMap({ onSelect }: { onSelect: (state: string, name:
                 key={seat.id}
                 d={d}
                 fill={colorFor(seat)}
-                stroke={isHover ? "#e7ebf3" : "#0b0e14"}
-                strokeWidth={isHover ? 1.2 : 0.3}
+                stroke={isHover ? MAP_STROKE_HOVER : MAP_STROKE_DEFAULT}
+                strokeWidth={isHover ? 1.5 : 0.6}
                 opacity={isHover ? 1 : 0.92}
                 onMouseEnter={() => setHover(seat)}
                 onMouseLeave={() => setHover((h) => (h?.id === seat.id ? null : h))}
@@ -69,7 +76,8 @@ export default function IndiaMap({ onSelect }: { onSelect: (state: string, name:
           <div
             style={{
               position: "fixed", left: mouse.x + 14, top: mouse.y + 14,
-              background: "#171c28", border: "1px solid #232938", borderRadius: 8,
+              background: CHART_TOOLTIP_BG, border: `1px solid ${CHART_TOOLTIP_BORDER}`,
+              boxShadow: "0 4px 12px rgba(16,24,40,0.12)", borderRadius: 8,
               padding: "8px 12px", fontSize: 12, pointerEvents: "none", zIndex: 50,
               maxWidth: 240,
             }}
@@ -85,13 +93,17 @@ export default function IndiaMap({ onSelect }: { onSelect: (state: string, name:
         )}
       </div>
       <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
-        <span className="legend-dot" style={{ background: "#e0615e" }} /> &lt; 2%{"  "}
-        <span className="legend-dot" style={{ background: "#f2a65a", marginLeft: 10 }} /> &lt; 8%{"  "}
-        <span className="legend-dot" style={{ background: "#e5d36a", marginLeft: 10 }} /> &lt; 15%{"  "}
-        <span className="legend-dot" style={{ background: "#5ec8e0", marginLeft: 10 }} /> &ge; 15%
-        {"   ·   "}fraction of the electorate that would need to switch to flip the seat · click to open ·
-        boundaries: DataMeet (CC BY 4.0)
+        <span className="legend-dot" style={{ background: BUCKET_COLORS.contestable }} /> &lt; 2%{"  "}
+        <span className="legend-dot" style={{ background: BUCKET_COLORS.competitive, marginLeft: 10 }} /> &lt; 8%{"  "}
+        <span className="legend-dot" style={{ background: BUCKET_COLORS.close, marginLeft: 10 }} /> &lt; 15%{"  "}
+        <span className="legend-dot" style={{ background: BUCKET_COLORS.safe, marginLeft: 10 }} /> &ge; 15%
+        {"   ·   "}fraction of the electorate that would need to switch to flip the seat · click to open
       </p>
+      <Disclosure summary="Map source & methodology">
+        Boundaries: DataMeet (CC BY 4.0). Tipping point is the fraction of the total electorate that
+        would need to switch to flip the real 2019 result — a closed-form search over the real
+        reallocation rule, not a simulation.
+      </Disclosure>
     </div>
   );
 }
