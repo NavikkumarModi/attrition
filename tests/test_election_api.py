@@ -504,6 +504,26 @@ def test_campaign_map_reports_real_literacy_effect_flag():
     assert resp.json()["use_literacy_effect"] is True
 
 
+def test_campaign_map_poverty_rate_filter_restricts_scope():
+    # Same real rural SECC poverty-rate filter /api/strategist already
+    # supports, reused here via the shared _filtered_constituencies helper.
+    unfiltered = client.post("/api/campaign-map", json={"state": "Gujarat"}).json()
+    filtered = client.post("/api/campaign-map", json={
+        "state": "Gujarat", "min_poverty_rate_pct": 0.0, "max_poverty_rate_pct": 5.0,
+    }).json()
+    assert filtered["n_seats"] <= unfiltered["n_seats"]
+    assert filtered["filters"]["min_poverty_rate_pct"] == 0.0
+    assert filtered["filters"]["max_poverty_rate_pct"] == 5.0
+
+
+def test_campaign_map_incumbency_filter_restricts_scope():
+    resp = client.post("/api/campaign-map", json={"state": "Gujarat", "incumbency": "incumbent"})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["filters"]["incumbency"] == "incumbent"
+    assert data["n_seats"] > 0
+
+
 # ----------------------------------------------- assembly rollup
 def test_assembly_rollup_endpoint_returns_real_shape():
     resp = client.get("/api/constituencies/Gujarat/AHMEDABAD EAST/assembly-rollup")

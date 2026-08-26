@@ -656,6 +656,9 @@ class CampaignMapRequest(BaseModel):
     state: Optional[str] = None
     constituency_type: Optional[str] = None
     sub_region: Optional[str] = None
+    incumbency: str = "any"
+    min_poverty_rate_pct: Optional[float] = None
+    max_poverty_rate_pct: Optional[float] = None
     use_literacy_effect: bool = False
 
 
@@ -670,9 +673,10 @@ def campaign_map(req: CampaignMapRequest):
     map scale, exactly as `/api/simulate` applies it to one seat.
 
     Scope: `state` restricts to one real state/UT; `constituency_type`
-    (GEN/SC/ST) and `sub_region` are the same real, published covariates
-    `/api/strategist` already filters by (`_filtered_constituencies`,
-    reused here, not reimplemented). Omitting all three runs every real
+    (GEN/SC/ST), `sub_region`, `incumbency`, and `min/max_poverty_rate_pct`
+    (real rural SECC poverty rate, via SHRUG) are the same real, published
+    covariates `/api/strategist` already filters by (`_filtered_constituencies`,
+    reused here, not reimplemented). Omitting all filters runs every real
     seat nationwide.
 
     `n_voters` is capped at 5,000 (not the single-seat endpoint's much
@@ -682,7 +686,8 @@ def campaign_map(req: CampaignMapRequest):
     stated tradeoff for map-wide responsiveness, not silently
     unlimited."""
     n_voters = max(50, min(req.n_voters, 5000))
-    cs = _filtered_constituencies(req.constituency_type, req.sub_region, "any",
+    cs = _filtered_constituencies(req.constituency_type, req.sub_region, req.incumbency,
+                                  req.min_poverty_rate_pct, req.max_poverty_rate_pct,
                                   state=req.state)
     seats = []
     n_flipped = 0
@@ -701,7 +706,9 @@ def campaign_map(req: CampaignMapRequest):
         })
     return {"n_seats": len(seats), "n_flipped": n_flipped,
            "filters": {"state": req.state, "constituency_type": req.constituency_type,
-                      "sub_region": req.sub_region},
+                      "sub_region": req.sub_region, "incumbency": req.incumbency,
+                      "min_poverty_rate_pct": req.min_poverty_rate_pct,
+                      "max_poverty_rate_pct": req.max_poverty_rate_pct},
            "use_literacy_effect": req.use_literacy_effect, "seats": seats}
 
 

@@ -828,6 +828,21 @@ to the real-data colour. Verified live: nationwide at Moderate effort,
 66/543 seats flip in a genuine geographic pattern; scoped to Gujarat,
 exactly its 26 seats render and everything else greys out.
 
+### The map-wide simulator gets Strategist's full filter granularity
+
+`FINDINGS.md` #65. The campaign-map endpoint (#64) was reusing the same
+`_filtered_constituencies` helper Strategist filters through, but only
+threaded `state`/`constituency_type`/`sub_region` onto its request —
+Strategist's real rural-poverty-rate range and incumbency filters, and
+the literacy-effect toggle (already on the request model since #64),
+were never connected or exposed. Finished the wiring rather than adding
+anything new: `CampaignMapRequest` gained `incumbency` and
+`min/max_poverty_rate_pct`, and `Overview.tsx`'s Campaign simulator
+panel gained the exact same incumbency `<select>` and poverty-rate
+dual-range slider Strategist already uses. Verified live: Gujarat +
+"real winner was incumbent" + a 0–29% poverty range narrows 543 seats
+down to 66 in scope, 7 flipping — screenshotted, not assumed.
+
 ### Scale with concurrent calls
 
 `simulate_population_simultaneous` and `compare_population_to_baselines` take

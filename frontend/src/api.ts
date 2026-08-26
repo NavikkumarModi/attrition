@@ -215,7 +215,14 @@ export interface CampaignMapSeat {
 export interface CampaignMapResult {
   n_seats: number;
   n_flipped: number;
-  filters: { state?: string | null; constituency_type?: string | null; sub_region?: string | null };
+  filters: {
+    state?: string | null;
+    constituency_type?: string | null;
+    sub_region?: string | null;
+    incumbency?: string;
+    min_poverty_rate_pct?: number | null;
+    max_poverty_rate_pct?: number | null;
+  };
   use_literacy_effect: boolean;
   seats: CampaignMapSeat[];
 }
@@ -224,6 +231,9 @@ export interface CampaignMapOptions {
   state?: string | null;
   constituency_type?: string | null;
   sub_region?: string | null;
+  incumbency?: "any" | "incumbent" | "challenger";
+  min_poverty_rate_pct?: number | null;
+  max_poverty_rate_pct?: number | null;
   use_literacy_effect?: boolean;
 }
 export const fetchCampaignMap = (intensitySequence: number[], options: CampaignMapOptions = {}) =>

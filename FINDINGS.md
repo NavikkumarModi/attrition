@@ -3291,3 +3291,46 @@ screenshot, not assumed from the response JSON.
 that an unknown scope value returns an honest empty result, never a 500
 or a silently-wrong nationwide answer. Full suite: 372/372 passing
 (was 365).
+
+## 65. The map-wide campaign simulator gets the same filter granularity Strategist already had
+
+Asked directly, right after #64 shipped: why hadn't the map-wide
+simulator picked up the poverty-rate and incumbency filters Strategist
+(#62) already exposes, or the literacy-effect toggle Constituency Lab
+(#59) and Strategist both already expose? A fair question with an
+honest answer, not a design choice -- `POST /api/campaign-map` was
+built by reusing `_filtered_constituencies`, the same shared helper
+Strategist filters through, but only `state`, `constituency_type`, and
+`sub_region` were ever threaded onto its request model; the helper's
+`incumbency` and `min/max_poverty_rate_pct` parameters, and
+`simulate_level1_contact`'s own `use_literacy_effect` argument, were
+left unconnected on the map endpoint even though every one of them was
+already real and tested elsewhere in the same codebase.
+
+Fixed by finishing the wiring, not adding anything new. `CampaignMapRequest`
+gained `incumbency: str = "any"` and `min/max_poverty_rate_pct:
+Optional[float] = None`, passed straight into the existing
+`_filtered_constituencies(...)` call exactly as Strategist already
+does; `use_literacy_effect` (already on the request model since #64,
+just never reached from the frontend) is now threaded to a checkbox.
+`frontend/src/api.ts`'s `CampaignMapOptions`/`CampaignMapResult`
+extended to match; `Overview.tsx`'s Campaign simulator panel gained an
+incumbency `<select>` and a poverty-rate dual-range slider -- the exact
+same components Strategist already uses, copied rather than
+reinvented, so "Real winner was incumbent" and "0% to 60%" mean
+identically the same real, published covariate in both places.
+
+Verified live: nationwide at Moderate effort with no filters, 543 seats
+in scope; adding the poverty range 0-5% narrows scope and never
+increases the seat count (checked in a new test, not just visually);
+switching incumbency to "Real winner was incumbent" together with a
+0-29% poverty range and Gujarat scope narrowed the map to 7 of 66 seats
+flipping, screenshotted live, the sparse coloured cluster matching the
+narrowed count rather than silently falling back to the unfiltered map.
+A degenerate 0%-0% range correctly produced "0 of 0 seats" with the
+whole map greyed "out of scope," not an error or a silent no-op.
+
+2 new tests (`tests/test_election_api.py`): the poverty-rate filter
+narrows or holds scope size relative to unfiltered, and the incumbency
+filter round-trips through the response's `filters` object. Full
+suite: 374/374 passing (was 372).

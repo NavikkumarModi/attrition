@@ -25,6 +25,11 @@ export default function Overview({ onSelect }: { onSelect: (state: string, name:
   const [simScope, setSimScope] = useState<"nation" | "state" | "type">("nation");
   const [simState, setSimState] = useState("");
   const [simType, setSimType] = useState("GEN");
+  const [simIncumbency, setSimIncumbency] = useState<"any" | "incumbent" | "challenger">("any");
+  const [simPovertyOn, setSimPovertyOn] = useState(false);
+  const [simMinPoverty, setSimMinPoverty] = useState(0);
+  const [simMaxPoverty, setSimMaxPoverty] = useState(60);
+  const [simUseLiteracy, setSimUseLiteracy] = useState(false);
   const [simResult, setSimResult] = useState<CampaignMapResult | null>(null);
   const [simLoading, setSimLoading] = useState(false);
   const [simError, setSimError] = useState<string | null>(null);
@@ -55,13 +60,18 @@ export default function Overview({ onSelect }: { onSelect: (state: string, name:
       fetchCampaignMap(INTENSITY_PRESETS[simEffort], {
         state: simScope === "state" && simState ? simState : null,
         constituency_type: simScope === "type" ? simType : null,
+        incumbency: simIncumbency,
+        min_poverty_rate_pct: simPovertyOn ? simMinPoverty : null,
+        max_poverty_rate_pct: simPovertyOn ? simMaxPoverty : null,
+        use_literacy_effect: simUseLiteracy,
       })
         .then(setSimResult)
         .catch((e) => setSimError(String(e)))
         .finally(() => setSimLoading(false));
     }, 400);
     return () => clearTimeout(t);
-  }, [simMode, simEffort, simScope, simState, simType]);
+  }, [simMode, simEffort, simScope, simState, simType, simIncumbency,
+      simPovertyOn, simMinPoverty, simMaxPoverty, simUseLiteracy]);
 
   const filtered = useMemo(() => {
     if (!seats) return [];
@@ -127,6 +137,37 @@ export default function Overview({ onSelect }: { onSelect: (state: string, name:
                 )}
               </div>
             </div>
+            <div className="grid cols-2" style={{ marginTop: 12 }}>
+              <div>
+                <label className="muted" style={{ fontSize: 12, display: "block", marginBottom: 6 }}>Incumbency</label>
+                <select value={simIncumbency} onChange={(e) => setSimIncumbency(e.target.value as typeof simIncumbency)}>
+                  <option value="any">Any incumbency</option>
+                  <option value="incumbent">Real winner was incumbent</option>
+                  <option value="challenger">Real winner was a challenger</option>
+                </select>
+              </div>
+              <div>
+                <label className="muted" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                  <input type="checkbox" checked={simUseLiteracy} onChange={(e) => setSimUseLiteracy(e.target.checked)} />
+                  Literacy-adjusted persuasion (Zaller 1992 RAS model)
+                </label>
+              </div>
+            </div>
+            <label className="muted" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6, marginTop: 12 }}>
+              <input type="checkbox" checked={simPovertyOn} onChange={(e) => setSimPovertyOn(e.target.checked)} />
+              Filter by real rural poverty rate (2012 SECC)
+            </label>
+            {simPovertyOn && (
+              <div className="round-slider-row" style={{ marginTop: 8 }}>
+                <span className="n">{simMinPoverty}%</span>
+                <input type="range" min={0} max={60} step={1} value={simMinPoverty}
+                      onChange={(e) => setSimMinPoverty(Math.min(Number(e.target.value), simMaxPoverty))} />
+                <span className="v">to</span>
+                <input type="range" min={0} max={60} step={1} value={simMaxPoverty}
+                      onChange={(e) => setSimMaxPoverty(Math.max(Number(e.target.value), simMinPoverty))} />
+                <span className="v">{simMaxPoverty}%</span>
+              </div>
+            )}
             <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
               {simLoading
                 ? "Updating…"
