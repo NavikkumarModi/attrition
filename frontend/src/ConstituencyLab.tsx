@@ -14,6 +14,17 @@ import { CHART_GRID, CHART_TICK, CHART_TOOLTIP_BG, CHART_TOOLTIP_BORDER } from "
 
 const DEFAULT_SEQUENCE = [0.15, 0.2, 0.25, 0.3, 0.35];
 
+// Simple-mode intensity presets -- competitor research (270toWin,
+// poliwave) converged on the same lesson: a non-technical user gets ONE
+// plain choice, not five per-round sliders. These map to the exact same
+// real intensity_sequence mechanism Advanced mode exposes directly --
+// no new simulation logic, just fewer numbers to look at by default.
+const INTENSITY_PRESETS: Record<string, number[]> = {
+  Light: [0.1, 0.1, 0.15, 0.15, 0.15],
+  Moderate: DEFAULT_SEQUENCE,
+  Heavy: [0.3, 0.4, 0.5, 0.6, 0.7],
+};
+
 export default function ConstituencyLab({
   initialState, initialName,
 }: { initialState: string | null; initialName: string | null }) {
@@ -37,6 +48,7 @@ export default function ConstituencyLab({
   const [marginOverride, setMarginOverride] = useState(5);
   const [useDistrictGranularity, setUseDistrictGranularity] = useState(false);
   const [useLiteracyEffect, setUseLiteracyEffect] = useState(false);
+  const [advancedMode, setAdvancedMode] = useState(false);
 
   const [assemblyRollup, setAssemblyRollup] = useState<AssemblyRollupResponse | null>(null);
   const [assemblyCoverage, setAssemblyCoverage] = useState<AssemblyRollupCoverage | null>(null);
@@ -124,6 +136,13 @@ export default function ConstituencyLab({
 
   return (
     <>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+        <nav className="tabs" style={{ marginBottom: 0 }}>
+          <button className={!advancedMode ? "active" : ""} onClick={() => setAdvancedMode(false)}>Simple</button>
+          <button className={advancedMode ? "active" : ""} onClick={() => setAdvancedMode(true)}>Advanced</button>
+        </nav>
+      </div>
+
       <div className="card">
         <h2>Run a campaign against one real seat</h2>
         <Disclosure summary="Why are the numbers so small?">
@@ -157,25 +176,47 @@ export default function ConstituencyLab({
             )}
           </div>
           <div>
-            <label className="muted" style={{ fontSize: 12 }}>n_voters ({nVoters.toLocaleString()})</label>
-            <input type="range" min={500} max={10000} step={500} value={Math.min(nVoters, 10000)}
-                  onChange={(e) => setNVoters(Number(e.target.value))} />
-            <div className="search-row" style={{ marginTop: 6 }}>
-              {[10000, 100000, 500000, 1000000].map((n) => (
-                <button key={n} className="run-btn" style={{ padding: "4px 10px", fontSize: 11 }}
-                       onClick={() => setNVoters(n)}>
-                  {n.toLocaleString()}
-                </button>
-              ))}
-            </div>
-            <p className="muted" style={{ fontSize: 11, marginTop: 4 }}>
-              Real, benchmarked capacity (FINDINGS.md #52): up to 1,000,000 voters (~0.5s) without network
-              propagation on; up to 500,000 with it on (graph construction dominates that path's cost).
-            </p>
-            <label className="muted" style={{ fontSize: 12, display: "block", marginTop: 10 }}>
-              Contact intensity by round ({sequence.length} round{sequence.length !== 1 ? "s" : ""})
+            {advancedMode ? (
+              <>
+                <label className="muted" style={{ fontSize: 12 }}>n_voters ({nVoters.toLocaleString()})</label>
+                <input type="range" min={500} max={10000} step={500} value={Math.min(nVoters, 10000)}
+                      onChange={(e) => setNVoters(Number(e.target.value))} />
+                <div className="search-row" style={{ marginTop: 6 }}>
+                  {[10000, 100000, 500000, 1000000].map((n) => (
+                    <button key={n} className="run-btn" style={{ padding: "4px 10px", fontSize: 11 }}
+                           onClick={() => setNVoters(n)}>
+                      {n.toLocaleString()}
+                    </button>
+                  ))}
+                </div>
+                <p className="muted" style={{ fontSize: 11, marginTop: 4 }}>
+                  Real, benchmarked capacity (FINDINGS.md #52): up to 1,000,000 voters (~0.5s) without network
+                  propagation on; up to 500,000 with it on (graph construction dominates that path's cost).
+                </p>
+              </>
+            ) : null}
+
+            <label className="muted" style={{ fontSize: 12, display: "block", marginTop: advancedMode ? 10 : 0 }}>
+              Campaign effort {advancedMode ? `(${sequence.length} round${sequence.length !== 1 ? "s" : ""})` : ""}
             </label>
-            {sequence.map((v, i) => (
+            {!advancedMode && (
+              <div className="search-row" style={{ marginTop: 6 }}>
+                {Object.entries(INTENSITY_PRESETS).map(([label, preset]) => (
+                  <button
+                    key={label}
+                    className="run-btn"
+                    style={{
+                      padding: "8px 16px",
+                      opacity: JSON.stringify(sequence) === JSON.stringify(preset) ? 1 : 0.55,
+                    }}
+                    onClick={() => setSequence(preset)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {advancedMode && sequence.map((v, i) => (
               <div className="round-slider-row" key={i}>
                 <span className="n">round {i + 1}</span>
                 <input type="range" min={0} max={1} step={0.05} value={v}
@@ -191,10 +232,12 @@ export default function ConstituencyLab({
                 </button>
               </div>
             ))}
-            <button className="run-btn" style={{ padding: "4px 10px", fontSize: 12, marginTop: 4 }}
-                   onClick={addRound}>
-              + add round
-            </button>
+            {advancedMode && (
+              <button className="run-btn" style={{ padding: "4px 10px", fontSize: 12, marginTop: 4 }}
+                     onClick={addRound}>
+                + add round
+              </button>
+            )}
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
@@ -208,6 +251,8 @@ export default function ConstituencyLab({
         {error && <p className="error-box" style={{ marginTop: 12 }}>{error}</p>}
       </div>
 
+      {advancedMode && (
+      <>
       <div className="card">
         <h2>Real state Assembly rollup for this seat</h2>
         <Disclosure summary="Source & methodology">
@@ -386,7 +431,10 @@ export default function ConstituencyLab({
           </p>
         )}
       </div>
+      </>
+      )}
 
+      {advancedMode && (
       <div className="card">
         <h2>Granular controls — real, already-causal factors only</h2>
         <Disclosure summary="What's real here, and what isn't">
@@ -500,8 +548,9 @@ export default function ConstituencyLab({
           </div>
         </div>
       </div>
+      )}
 
-      {result && (
+      {result && advancedMode && (
         <div className="card">
           <h2>Agents in this run</h2>
           <div className="grid cols-4">
@@ -574,7 +623,8 @@ export default function ConstituencyLab({
       )}
 
       {result && (
-        <div className="grid cols-2">
+        <div className={advancedMode ? "grid cols-2" : ""}>
+          {advancedMode && (
           <div className="card">
             <h2>Level 1: switched fraction by round</h2>
             {result.level1_switched_fraction_by_round ? (
@@ -603,24 +653,47 @@ export default function ConstituencyLab({
               </p>
             )}
           </div>
+          )}
 
           <div className="card">
-            <h2>Recomputed outcome</h2>
+            <h2>{advancedMode ? "Recomputed outcome" : "Result"}</h2>
             <div style={{ marginBottom: 12 }}>
               <span className={`pill ${result.outcome.flipped ? "flip" : "hold"}`}>
-                {result.outcome.flipped ? "SEAT FLIPS" : "SEAT HOLDS"}
+                {result.outcome.flipped ? "SEAT LIKELY TO FLIP" : "SEAT LIKELY TO HOLD"}
               </span>
             </div>
             <p>
               <strong>{result.outcome.winner}</strong> wins with {result.outcome.winner_share_pct.toFixed(2)}%,
               margin {result.outcome.margin_pct.toFixed(2)}pp over {result.outcome.runner_up}.
             </p>
-            <p className="muted" style={{ fontSize: 13 }}>
-              Final switched fraction {(result.level1_final_switched_fraction * 100).toFixed(1)}% vs.
-              a tipping point of {result.seat.tipping_point_pct?.toFixed(1)}%.
-            </p>
+            {!advancedMode && result.seat.tipping_point_pct != null && (
+              <div style={{ margin: "14px 0" }}>
+                <div style={{
+                  height: 10, borderRadius: 6, background: "var(--panel-2)",
+                  overflow: "hidden", border: "1px solid var(--border)",
+                }}>
+                  <div style={{
+                    height: "100%",
+                    width: `${Math.min(100, (result.level1_final_switched_fraction * 100
+                      / result.seat.tipping_point_pct) * 100)}%`,
+                    background: result.outcome.flipped ? "#dc2626" : "#2563eb",
+                    borderRadius: 6,
+                  }} />
+                </div>
+                <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+                  Campaign moved {(result.level1_final_switched_fraction * 100).toFixed(2)}% of voters — this seat
+                  needs {result.seat.tipping_point_pct.toFixed(1)}% to flip.
+                </p>
+              </div>
+            )}
+            {advancedMode && (
+              <p className="muted" style={{ fontSize: 13 }}>
+                Final switched fraction {(result.level1_final_switched_fraction * 100).toFixed(1)}% vs.
+                a tipping point of {result.seat.tipping_point_pct?.toFixed(1)}%.
+              </p>
+            )}
 
-            {result.network && (
+            {advancedMode && result.network && (
               <>
                 <h2 style={{ marginTop: 18 }}>Voter-to-voter network effect</h2>
                 <p className="muted" style={{ fontSize: 13 }}>
@@ -636,7 +709,7 @@ export default function ConstituencyLab({
               </>
             )}
 
-            {result.flip_probability && (
+            {advancedMode && result.flip_probability && (
               <>
                 <h2 style={{ marginTop: 18 }}>Flip probability ({result.flip_probability.n_seeds} seeds)</h2>
                 <div className="grid cols-2">
@@ -655,7 +728,7 @@ export default function ConstituencyLab({
               </>
             )}
 
-            {result.level2_decisions && (
+            {advancedMode && result.level2_decisions && (
               <>
                 <h2 style={{ marginTop: 18 }}>Level 2: persona decisions</h2>
                 <table className="seat-table">

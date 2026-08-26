@@ -792,6 +792,24 @@ wiring it in as a cost driver here would repeat that exact mistake.
 Wired into `Strategist.tsx` with live, debounced updates; verified the
 indicator-driven toggle visibly changes which seats get targeted.
 
+### A genuine Simple mode, grounded in two competitors
+
+`FINDINGS.md` #63. Two real competitors checked before designing a fix:
+270toWin has zero settings for its core simulator (click a state, watch
+one score bar); poliwave hides its full control surface behind a
+dismissible sheet. Both converge on the same lesson — a non-technical
+user's default view gets one action and one result, not a settings
+panel. New `advancedMode` toggle in `ConstituencyLab.tsx` (Simple is the
+default): the 5-round contact-intensity sliders become three preset
+buttons (Light/Moderate/Heavy, mapped to the same real
+`intensity_sequence` the sliders always used); ten stacked cards become
+two; "Recomputed outcome" becomes a plain-language "Result" with a
+simple progress bar instead of a line chart. Advanced mode restores
+every control and card exactly as before — same real mechanism
+underneath both. Verified live: Simple mode's default view is genuinely
+two cards, and switching effort presets changes the real simulated
+result (0.38% → 1.41% switched), not a static label.
+
 ### Scale with concurrent calls
 
 `simulate_population_simultaneous` and `compare_population_to_baselines` take

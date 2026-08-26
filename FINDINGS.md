@@ -3161,3 +3161,71 @@ its default 0-60% range.
 including a regression guard that the literacy-adjusted and unadjusted
 allocations pick genuinely different real seat sets, not just different
 numbers on the same seats. Full suite: 365/365 passing (was 355).
+
+## 63. A genuine Simple mode, grounded in two competitors, not a guess
+
+The complaint, restated precisely: even after #58's redesign, #60's real
+map, and #61-62's live-updating controls, Constituency Lab was still a
+form a non-technical user would not know how to read -- 15+ controls,
+10 stacked cards, a 5-slider "contact intensity" input, and a wall of
+technical jargon (`n_voters`, "district granularity", "flip-probability
+sweep") visible by default. Asked explicitly to look at competitors
+before designing a fix, rather than guessing again.
+
+**Two competitors checked live, not from memory:** 270toWin (US
+election forecaster) has, by design, ZERO settings for its core
+simulator -- one instruction sentence ("Click states... to create your
+own forecast"), a single always-visible score bar, and nothing else;
+poliwave (the earlier session's reference point) hides its full control
+surface behind a dismissible bottom sheet, on by default only enough to
+click a region and see a result. Both converge on the same lesson,
+independently: a non-technical user's DEFAULT view gets exactly one
+action and one big result, never a settings panel to read first.
+
+**A real Simple/Advanced mode in `ConstituencyLab.tsx`, not just hidden
+prose (that was already done in #58) -- this time hiding CONTROLS and
+RESULT DENSITY, the actual complexity source.** New `advancedMode`
+state (default `false` -- Simple is the default a new visitor sees, not
+an opt-in). In Simple mode:
+
+- **One decision instead of five:** `n_voters`'s manual slider/presets
+  and the 5-round contact-intensity sliders are replaced by three
+  preset buttons -- Light/Moderate/Heavy -- mapped to the SAME real
+  `intensity_sequence` arrays Advanced mode exposes directly (no new
+  simulation mechanism; `n_voters` silently stays at its existing 3,000
+  default). Advanced mode keeps every slider exactly as before.
+- **Ten cards down to two:** the Assembly/Census/SHRUG rollup cards, the
+  entire "Granular controls" card (network propagation, flip-
+  probability sweep, incumbency/margin override, district granularity,
+  literacy effect), the "Agents in this run" stat grid, the Level-1
+  line chart, network-effect prose, and the Level-2 persona table are
+  all Advanced-only. Simple mode shows exactly two cards: pick a seat,
+  see the result.
+- **A plain-language result, not a technical readout:** "Recomputed
+  outcome" becomes "Result" in Simple mode -- same real pill
+  (`SEAT LIKELY TO HOLD`/`FLIP`, reworded from the terser `SEAT HOLDS`/
+  `FLIPS`), the same real winner/margin sentence, plus a new simple
+  horizontal progress bar (switched fraction as a real fraction of the
+  seat's real tipping point, capped at 100%) and one plain sentence
+  ("Campaign moved X% of voters — this seat needs Y% to flip") replacing
+  the line chart, axis labels, and reference-line legend a non-technical
+  reader has no context for.
+
+**A real bug caught and fixed during this pass, not shipped:** wrapping
+three adjacent sibling cards (Assembly/Census/SHRUG) in a single
+`{advancedMode && (...)}` conditional without a `<>...</>` fragment is
+invalid JSX ("Adjacent JSX elements must be wrapped in an enclosing
+tag") -- caught immediately by `vite`'s dev-server transform error (not
+by `tsc --noEmit`, which stayed silent throughout; the two tools check
+genuinely different things), fixed before verifying live, not left for
+a user to hit.
+
+Verified live in a fresh browser tab: Simple mode's default view is
+exactly two cards (pick a seat, see "SEAT LIKELY TO HOLD" with a
+progress bar); clicking "Heavy" moved the real switched fraction from
+0.38% to 1.41% (a real, different simulation result, not a static
+label); toggling to Advanced restores every control and card exactly as
+before, byte-for-byte the same mechanism underneath both modes. A full
+production build (`npm run build`) also verified clean after the JSX
+fix. No backend change; full suite (365/365) unaffected, checked as a
+sanity check only.
