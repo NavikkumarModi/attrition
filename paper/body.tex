@@ -1018,9 +1018,8 @@ across ten trials. Two further candidate bounds on the disagreement count
 itself, $N_{\mathrm{exh}}$ and the pairwise count $\binom{n}{2}$, both stay
 empirically bounded but neither shows unambiguous general structure.
 Forcing a constant from either candidate would risk fitting the tested
-instances rather than proving a real relationship, so the general bound is
-left open rather than manufactured, and these negative results are released
-in the open-source testbed as a concrete starting point.
+instances rather than establishing a real relationship, so the general
+bound remains open.
 \end{remark}
 
 \section{Corrections}
@@ -1399,11 +1398,10 @@ surprise.} Constant $\kappa$ gives greedy exact optimality even under correlated
 cluster shocks, verified to full floating-point precision ($0.00\times10^{0}$ to
 ten decimal places) up to $q=0.7$, including an adversarial construction with $e$
 varying sixfold within a cluster while $\kappa$ is held exactly constant. We state
-this as a \emph{conjecture} rather than a theorem: a proof attempt was made and
-abandoned rather than forced through, since the original burden-invariance
-argument nests awkwardly once a shock's effect on other cluster members depends on
-which arm was just removed. The empirical result is precise; the general proof is
-open.
+this as a \emph{conjecture} rather than a theorem: the burden-invariance
+argument used for independent destruction does not extend cleanly, since a
+shock's effect on other cluster members depends on which arm was just
+removed. The empirical result is precise; the general proof is open.
 
 \paragraph{ECI does not survive, and this is the substantive limitation.} At high
 correlated-shock rates ECI is worse than greedy in the majority of instances
@@ -1438,14 +1436,11 @@ At the same scale as above, SECI matches or beats greedy at \emph{every} $q$
 tested, confirmed across 30 seeds, staying within $0.01\%$--$1.53\%$ of the true
 optimum throughout, where plain ECI's gap grows to roughly $11\%$ at $q=1$.
 
-\paragraph{A rollout cross-check, and a scale-fairness diagnosis.} An initial
-Monte Carlo rollout used as an independent scale-level reference failed a
-basic sanity check and was traced to an implementation bug rather than
-reported; a subsequent scale comparison at $n=40$ initially appeared to show
-SECI trailing greedy, which turned out to be an unfair comparison (holding
-$\delta$ fixed while $n$ grew) rather than a real shortfall. Both episodes are
-given in full, since the debugging process is itself informative, in
-Appendix~F.
+\paragraph{A rollout cross-check, and a scale-fairness diagnosis.} A Monte Carlo
+rollout used as an independent scale-level reference fails a basic sanity check
+and is excluded rather than reported. At $n=40$, SECI's apparent shortfall
+against greedy is an artifact of holding $\delta$ fixed while $n$ grows, not a
+real one. Full diagnostics for both are given in Appendix~F.
 
 \paragraph{Empirical finding (not a theorem).}
 The paper's central practical recommendation --- specify $\kappa$, do not attempt
@@ -1456,9 +1451,8 @@ empirical result rather than a proven theorem: its dampening term was found by
 testing candidates against exact ground truth, not derived and proven from the
 Bellman structure the way ECI itself was. A first-principles alternative --- an
 effective-horizon correction based on an arm's expected survival time under
-shock risk --- was attempted and performed \emph{worse}, which is itself
-informative: the more theoretically motivated derivation was wrong, and testing
-against exact DP caught it before it became a claimed result.
+shock risk --- performs \emph{worse} against exact DP, despite being the more
+theoretically motivated derivation.
 
 \section{Limitations}
 
