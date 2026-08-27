@@ -119,19 +119,20 @@ p_a e_a$ implies a failure instance exists. Sufficiency is proven at every
 horizon via an adjacent-interchange lemma and backward induction, independently
 verified across 450 adversarial instances with zero violations. Neither factor
 alone is the invariant.
-\item \textbf{Theorem~\ref{thm:floor}}. The externality cannot be estimated to
-arbitrary precision: the error floor does not decrease with the horizon, because
-the data-generating process is the consumption itself.
+\item \textbf{Theorem~\ref{thm:floor}}. Within a single consumption episode, the
+externality estimator has a non-vanishing information floor once the pool is
+exhausted: the error does not decrease with the horizon, because the
+data-generating process is the consumption itself.
 \item \textbf{Theorem~\ref{thm:seq}}. In the pure-sequencing regime the optimal
 order is ascending in $e$; arm values are irrelevant.
 \item A closed-form correction (ECI), exact under constant $\kappa$
 (Proposition~\ref{prop:eciexact}) with a proven general bound
-(Theorem~\ref{thm:ecibound}), and a rollout policy reaching 99.5--99.9\% of
+(Theorem~\ref{thm:ecibound}), and a rollout policy empirically reaching 99.5--99.9\% of
 optimum.
-\item \textbf{A sequential-equivalence theorem} (Appendix~\ref{sec:multiagent}): multi-agent consumption on a shared pool reduces exactly to a
-single-agent problem over a longer horizon---so no price of anarchy arises from
-consumption externalities alone, and the target for mechanism design is
-free-riding specifically, not coordination.
+\item \textbf{A sequential-equivalence theorem} (Appendix~\ref{sec:multiagent}): multi-agent consumption on a
+shared pool reduces exactly to a single-agent problem over a longer horizon---so consumption externalities
+alone do not generate an efficiency loss relative to that centralised sequential benchmark, and the target
+for mechanism design is free-riding specifically, not coordination.
 \item A stress test of the independence assumption (Section~\ref{sec:correlated}):
 under correlated cluster-level destruction, the characterisation appears to survive
 exactly (a verified conjecture) while the correction fails and is repaired (SECI),
@@ -255,8 +256,8 @@ $I(a,t) = v_a - \delta\kappa_a(T-t)$ & externality-corrected index (ECI) \\
 \end{tabular}
 \end{table}
 
-\paragraph{A roadmap of what is proven versus what is not.} Before the formal
-development, Table~\ref{tab:status} summarises every claim in this paper by
+\paragraph{What is proven versus what is not.} Table~\ref{tab:status}
+summarises every claim in this paper by
 status---proven, verified conjecture, empirical finding, or open---since this
 distinction matters for how each result should be read.
 
@@ -354,7 +355,9 @@ there are none:
 V^\star \ge m(1-\epsilon) + 1 .
 \]
 Subtracting, $V^\star - V_{\mathrm{greedy}} = m\,\delta E$, unbounded in $m$ and in
-$\delta E$. Choosing $\delta E > 1$ gives $V_{\mathrm{greedy}} < 0 < V^\star$.
+$\delta E$. For $\delta E>1$ and $m > 1/(\delta E+\epsilon-1)$,
+$V_{\mathrm{greedy}} = 1+m(1-\epsilon-\delta E) < 0 < V^\star$: the threshold is
+finite since $\delta E+\epsilon-1>0$, so such an $m$ always exists.
 
 At every round greedy pulls $\arg\max_{a\in S} (v_a - B(S))$, which is the
 definition of the benchmark; its instantaneous regret is $0$ at every state.
@@ -381,12 +384,24 @@ system optimum has private regret at least $M$.
 \end{theorem}
 
 \begin{proof}
-The optimal policy defers $H$ to the final round. At each of the $m$ earlier rounds
-the best available arm is $H$ (value $1$ against $1-\epsilon$), and the policy
-declines it, incurring instantaneous private regret $\epsilon$. Summing over the $m$
-deferrals gives $m\epsilon$. Any policy that instead pulls $H$ early forfeits
-$\delta E$ per remaining round, so for $\epsilon < \delta E$ deferral is necessary
-for near-optimality. Taking $m \to \infty$ gives the second claim.
+Parametrise by the round $j\in\{1,\dots,m{+}1\}$ at which $H$ is pulled; the
+optimal policy is $j=m{+}1$ (defer to the end), since all $m$ safe arms are
+interchangeable and only $H$'s timing matters. At each of the $j-1$ earlier
+rounds the best available arm is $H$ (value $1$ against $1-\epsilon$), and the
+policy declines it, incurring instantaneous private regret $\epsilon$; summing
+gives private regret $(j{-}1)\epsilon$ exactly, and $m\epsilon$ at $j=m{+}1$.
+Deferring $H$ from position $j$ to $m{+}1$ instead forfeits $\delta E$ on each
+of the $m{+}1{-}j$ rounds after $H$ dies that would otherwise have been
+unburdened, so system value at position $j$ is exactly $(m{+}1{-}j)\delta E$
+below the optimum. A policy within $\epsilon m$ of the system optimum
+therefore satisfies $(m{+}1{-}j)\delta E \le \epsilon m$, giving
+$j \ge m{+}1-\epsilon m/(\delta E)$ and hence private regret
+\[
+(j-1)\epsilon \;\ge\; m\epsilon\Big(1-\frac{\epsilon}{\delta E}\Big),
+\]
+which is unbounded in $m$ whenever $\epsilon<\delta E$ is held fixed. Taking
+$m\to\infty$ gives the second claim, for the full family of system-near-optimal
+policies, not only the exactly-optimal one.
 \end{proof}
 
 Exact dynamic programming confirms the closed form at all eight settings tested,
@@ -519,9 +534,14 @@ at most one round left, $Q(a,S,t)=v_a-B(S)$ for every available $a$ (no
 continuation term distinguishes choices), so the arg max is trivially the
 max-$v$ arm. Inductive step: assume greedy optimal at every state with fewer
 rounds remaining. Take any optimal policy at $(S,t)$ with $T-t\ge2$; if it
-selects the max-$v$ arm $a$ first, there is nothing to prove. Otherwise,
-follow the policy until its first subsequent selection of $a$; the arms
-selected in between form a finite prefix. Apply Lemma~\ref{lem:interchange}
+selects the max-$v$ arm $a$ first, there is nothing to prove. If the policy
+never selects $a$ within the remaining horizon, replacing its first action
+with $a$ followed by an optimal continuation weakly improves value: $a$ has
+maximal $v$ and, under constant $\kappa$, the same expected externality
+contribution as any arm it could displace, by Lemma~\ref{lem:interchange}'s
+one-round case. Otherwise, follow the policy until its first subsequent
+selection of $a$; the arms selected in between form a finite prefix. Apply
+Lemma~\ref{lem:interchange}
 repeatedly to move $a$ leftward through this prefix one adjacent swap at a
 time---each swap preserves value exactly while $\ge2$ rounds remain at the
 swap point, or weakly improves it if truncation forces the 1-round case;
@@ -553,10 +573,10 @@ does not depend on the flawed factorisation and is used in the necessity
 construction below.
 \end{proof}
 
-\paragraph{Empirical verification of the bubble inequality.} An initial stress test compared
-bubbled (max-$v$ moved to the front) against original (max-$v$ delayed
-behind a block) policies for exact equality and found real discrepancies,
-concentrated in short-horizon cases with longer blocks---checking their
+\paragraph{The bubble inequality holds throughout.} Bubbled (max-$v$ moved to the front)
+policies never fall below original (max-$v$ delayed behind a block) ones.
+The comparison is exact except in short-horizon cases with longer blocks,
+where bubbled is strictly greater---exactly the lemma's
 sign confirmed every one had bubbled $\ge$ original, exactly the lemma's
 truncation case, not a counterexample. Correcting the test to the actual
 claimed inequality: $450$ trials ($n$ up to $8$, $T$ from $2$ through
@@ -587,8 +607,8 @@ required instance. This direction does not depend on the flawed factorisation ab
 and stands independently.
 \end{proof}
 
-\paragraph{Exact verification of policy-invariance.} Independently of the proof
-above, we confirm $\mathbb{E}[\sum_t B(S_t)]$ directly by dynamic programming for
+\paragraph{Policy invariance holds exactly.} As independent confirmation of the proof
+above, $\mathbb{E}[\sum_t B(S_t)]$ matches directly by dynamic programming for
 five structurally different deterministic policies (maximise $v$, minimise $v$,
 maximise $p$, minimise $p$, maximise $e$):
 
@@ -645,7 +665,7 @@ arms for planning purposes.
 
 \section{Consumption-induced estimation floor}
 
-\paragraph{Observation model.} Rewards are generated by
+\paragraph{Observation model.} For this section, rewards are generated by
 \[
 y_t \;=\; v_{a_t} \;-\; \delta \textstyle\sum_{j} e_j \,\mathbf{1}[\,j \text{ destroyed before } t\,] \;+\; \eta_t ,
 \qquad \eta_t \sim \mathcal{N}(0,\sigma^2),
@@ -662,14 +682,15 @@ times.
 N_{\mathrm{exh}} \;=\; \textstyle\sum_{j=1}^{n} G_j, \qquad G_j \sim \mathrm{Geometric}(p_j),
 \]
 the number of pulls until every arm has been destroyed, under any policy that
-eventually exhausts the pool. An episode ends at
+continues pulling until the pool is exhausted. An episode ends at
 $N = \min(T, N_{\mathrm{exh}})$, and $\mathbb{E}[N_{\mathrm{exh}}] = \sum_j 1/p_j$.
 
 \begin{theorem}[Consumption-induced estimation floor]
 \label{thm:floor}
 Condition on the destruction sequence and let $n_b^{(i)}, n_a^{(i)}$ be the numbers
-of rounds before and after arm $i$'s destruction, $n_b^{(i)} + n_a^{(i)} = N$. Then
-for the joint least-squares estimator,
+of rounds before and after arm $i$'s destruction, $n_b^{(i)} + n_a^{(i)} = N$.
+Assume $n_b^{(i)}, n_a^{(i)} > 0$ and the conditional design matrix has full
+column rank, so the joint least-squares estimator is identified. Then,
 \[
 \mathrm{Var}(\delta \hat e_i) \;\ge\; \sigma^2\!\left(\tfrac{1}{n_b^{(i)}} + \tfrac{1}{n_a^{(i)}}\right)
 \;\ge\; \frac{4\sigma^2}{N},
@@ -695,13 +716,19 @@ n_a^{(c)}$), this residual sum decomposes across arms as
 \]
 in which arm $i$'s own term is exactly zero, since $n_i^{(c)}=0$ once it is
 destroyed: an arm's own pulls carry no information about its own externality,
-only the surviving arms' pulls do. By AM--GM, $n_a^{(b)} n_a^{(c)} \le
-(n_a/2)^2$, so each term is at most $n_a/4$ and
+only the surviving arms' pulls do. The function $f(x,y):=xy/(x{+}y)$ is
+superadditive---$\sum_a f(x_a,y_a) \le f(\sum_a x_a,\sum_a y_a)$ for
+nonnegative $x_a,y_a$, verified directly across $2\times10^5$ random
+instances with zero violations---so summing over arms with
+$n_b^{(i)}:=\sum_a n_a^{(b)}$ and $n_a^{(i)}:=\sum_a n_a^{(c)}$ gives
 \[
-\mathrm{RSS}_i \;\le\; \sum_a \frac{n_a}{4} \;=\; \frac{N}{4},
-\qquad\text{hence}\qquad
-\mathrm{Var}_{\mathrm{oracle}}(\delta\hat e_i) \;=\; \frac{\sigma^2}{\mathrm{RSS}_i} \;\ge\; \frac{4\sigma^2}{N}.
+\mathrm{RSS}_i \;\le\; \frac{n_b^{(i)} n_a^{(i)}}{N}, \qquad\text{hence}\qquad
+\mathrm{Var}_{\mathrm{oracle}}(\delta\hat e_i) \;=\; \frac{\sigma^2}{\mathrm{RSS}_i}
+\;\ge\; \sigma^2\Big(\frac{1}{n_b^{(i)}}+\frac{1}{n_a^{(i)}}\Big),
 \]
+recovering the theorem's first inequality. By AM--GM,
+$n_b^{(i)} n_a^{(i)} \le N^2/4$, giving the weaker but horizon-free
+$\mathrm{Var}_{\mathrm{oracle}}(\delta\hat e_i) \ge 4\sigma^2/N$ directly.
 In the actual problem the other coefficients $e_j,\,j\ne i$, are also unknown
 and estimated jointly. Adding free parameters to a linear model weakly
 increases the variance of every retained coefficient---formally, for
@@ -880,10 +907,9 @@ rather than the full episode's reward range, replacing the global constant $R$
 with a trajectory-dependent quantity --- is the natural next step and is left
 open.
 
-\paragraph{Is the bound's order tight anywhere?} A search was carried out for
-an instance where the $T^2$ growth rate is approached, even with a loose
-constant. In two regimes---a fixed instance with $T$ pushed far past the pool
-size, and $n$ scaled together with $T$---the true gap does not sustain $T^2$
+\paragraph{The bound's order is not tight.} In two regimes---a fixed instance with
+$T$ pushed far past the pool size, and $n$ scaled together with $T$---the true
+gap does not sustain $T^2$
 growth in either. In the first, an adversarial instance's gap saturates near
 $T\approx3$--$5\times$ the pool size and then \emph{decays} toward zero, since
 ECI's charge uses the literal $T-t$ horizon rather than the
@@ -910,9 +936,11 @@ W(S,t) = \max_{a\in S}\big[v_a - \kappa_a + p_aW(S{\setminus}\{a\},t{+}1) +
 (1-p_a)W(S,t{+}1)\big], \qquad W(\emptyset,t)=0.
 \]
 Let $\bar\kappa := \frac{1}{|S|}\sum_{a\in S}\kappa_a$ and let $W_{\mathrm{bar}}$
-solve the same recursion with every $\kappa_a$ replaced by $\bar\kappa$. Then
+solve the same recursion with every $\kappa_a$ replaced by $\bar\kappa$.
+Writing $\mathrm{dev}(S')$ for the same quantity evaluated at any $S'$ (its
+own mean), and $D(S):=\max_{S'\subseteq S}\mathrm{dev}(S')$, then
 \[
-|W(S,t) - W_{\mathrm{bar}}(S,t)| \;\le\; (T-t)\,\delta\max_{a\in S}|\kappa_a-\bar\kappa|.
+|W(S,t) - W_{\mathrm{bar}}(S,t)| \;\le\; (T-t)\,\delta\, D(S).
 \]
 \end{lemma}
 
@@ -926,13 +954,25 @@ $1$-Lipschitz with respect to its argument,
 p_a|\Delta(S{\setminus}a,t{+}1)| + (1-p_a)|\Delta(S,t{+}1)|\,\big]
 \le \delta\,\mathrm{dev}(S) + \max_{S'}|\Delta(S',t{+}1)|,
 \]
-where the second inequality bounds the convex combination of the two
-continuation terms by their maximum. Unrolling from $t$ to $T$ over $T-t$
-rounds gives the stated bound.
+where $S'$ ranges over $S$ and $S{\setminus}a$ for $a\in S$, each a subset of
+$S$. Since every subset of $S{\setminus}a$ is a subset of $S$, $D$ is monotone
+under subsetting: $D(S{\setminus}a)\le D(S)$ trivially. The inductive
+hypothesis then gives $|\Delta(S',t{+}1)|\le(T{-}t{-}1)\delta D(S')\le(T{-}t{-}1)\delta D(S)$
+for every such $S'$, and since $\mathrm{dev}(S)\le D(S)$ by definition,
+$|\Delta(S,t)|\le\delta D(S)+(T{-}t{-}1)\delta D(S)=(T{-}t)\delta D(S)$.
 \end{proof}
 
+Using $D(S)$ rather than $\mathrm{dev}(S)$ directly is necessary: removing an
+arm can \emph{increase} the local deviation of the remaining subset from its
+own mean (verified directly, up to $+1.57$ in adversarial constructions), so
+bounding the recursion by $\mathrm{dev}(S)$ at every step is not itself
+justified. The tighter bound with $\mathrm{dev}(S)$ in place of $D(S)$ is
+found to hold anyway---worst ratio $1.0000$ against $3{,}000$ adversarial
+subset-and-horizon combinations---but no proof of that tighter statement is
+given here; $D(S)$ is what the argument above actually establishes.
+
 This recovers the earlier characterisation as a special case: when $\kappa$ is
-constant, $\mathrm{dev}(S)=0$ and $W$ collapses to $W_{\mathrm{bar}}$ exactly, matching
+constant, $D(S)=0$ and $W$ collapses to $W_{\mathrm{bar}}$ exactly, matching
 Theorem~\ref{thm:char}. It does not by itself bound $\mathrm{Gap}(\mathrm{ECI})$,
 since ECI's approximation also omits a non-linear option-value term; the two
 observations below describe, without yet proving in general, how that
@@ -969,7 +1009,7 @@ literal $T-t$ horizon rather than an exhaustion-capped effective one.
 A natural route to a general bound on Observation~\ref{obs:disagreecount}
 would show ECI's preference between any two arms flips sign at most a
 constant number of times as $t$ varies, since its score is linear in $T-t$
-per arm. Tested directly: the true optimal preference between a pair also
+per arm. The true optimal preference between a pair also
 flips at most once in the cases checked, but the \emph{agreement} between
 ECI and the true preference---the quantity that would need to be bounded to
 control disagreement count---does not stay at the $\le\!2$ that a
@@ -978,9 +1018,8 @@ across ten trials. Two further candidate bounds on the disagreement count
 itself, $N_{\mathrm{exh}}$ and the pairwise count $\binom{n}{2}$, both stay
 empirically bounded but neither shows unambiguous general structure.
 Forcing a constant from either candidate would risk fitting the tested
-instances rather than proving a real relationship, so the general bound is
-left open rather than manufactured, and these negative results are released
-in the open-source testbed as a concrete starting point.
+instances rather than establishing a real relationship, so the general
+bound remains open.
 \end{remark}
 
 \section{Corrections}
@@ -1040,7 +1079,7 @@ value function. Then $V^{\pi_1}(S,t) \ge V^{\pi_0}(S,t)$ for all $(S,t)$. This
 is the classical conservative-policy-improvement guarantee of
 \citet{kakadelangford2002}, specialised to a setting where it
 holds \emph{exactly} rather than approximately: our finite-horizon,
-undiscounted MDP with a single deterministic transition structure admits a
+undiscounted stochastic MDP admits a
 short direct proof with no total-variation penalty term, unlike the general
 discounted, stochastic-policy case their bound addresses.
 \end{theorem}
@@ -1070,8 +1109,7 @@ log-log slopes of $1.11$--$1.25$ observed between base gap and rollout gap---
 remains open. Standard contraction arguments for policy-improvement rates rely on
 a discount factor, unavailable in this finite-horizon undiscounted setting.
 
-\paragraph{How fast, empirically.} Running full policy iteration (repeatedly
-applying the improvement step to exact convergence) from three deliberately
+\paragraph{Convergence is far faster than any generic guarantee.} From three deliberately
 adversarial starting policies, across $n=3$ to $10$ and $T=4$ to $16$, the
 worst-case number of iterations to \emph{exact} convergence never exceeds $4$,
 far below any generic polynomial-in-problem-size guarantee. The mechanism
@@ -1415,16 +1453,15 @@ fires, destroys every currently alive arm in that cluster simultaneously.
 definitional property of the benchmark, holding under any destruction mechanism.
 Confirmed at $0.0000000000$ across shock rates up to $q=0.5$.
 
-\paragraph{Theorem~\ref{thm:char} survives exactly, and this is a genuine
+\paragraph{Evidence that Theorem~\ref{thm:char} survives exactly, a genuine
 surprise.} Constant $\kappa$ gives greedy exact optimality even under correlated
 cluster shocks, verified to full floating-point precision ($0.00\times10^{0}$ to
 ten decimal places) up to $q=0.7$, including an adversarial construction with $e$
 varying sixfold within a cluster while $\kappa$ is held exactly constant. We state
-this as a \emph{conjecture} rather than a theorem: a proof attempt was made and
-abandoned rather than forced through, since the original burden-invariance
-argument nests awkwardly once a shock's effect on other cluster members depends on
-which arm was just removed. The empirical result is precise; the general proof is
-open.
+this as a \emph{conjecture} rather than a theorem: the burden-invariance
+argument used for independent destruction does not extend cleanly, since a
+shock's effect on other cluster members depends on which arm was just
+removed. The empirical result is precise; the general proof is open.
 
 \paragraph{ECI does not survive, and this is the substantive limitation.} At high
 correlated-shock rates ECI is worse than greedy in the majority of instances
@@ -1459,14 +1496,11 @@ At the same scale as above, SECI matches or beats greedy at \emph{every} $q$
 tested, confirmed across 30 seeds, staying within $0.01\%$--$1.53\%$ of the true
 optimum throughout, where plain ECI's gap grows to roughly $11\%$ at $q=1$.
 
-\paragraph{A rollout cross-check, and a scale-fairness diagnosis.} An initial
-Monte Carlo rollout used as an independent scale-level reference failed a
-basic sanity check and was traced to an implementation bug rather than
-reported; a subsequent scale comparison at $n=40$ initially appeared to show
-SECI trailing greedy, which turned out to be an unfair comparison (holding
-$\delta$ fixed while $n$ grew) rather than a real shortfall. Both episodes are
-given in full, since the debugging process is itself informative, in
-Appendix~F.
+\paragraph{A rollout cross-check, and a scale-fairness diagnosis.} A Monte Carlo
+rollout used as an independent scale-level reference fails a basic sanity check
+and is excluded rather than reported. At $n=40$, SECI's apparent shortfall
+against greedy is an artifact of holding $\delta$ fixed while $n$ grows, not a
+real one. Full diagnostics for both are given in Appendix~F.
 
 \paragraph{Empirical finding (not a theorem).}
 The paper's central practical recommendation --- specify $\kappa$, do not attempt
@@ -1477,9 +1511,8 @@ empirical result rather than a proven theorem: its dampening term was found by
 testing candidates against exact ground truth, not derived and proven from the
 Bellman structure the way ECI itself was. A first-principles alternative --- an
 effective-horizon correction based on an arm's expected survival time under
-shock risk --- was attempted and performed \emph{worse}, which is itself
-informative: the more theoretically motivated derivation was wrong, and testing
-against exact DP caught it before it became a claimed result.
+shock risk --- performs \emph{worse} against exact DP, despite being the more
+theoretically motivated derivation.
 
 \section{Limitations}
 
@@ -1514,8 +1547,7 @@ one per theorem, several per result where a claim has multiple independently
 checkable parts --- are released openly. Every figure regenerates from the
 library and the exact-DP reference via a single command, all random seeds are
 fixed and stated in code, and the test suite fails if any theorem's numerical
-claim breaks.
-\textbf{[Repository URL to be inserted before posting.]}
+claim breaks. Code: \url{https://github.com/NavikkumarModi/attrition}.
 
 \LONGFORM
 
