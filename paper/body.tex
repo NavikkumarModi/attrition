@@ -1,38 +1,23 @@
 \begin{abstract}
-Sublinear regret is the standard justification for deploying sequential
-decision-making systems. We show that this justification is vacuous when actions
+Regret guarantees are the standard justification for deploying sequential
+decision-making systems. We show that this justification can fail when actions
 consume the action set. We study bandits in which pulling an arm may destroy it,
-and in which each destroyed arm imposes a permanent negative externality on every
-subsequent reward. We prove a two-sided separation: a policy achieving \emph{exactly zero} regret
-against the best-available-arm benchmark can incur value loss $m\delta E$, unbounded
-in both the pool size $m$ and the externality magnitude $\delta E$, and can drive
-total value negative while the optimal policy remains positive; conversely, any
-policy near the system optimum is \emph{forced} to report private regret
-$m\epsilon$. The metric does not merely fail to separate good from destructive
-policies---it orders them backwards. The mechanism is
-that regret is measured against an optimum the learner has itself degraded. We
-further establish that the parameter governing optimal play, the expected marginal
-externality $\kappa_a = p_a e_a$, determines whether greedy is optimal: constant
-$\kappa$ is proven sufficient for universal optimality---via an adjacent-
-interchange lemma and backward induction, holding at every horizon without
-qualification, verified independently across 450 adversarial instances---and
-non-constant $\kappa$ is proven to admit a counterexample instance, not
-universal failure. The parameter is also (ii) subject to a consumption-induced estimation floor
-$\mathrm{SE} \ge 2\sigma/\sqrt{\min(T,\sum_j 1/p_j)}$ that \emph{does not decrease
-with the horizon}, because each arm supplies exactly one before/after transition and
-the sample budget is capped by consumption rather than time. The quantity that
-matters most cannot be estimated arbitrarily accurately, and its attainable
-precision degrades exactly as it becomes more important. We give a closed-form
-correction (ECI, exact under constant $\kappa$, with a proven though loose bound
-on its general approximation gap), characterise an exactly-solvable special case,
-and show that sequential multi-agent consumption on a shared pool reduces exactly
-to the single-agent case, so no price-of-anarchy separately arises there. We
-further stress-test the independence assumption underlying every result: under
-correlated, cluster-level destruction the core characterisation appears to survive
-exactly (verified, not proven) while the correction requires an explicit
-adjustment, which we derive and validate against exact and scaled ground truth. We
-release an open-source testbed, \textsc{Attrition}, with a regression test for
-every claim.
+and each destroyed arm imposes a permanent negative externality on every
+subsequent reward. Against the best-available-arm benchmark, a policy with
+\emph{exactly zero} regret can incur value loss $m\delta E$, unbounded in both the
+pool size $m$ and the externality magnitude $\delta E$, and can drive total value
+negative while the optimal policy remains positive; in the same family, the
+optimal policy reports private regret $m\epsilon$. The mechanism is that regret is
+measured against an optimum the learner has itself degraded. We characterise when
+greedy is safe: if the expected marginal externality $\kappa_a = p_a e_a$ is
+constant across arms, greedy is optimal at every horizon; if it is not, there is an
+instance on which greedy is strictly suboptimal. The parameter $\kappa$ is also
+hard to learn: consumption caps the number of before/after observations, giving an
+estimation floor $\mathrm{SE} \ge 2\sigma/\sqrt{\min(T,\sum_j 1/p_j)}$ that does not
+decrease with the horizon. We give a closed-form correction (ECI), exact under
+constant $\kappa$, and an adjusted version (SECI) for correlated, cluster-level
+destruction, validated empirically against exact ground truth. We release an
+open-source testbed, \textsc{Attrition}, with a regression test for every claim.
 \end{abstract}
 
 \section{Introduction}
@@ -328,7 +313,7 @@ subsets for $n \le 8$ and by rollout above that.
 
 \section{A zero-regret policy can destroy unbounded value}
 
-\begin{theorem}[Vacuity of no-regret under consumption]
+\begin{theorem}[Zero regret can destroy unbounded value]
 \label{thm:vacuity}
 For any $M > 0$ there is an instance on which greedy attains regret exactly $0$
 against the best-available benchmark while $V^\star - V_{\mathrm{greedy}} \ge M$.
@@ -412,7 +397,7 @@ greedy is $m\delta E$.
 Together with Theorem~\ref{thm:vacuity} this closes the separation in both
 directions. A zero-regret policy may destroy unbounded value, and---the sharper
 statement---a policy that preserves value \emph{must} report regret. The metric does
-not merely fail to separate the two; it orders them backwards.
+not merely fail to separate the two; in this family it orders them backwards.
 
 \begin{corollary}[The reported regret tracks the value delivered]
 \label{cor:tracks}
